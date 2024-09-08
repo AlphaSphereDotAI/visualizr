@@ -158,7 +158,6 @@ load_cpk(audio2exp_checkpoint, model=netG, device="cpu")
 
 
 class SadTalker(torch.nn.Module):
-
     def __init__(self, kp_extractor, generator, netG, audio2pose, face_3drecon):
         super(SadTalker, self).__init__()
         self.kp_extractor = kp_extractor

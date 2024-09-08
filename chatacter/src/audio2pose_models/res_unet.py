@@ -4,7 +4,6 @@ from src.audio2pose_models.networks import ResidualConv, Upsample
 
 
 class ResUnet(nn.Module):
-
     def __init__(self, channel=1, filters=[32, 64, 128, 256]):
         super(ResUnet, self).__init__()
 

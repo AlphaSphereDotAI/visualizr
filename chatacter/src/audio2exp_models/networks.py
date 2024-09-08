@@ -3,7 +3,6 @@ from torch import nn
 
 
 class Conv2d(nn.Module):
-
     def __init__(
         self,
         cin,
@@ -36,7 +35,6 @@ class Conv2d(nn.Module):
 
 
 class SimpleWrapperV2(nn.Module):
-
     def __init__(self) -> None:
         super().__init__()
         self.audio_encoder = nn.Sequential(

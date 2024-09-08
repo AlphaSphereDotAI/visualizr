@@ -51,7 +51,6 @@ class BaseModel(ABC):
         saved_dict = dict()
 
         def hook_gen(name):
-
             def grad_hook(grad):
                 saved_vals = add_func(grad)
                 saved_dict[name] = saved_vals
