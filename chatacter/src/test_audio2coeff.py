@@ -24,7 +24,6 @@ def load_cpk(checkpoint_path, model=None, optimizer=None, device="cpu"):
 
 
 class Audio2Coeff:
-
     def __init__(self, sadtalker_path, device):
         # load config
         fcfg_pose = open(sadtalker_path["audio2pose_yaml_path"])

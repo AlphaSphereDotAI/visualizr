@@ -27,7 +27,6 @@ SRC[:, 0] += 8.0
 
 
 class AlignedDataSet(mx.gluon.data.Dataset):
-
     def __init__(self, root, lines, align=True):
         self.lines = lines
         self.root = root

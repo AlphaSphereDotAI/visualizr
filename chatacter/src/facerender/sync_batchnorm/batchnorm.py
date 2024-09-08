@@ -38,7 +38,6 @@ _MasterMessage = collections.namedtuple("_MasterMessage", ["sum", "inv_std"])
 
 
 class _SynchronizedBatchNorm(_BatchNorm):
-
     def __init__(self, num_features, eps=1e-5, momentum=0.1, affine=True):
         super(_SynchronizedBatchNorm, self).__init__(
             num_features, eps=eps, momentum=momentum, affine=affine

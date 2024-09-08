@@ -18,7 +18,6 @@ def mp3_to_wav(mp3_filename, wav_filename, frame_rate):
 
 
 class SadTalker:
-
     def __init__(
         self, checkpoint_path="checkpoints", config_path="src/config", lazy_load=False
     ):

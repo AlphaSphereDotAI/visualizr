@@ -7,7 +7,6 @@ from src.face3d.extract_kp_videos_safe import KeypointExtractor
 
 
 class Preprocesser:
-
     def __init__(self, device="cuda"):
         self.predictor = KeypointExtractor(device)
 
