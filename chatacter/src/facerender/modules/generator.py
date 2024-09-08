@@ -171,7 +171,6 @@ class OcclusionAwareGenerator(nn.Module):
 
 
 class SPADEDecoder(nn.Module):
-
     def __init__(self):
         super().__init__()
         ic = 256
@@ -213,7 +212,6 @@ class SPADEDecoder(nn.Module):
 
 
 class OcclusionAwareSPADEGenerator(nn.Module):
-
     def __init__(
         self,
         image_channel,

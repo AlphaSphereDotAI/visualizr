@@ -52,7 +52,6 @@ batch_size = args.batch_size
 
 
 class Embedding(object):
-
     def __init__(self, prefix, data_shape, batch_size=1):
         image_size = (112, 112)
         self.image_size = image_size

@@ -14,7 +14,6 @@ from onnx import numpy_helper
 
 
 class ArcFaceORT:
-
     def __init__(self, model_path, cpu=False):
         self.model_path = model_path
         # providers = None will use available provider, for onnxruntime-gpu it will be "CUDAExecutionProvider"

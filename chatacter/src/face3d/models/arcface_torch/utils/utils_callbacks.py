@@ -9,7 +9,6 @@ from utils.utils_logging import AverageMeter
 
 
 class CallBackVerification(object):
-
     def __init__(self, frequent, rank, val_targets, rec_prefix, image_size=(112, 112)):
         self.frequent: int = frequent
         self.rank: int = rank
@@ -59,7 +58,6 @@ class CallBackVerification(object):
 
 
 class CallBackLogging(object):
-
     def __init__(self, frequent, rank, total_step, batch_size, world_size, writer=None):
         self.frequent: int = frequent
         self.rank: int = rank
@@ -134,7 +132,6 @@ class CallBackLogging(object):
 
 
 class CallBackModelCheckpoint(object):
-
     def __init__(self, rank, output="./"):
         self.rank: int = rank
         self.output: str = output

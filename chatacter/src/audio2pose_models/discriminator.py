@@ -2,7 +2,6 @@ from torch import nn
 
 
 class ConvNormRelu(nn.Module):
-
     def __init__(
         self,
         conv_type="1d",
@@ -71,7 +70,6 @@ class ConvNormRelu(nn.Module):
 
 
 class PoseSequenceDiscriminator(nn.Module):
-
     def __init__(self, cfg):
         super().__init__()
         self.cfg = cfg

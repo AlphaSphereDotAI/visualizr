@@ -42,7 +42,6 @@ def calculate_points(heatmaps):
 
 
 class AddCoordsTh(nn.Module):
-
     def __init__(self, x_dim=64, y_dim=64, with_r=False, with_boundary=False):
         super(AddCoordsTh, self).__init__()
         self.x_dim = x_dim
@@ -195,7 +194,6 @@ class BasicBlock(nn.Module):
 
 
 class ConvBlock(nn.Module):
-
     def __init__(self, in_planes, out_planes):
         super(ConvBlock, self).__init__()
         self.bn1 = nn.BatchNorm2d(in_planes)
@@ -244,7 +242,6 @@ class ConvBlock(nn.Module):
 
 
 class HourGlass(nn.Module):
-
     def __init__(self, num_modules, depth, num_features, first_one=False):
         super(HourGlass, self).__init__()
         self.num_modules = num_modules
@@ -304,7 +301,6 @@ class HourGlass(nn.Module):
 
 
 class FAN(nn.Module):
-
     def __init__(
         self,
         num_modules=1,

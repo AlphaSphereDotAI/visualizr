@@ -16,7 +16,6 @@ checkpoints = "checkpoints"
 
 
 class Predictor(BasePredictor):
-
     def setup(self):
         """Load the model into memory to make running multiple predictions efficient"""
         device = "cuda"

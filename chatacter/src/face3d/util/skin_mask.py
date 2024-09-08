@@ -8,7 +8,6 @@ import numpy as np
 
 
 class GMM:
-
     def __init__(self, dim, num, w, mu, cov, cov_det, cov_inv):
         self.dim = dim  # feature dimension
         self.num = num  # number of Gaussian components
