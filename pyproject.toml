@@ -18,7 +18,7 @@ dependencies = [
     "resampy>=0.4.3",
     "soundfile>=0.12.1",
     "torch==1.12.1+cu113",
-    "torchaudio==0.12.1+cu113",
+    "torchaudio==2.4.1",
     "torchvision==0.13.1+cu113",
     "transformers>=4.44.2",
     "yacs>=0.1.8",
