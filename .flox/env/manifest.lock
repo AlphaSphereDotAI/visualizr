@@ -1,0 +1,145 @@
+{
+  "lockfile-version": 1,
+  "manifest": {
+    "version": 1,
+    "install": {
+      "rustup": {
+        "pkg-path": "rustup"
+      }
+    },
+    "hook": {
+      "on-activate": "#   # -> Set variables, create files and directories\n#   # -> Perform initialization steps, e.g. create a python venv\n#   # -> Useful environment variables:\n#   #      - FLOX_ENV_PROJECT=/home/user/example\n#   #      - FLOX_ENV=/home/user/example/.flox/run\n#   #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache\nrustup default stable\n"
+    },
+    "profile": {},
+    "options": {
+      "systems": [
+        "aarch64-darwin",
+        "aarch64-linux",
+        "x86_64-darwin",
+        "x86_64-linux"
+      ],
+      "allow": {
+        "licenses": []
+      },
+      "semver": {}
+    }
+  },
+  "packages": [
+    {
+      "attr_path": "rustup",
+      "broken": false,
+      "derivation": "/nix/store/wqnk0b7n7kisljgaxp6ld9rws1cjgss7-rustup-1.27.1.drv",
+      "description": "Rust toolchain installer",
+      "install_id": "rustup",
+      "license": "[ Apache-2.0, MIT ]",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=2ff53fe64443980e139eaa286017f53f88336dd0",
+      "name": "rustup-1.27.1",
+      "pname": "rustup",
+      "rev": "2ff53fe64443980e139eaa286017f53f88336dd0",
+      "rev_count": 752742,
+      "rev_date": "2025-02-13T11:42:38Z",
+      "scrape_date": "2025-02-15T05:15:55Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "1.27.1",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/9b8v9lji5gjw5cj7f2nv3l184zyg0m3a-rustup-1.27.1"
+      },
+      "system": "aarch64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "rustup",
+      "broken": false,
+      "derivation": "/nix/store/fbsif1ly6z0kcx2x55sxfqx8ppfppr83-rustup-1.27.1.drv",
+      "description": "Rust toolchain installer",
+      "install_id": "rustup",
+      "license": "[ Apache-2.0, MIT ]",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=2ff53fe64443980e139eaa286017f53f88336dd0",
+      "name": "rustup-1.27.1",
+      "pname": "rustup",
+      "rev": "2ff53fe64443980e139eaa286017f53f88336dd0",
+      "rev_count": 752742,
+      "rev_date": "2025-02-13T11:42:38Z",
+      "scrape_date": "2025-02-15T05:15:55Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "1.27.1",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/d2g7zcymlvc5cjqcdpbqgrzzg2swwzik-rustup-1.27.1"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "rustup",
+      "broken": false,
+      "derivation": "/nix/store/bmybhfw28pfmggspxqqfijlcs1dvhd78-rustup-1.27.1.drv",
+      "description": "Rust toolchain installer",
+      "install_id": "rustup",
+      "license": "[ Apache-2.0, MIT ]",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=2ff53fe64443980e139eaa286017f53f88336dd0",
+      "name": "rustup-1.27.1",
+      "pname": "rustup",
+      "rev": "2ff53fe64443980e139eaa286017f53f88336dd0",
+      "rev_count": 752742,
+      "rev_date": "2025-02-13T11:42:38Z",
+      "scrape_date": "2025-02-15T05:15:55Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "1.27.1",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/pxbbd2112rlz283k82rsk0mfc9bw0jkb-rustup-1.27.1"
+      },
+      "system": "x86_64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "rustup",
+      "broken": false,
+      "derivation": "/nix/store/pqhr4bndcypdcsn748ix44qdlvnfs118-rustup-1.27.1.drv",
+      "description": "Rust toolchain installer",
+      "install_id": "rustup",
+      "license": "[ Apache-2.0, MIT ]",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=2ff53fe64443980e139eaa286017f53f88336dd0",
+      "name": "rustup-1.27.1",
+      "pname": "rustup",
+      "rev": "2ff53fe64443980e139eaa286017f53f88336dd0",
+      "rev_count": 752742,
+      "rev_date": "2025-02-13T11:42:38Z",
+      "scrape_date": "2025-02-15T05:15:55Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "1.27.1",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/dqz7ghl1i46i8nswvkkl3h3jbhxkbchg-rustup-1.27.1"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    }
+  ]
+}

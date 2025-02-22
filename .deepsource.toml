@@ -1,16 +1,16 @@
 version = 1
 
 [[analyzers]]
-name = "secrets"
+name = "rust"
+
+[analyzers.meta]
+msrv = "stable"
 
 [[analyzers]]
-name = "python"
-
-  [analyzers.meta]
-  runtime_version = "3.x.x"
+name = "secrets"
 
 [[analyzers]]
 name = "docker"
 
 [[transformers]]
-name = "ruff"
+name = "rustfmt"

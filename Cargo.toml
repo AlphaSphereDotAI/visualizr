@@ -1,0 +1,12 @@
+[package]
+name = "voice_generator"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+actix-files = "0.6.6"
+actix-web = { version = "4.9.0", features = ["macros"] }
+env_logger = "0.11.6"
+log = "0.4.25"
+serde = { version = "1.0.218", features = ["derive"] }
+uuid = { version = "1.13.2", features = ["v4"] }
