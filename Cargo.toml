@@ -1,10 +1,11 @@
 [package]
-name = "voice_generator"
+name = "video_generator"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 actix-files = "0.6.6"
+actix-multipart = "0.7.2"
 actix-web = { version = "4.9.0", features = ["macros"] }
 env_logger = "0.11.6"
 log = "0.4.25"
