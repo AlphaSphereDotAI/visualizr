@@ -1,9 +1,10 @@
 import os
 
-from chatacter.model import generate_video
-from chatacter.settings import get_settings
 from fastapi import FastAPI, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
+
+from chatacter.model import generate_video
+from chatacter.settings import get_settings
 
 app = FastAPI(debug=True)
 settings = get_settings()

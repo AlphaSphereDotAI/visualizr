@@ -68,11 +68,9 @@ def run(command, desc=None, errdesc=None, custom_env=None, live=False):
             command, shell=True, env=os.environ if custom_env is None else custom_env
         )
         if result.returncode != 0:
-            raise RuntimeError(
-                f"""{errdesc or 'Error running command'}.
+            raise RuntimeError(f"""{errdesc or 'Error running command'}.
 Command: {command}
-Error code: {result.returncode}"""
-            )
+Error code: {result.returncode}""")
 
         return ""
 

@@ -144,13 +144,11 @@ def install():
     elif get_default_checkpoint_path() is not None:
         os.environ["SADTALKER_CHECKPOINTS"] = str(get_default_checkpoint_path())
     else:
-        print(
-            """"
+        print(""""
             SadTalker will not support download all the files from hugging face, which will take a long time.
              
             please manually set the SADTALKER_CHECKPOINTS in `webui_user.bat`(windows) or `webui_user.sh`(linux)
-            """
-        )
+            """)
 
         # python = sys.executable
 
