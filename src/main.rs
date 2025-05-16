@@ -10,27 +10,69 @@ use actix_web::{
     get, http::header::ContentType, middleware, post, web, App, Error, HttpResponse, HttpServer,
     Responder,
 };
-use serde::Deserialize;
+use std::process::Command;
 use uuid::Uuid;
 
 #[derive(Debug, MultipartForm)]
 struct UploadForm {
     #[multipart(rename = "file")]
-    image: Vec<TempFile>,
-    // #[multipart(field = "name")]
+    image: TempFile,
+    audio: TempFile,
 }
 
 #[post("/generate")]
 async fn generate(MultipartForm(form): MultipartForm<UploadForm>) -> Result<impl Responder, Error> {
-    for f in form.image {
-        let path = format!("./tmp/{}", f.file_name.unwrap());
-        log::info!("saving to {path}");
-        f.file.persist(path).unwrap();
-    }
-
-    Ok(HttpResponse::Ok()
-        .content_type(ContentType::json())
-        .body("File uploaded".to_string()))
+    let image_file_path = format!(
+        "./tmp/{}",
+        form.image.file_name.unwrap() + Uuid::new_v4().to_string().as_str()
+    );
+    let audio_file_path = format!(
+        "./tmp/{}",
+        form.audio.file_name.unwrap() + Uuid::new_v4().to_string().as_str()
+    );
+    log::info!("saving to {image_file_path}");
+    log::info!("saving to {audio_file_path}");
+    form.image.file.persist(image_file_path.clone()).unwrap();
+    form.audio.file.persist(audio_file_path.clone()).unwrap();
+    log::info!("Files uploaded");
+    log::info!("Generating video");
+    // docker run --gpus "all" --rm -v $(pwd):/host_dir wawa9000/sadtalker \
+    // --driven_audio /host_dir/deyu.wav \
+    // --source_image /host_dir/image.jpg \
+    // --expression_scale 1.0 \
+    // --still \
+    // --result_dir /host_dir
+    let output = Command::new("docker")
+        .arg("run")
+        .arg("--gpus \"all\"")
+        .arg("--rm")
+        .arg("-v")
+        .arg(format!(
+            "{}:/host_dir",
+            std::env::current_dir().unwrap().to_str().unwrap()
+        ))
+        .arg("wawa9000/sadtalker")
+        .arg("--driven_audio")
+        .arg(audio_file_path.to_string())
+        .arg("--source_image")
+        .arg(image_file_path.to_string())
+        .arg("--expression_scale")
+        .arg("1.0")
+        .arg("--still")
+        .arg("--result_dir")
+        .arg(format!(
+            "{}",
+            std::env::current_dir().unwrap().to_str().unwrap()
+        ))
+        .output()
+        .expect("Failed to execute command");
+    assert!(output.status.success());
+    log::info!("status: {}", output.status);
+    Ok(NamedFile::open_async(format!(
+        "{}",
+        std::env::current_dir().unwrap().to_str().unwrap()
+    ))
+    .await?)
 }
 
 #[get("/")]
@@ -39,44 +81,6 @@ async fn hello() -> impl Responder {
         .content_type(ContentType::html())
         .body("Welcome to the Chatacter's Video Generator API")
 }
-
-// #[post("/generate")]
-// async fn generate(params: web::Json<GenerateParams>) -> impl Responder {
-//     if params.text.trim().is_empty() {
-//         return Err(actix_web::error::ErrorBadRequest("Text cannot be empty"));
-//     };
-
-//     if !(0..=10).contains(&params.character_id) {
-//         return Err(actix_web::error::ErrorBadRequest(
-//             "Character ID must be between 0 and 10",
-//         ));
-//     };
-
-//     let config: KokoroTtsConfig = KokoroTtsConfig {
-//         model: "./kokoro-en-v0_19/model.onnx".to_string(),
-//         voices: "./kokoro-en-v0_19/voices.bin".into(),
-//         tokens: "./kokoro-en-v0_19/tokens.txt".into(),
-//         data_dir: "./kokoro-en-v0_19/espeak-ng-data".into(),
-//         length_scale: 1.0,
-//         ..Default::default()
-//     };
-//     let mut tts = KokoroTts::new(config);
-//     // 0->af, 1->af_bella, 2->af_nicole, 3->af_sarah, 4->af_sky, 5->am_adam
-//     // 6->am_michael, 7->bf_emma, 8->bf_isabella, 9->bm_george, 10->bm_lewis
-//     let audio: TtsAudio = tts
-//         .create(&params.text, params.speaker_id, 1.0)
-//         .map_err(actix_web::error::ErrorInternalServerError)?;
-
-//     let filename = format!("assets/{}.wav", Uuid::new_v4());
-//     if let Err(e) = write_audio_file(&filename, &audio.samples, audio.sample_rate) {
-//         log::info!("Error writing audio file: {:?}", e);
-//         return Err(actix_web::error::ErrorInternalServerError(format!(
-//             "Error writing audio file: {:?}",
-//             e
-//         )));
-//     }
-//     Ok(NamedFile::open_async(&filename).await?)
-// }
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
