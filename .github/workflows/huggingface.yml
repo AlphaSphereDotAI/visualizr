@@ -1,0 +1,30 @@
+name: Push to HuggingFace
+on:
+  push:
+    branches:
+      - main
+env:
+  HF_HUB_ENABLE_HF_TRANSFER: 1
+jobs:
+  huggingface:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup UV
+        uses: ./.github/actions/uv
+      - name: Remove Unnecessary Files
+        run: |
+          echo "" >> .gitignore
+          echo ".github/" >> .gitignore
+          echo ".idea/" >> .gitignore
+          echo "renovate.json" >> .gitignore
+          echo ".deepsource.toml" >> .gitignore
+      - name: Add to git credentials
+        run: git config --global credential.helper store
+      - name: Login to HuggingFace Hub
+        run: uv run huggingface-cli login --add-to-git-credential --token ${{ secrets.HF_TOKEN }}
+      - name: Check if logged in
+        run: uv run huggingface-cli whoami
+      - name: Upload
+        run: uv run huggingface-cli upload AlphaSphereDotAI/Visualizr . . --repo-type space
