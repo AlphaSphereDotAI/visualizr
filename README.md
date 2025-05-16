@@ -1,1 +1,1 @@
-# Video Generator part of the Chatacter Backend
+# Visualizr: Video Generator part of the Chatacter Backend
