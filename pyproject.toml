@@ -1,5 +1,5 @@
 [project]
-name = "video_generator"
+name = "visualizr"
 version = "0.1.0"
 description = "Video Generator part of the Chatacter Backend"
 readme = "README.md"
