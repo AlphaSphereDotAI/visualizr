@@ -8,7 +8,7 @@ on:
       - "[0-9]+.[0-9]+.[0-9]+b[0-9]+"
       - "[0-9]+.[0-9]+.[0-9]+rc[0-9]+"
 env:
-  PACKAGE_NAME: visualizr
+  PACKAGE_NAME: vocalizr
   OWNER: AlphaSphereDotAI
 permissions:
   contents: write
@@ -20,7 +20,7 @@ jobs:
       tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v4
       - name: Extract tag and Details
         id: release
         run: |
@@ -39,13 +39,21 @@ jobs:
             exit 1
           fi
   setup_and_build:
-    needs: [details]
+    needs: [ details ]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4.2.2
-      - name: Setup UV
-        uses: ./.github/actions/uv
+        uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        id: uv
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+          activate-environment: true
+      - name: Install the project
+        if: steps.uv.outputs.cache-hit != 'true'
+        run: uv sync --frozen
       - name: Update Project Version
         run: uv version ${{ needs.details.outputs.new_version }}
       - name: Build source and wheel distribution
@@ -57,11 +65,11 @@ jobs:
           path: dist/
   github_release:
     name: Create GitHub Release
-    needs: [setup_and_build, details]
+    needs: [ setup_and_build, details ]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Download artifacts
