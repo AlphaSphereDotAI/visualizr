@@ -1,5 +1,4 @@
 from gradio import Blocks
-
 from vocalizr import DEBUG, SERVER_NAME, SERVER_PORT
 from vocalizr.gui import app_block
 
