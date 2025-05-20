@@ -9,5 +9,6 @@ dependencies = []
 [dependency-groups]
 dev = [
     "pyrefly>=0.16.1",
+    "ruff>=0.11.10",
     "ty>=0.0.1a6",
 ]
