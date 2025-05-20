@@ -19,10 +19,6 @@ from templates import *
 from torchvision import transforms
 from tqdm import tqdm
 
-# Disable Gradio analytics to avoid network-related issues
-gr.analytics_enabled = False
-
-
 def check_package_installed(package_name):
     package_spec = importlib.util.find_spec(package_name)
     if package_spec is None:

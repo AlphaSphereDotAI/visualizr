@@ -2,7 +2,7 @@ from datetime import datetime
 from os import getenv
 from pathlib import Path
 from warnings import filterwarnings
-
+from gradio import analytics_enabled
 from dotenv import load_dotenv
 from kokoro import KPipeline
 from loguru import logger
@@ -78,3 +78,6 @@ CHOICES: dict[str, str] = {
     "🇬🇧 🚹 Lewis": "bm_lewis",
     "🇬🇧 🚹 Daniel": "bm_daniel",
 }
+
+# Disable Gradio analytics to avoid network-related issues
+analytics_enabled = False

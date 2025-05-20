@@ -1,3 +1,5 @@
 {
-    "terminal.integrated.defaultProfile.windows": "FedoraLinux-42 (WSL)"
+    "terminal.integrated.defaultProfile.windows": "FedoraLinux-42 (WSL)",
+    "ty.experimental.completions.enable": true,
+    "python.languageServer": "None"
 }
