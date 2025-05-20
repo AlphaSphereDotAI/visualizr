@@ -2,8 +2,9 @@ from datetime import datetime
 from os import getenv
 from pathlib import Path
 from warnings import filterwarnings
-from gradio import analytics_enabled
+
 from dotenv import load_dotenv
+from gradio import analytics_enabled
 from kokoro import KPipeline
 from loguru import logger
 from torch import cuda
