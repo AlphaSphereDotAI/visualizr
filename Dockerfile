@@ -10,6 +10,7 @@ ENV UV_COMPILE_BYTECODE=1 \
 
 RUN groupadd visualizr && \
     useradd -g visualizr -s /bin/bash -d /app visualizr && \
+    mkdir -p /app/ckpts && \
     uv tool install --quiet huggingface-hub[cli] && \
     huggingface-cli download taocode/anitalker_ckpts --quiet --local-dir /app/ckpts && \
     uv tool uninstall --quiet huggingface-hub
