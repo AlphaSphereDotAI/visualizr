@@ -9,6 +9,7 @@ permissions:
   id-token: write
 jobs:
   check_image:
+    name: Validate build configuration
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -24,6 +25,7 @@ jobs:
         with:
           call: check
   build_image:
+    name: Build and push Docker image
     needs: check_image
     runs-on: ubuntu-latest
     steps:
@@ -58,22 +60,26 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
       - name: Generate artifact attestation for App
-        uses: actions/attest-build-provenance@v2.3.0
+        uses: actions/attest-build-provenance@v2
         with:
           subject-name: ghcr.io/${{ github.repository }}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
   docker_scout:
+    name: Docker Scout (${{ matrix.commands }})
     needs:
       - build_image
       - check_image
     runs-on: ubuntu-latest
+    strategy:  
+      fail-fast: false
+      matrix:
+        commands: ["quickview", "cves", "recommendations"]
     steps:
       - name: Docker Scout
-        continue-on-error: true
         uses: docker/scout-action@v1
         with:
-          command: quickview,cves,recommendations
+          command: ${{ matrix.commands }}
           dockerhub-user: mh0386
           dockerhub-password: ${{ secrets.TOKEN_KEY_DOCKER }}
           image: ghcr.io/${{ github.repository }}:latest

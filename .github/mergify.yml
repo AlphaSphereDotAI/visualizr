@@ -2,10 +2,7 @@ pull_request_rules:
   - name: Automatically merge Renovate PRs
     conditions:
       - author = renovate[bot]
-      - check-success = spelling
-      - check-success = ruff
-      - check-success = pyright
-      - check-success = pylint
+      - check-success = python
       - check-success = dockerfile
       - check-success = check_image
     actions:
@@ -16,10 +13,7 @@ pull_request_rules:
   - name: Automatically merge DeepSource Autofix PRs
     conditions:
       - author = deepsource-autofix[bot]
-      - check-success = spelling
-      - check-success = ruff
-      - check-success = pyright
-      - check-success = pylint
+      - check-success = python
       - check-success = dockerfile
       - check-success = check_image
     actions:
