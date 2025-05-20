@@ -1,6 +1,6 @@
-from torch import nn
-import torch.nn.functional as F
 import torch
+import torch.nn.functional as F
+from torch import nn
 
 
 class AntiAliasInterpolation2d(nn.Module):
@@ -21,14 +21,11 @@ class AntiAliasInterpolation2d(nn.Module):
         # gaussian function of each dimension.
         kernel = 1
         meshgrids = torch.meshgrid(
-            [
-                torch.arange(size, dtype=torch.float32)
-                for size in kernel_size
-            ]
+            [torch.arange(size, dtype=torch.float32) for size in kernel_size]
         )
         for size, std, mgrid in zip(kernel_size, sigma, meshgrids):
             mean = (size - 1) / 2
-            kernel *= torch.exp(-(mgrid - mean) ** 2 / (2 * std ** 2))
+            kernel *= torch.exp(-((mgrid - mean) ** 2) / (2 * std**2))
 
         # Make sure sum of values in gaussian kernel equals 1.
         kernel = kernel / torch.sum(kernel)
@@ -36,7 +33,7 @@ class AntiAliasInterpolation2d(nn.Module):
         kernel = kernel.view(1, 1, *kernel.size())
         kernel = kernel.repeat(channels, *[1] * (kernel.dim() - 1))
 
-        self.register_buffer('weight', kernel)
+        self.register_buffer("weight", kernel)
         self.groups = channels
         self.scale = scale
         inv_scale = 1 / scale
@@ -48,6 +45,6 @@ class AntiAliasInterpolation2d(nn.Module):
 
         out = F.pad(input, (self.ka, self.kb, self.ka, self.kb))
         out = F.conv2d(out, weight=self.weight, groups=self.groups)
-        out = out[:, :, ::self.int_inv_scale, ::self.int_inv_scale]
+        out = out[:, :, :: self.int_inv_scale, :: self.int_inv_scale]
 
         return out

@@ -10,7 +10,6 @@ from gradio import (
     Slider,
     Textbox,
 )
-
 from vocalizr import CHOICES, CUDA_AVAILABLE, DEBUG
 from vocalizr.model import generate_audio_for_text
 

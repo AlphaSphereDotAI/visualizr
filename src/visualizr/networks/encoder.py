@@ -1,13 +1,17 @@
 import math
+
 import torch
 from torch import nn
 from torch.nn import functional as F
 
-def fused_leaky_relu(input, bias, negative_slope=0.2, scale=2 ** 0.5):
+
+def fused_leaky_relu(input, bias, negative_slope=0.2, scale=2**0.5):
     return F.leaky_relu(input + bias, negative_slope) * scale
 
+
 class FusedLeakyReLU(nn.Module):
-    def __init__(self, channel, negative_slope=0.2, scale=2 ** 0.5):
+
+    def __init__(self, channel, negative_slope=0.2, scale=2**0.5):
         super().__init__()
         self.bias = nn.Parameter(torch.zeros(1, channel, 1, 1))
         self.negative_slope = negative_slope
@@ -18,7 +22,9 @@ class FusedLeakyReLU(nn.Module):
         return out
 
 
-def upfirdn2d_native(input, kernel, up_x, up_y, down_x, down_y, pad_x0, pad_x1, pad_y0, pad_y1):
+def upfirdn2d_native(
+    input, kernel, up_x, up_y, down_x, down_y, pad_x0, pad_x1, pad_y0, pad_y1
+):
     _, minor, in_h, in_w = input.shape
     kernel_h, kernel_w = kernel.shape
 
@@ -27,20 +33,32 @@ def upfirdn2d_native(input, kernel, up_x, up_y, down_x, down_y, pad_x0, pad_x1, 
     out = out.view(-1, minor, in_h * up_y, in_w * up_x)
 
     out = F.pad(out, [max(pad_x0, 0), max(pad_x1, 0), max(pad_y0, 0), max(pad_y1, 0)])
-    out = out[:, :, max(-pad_y0, 0): out.shape[2] - max(-pad_y1, 0),
-          max(-pad_x0, 0): out.shape[3] - max(-pad_x1, 0), ]
+    out = out[
+        :,
+        :,
+        max(-pad_y0, 0) : out.shape[2] - max(-pad_y1, 0),
+        max(-pad_x0, 0) : out.shape[3] - max(-pad_x1, 0),
+    ]
 
-    out = out.reshape([-1, 1, in_h * up_y + pad_y0 + pad_y1, in_w * up_x + pad_x0 + pad_x1])
+    out = out.reshape(
+        [-1, 1, in_h * up_y + pad_y0 + pad_y1, in_w * up_x + pad_x0 + pad_x1]
+    )
     w = torch.flip(kernel, [0, 1]).view(1, 1, kernel_h, kernel_w)
     out = F.conv2d(out, w)
-    out = out.reshape(-1, minor, in_h * up_y + pad_y0 + pad_y1 - kernel_h + 1,
-                      in_w * up_x + pad_x0 + pad_x1 - kernel_w + 1, )
+    out = out.reshape(
+        -1,
+        minor,
+        in_h * up_y + pad_y0 + pad_y1 - kernel_h + 1,
+        in_w * up_x + pad_x0 + pad_x1 - kernel_w + 1,
+    )
 
     return out[:, :, ::down_y, ::down_x]
 
 
 def upfirdn2d(input, kernel, up=1, down=1, pad=(0, 0)):
-    return upfirdn2d_native(input, kernel, up, up, down, down, pad[0], pad[1], pad[0], pad[1])
+    return upfirdn2d_native(
+        input, kernel, up, up, down, down, pad[0], pad[1], pad[0], pad[1]
+    )
 
 
 def make_kernel(k):
@@ -55,15 +73,16 @@ def make_kernel(k):
 
 
 class Blur(nn.Module):
+
     def __init__(self, kernel, pad, upsample_factor=1):
         super().__init__()
 
         kernel = make_kernel(kernel)
 
         if upsample_factor > 1:
-            kernel = kernel * (upsample_factor ** 2)
+            kernel = kernel * (upsample_factor**2)
 
-        self.register_buffer('kernel', kernel)
+        self.register_buffer("kernel", kernel)
 
         self.pad = pad
 
@@ -72,6 +91,7 @@ class Blur(nn.Module):
 
 
 class ScaledLeakyReLU(nn.Module):
+
     def __init__(self, negative_slope=0.2):
         super().__init__()
 
@@ -82,11 +102,16 @@ class ScaledLeakyReLU(nn.Module):
 
 
 class EqualConv2d(nn.Module):
-    def __init__(self, in_channel, out_channel, kernel_size, stride=1, padding=0, bias=True):
+
+    def __init__(
+        self, in_channel, out_channel, kernel_size, stride=1, padding=0, bias=True
+    ):
         super().__init__()
 
-        self.weight = nn.Parameter(torch.randn(out_channel, in_channel, kernel_size, kernel_size))
-        self.scale = 1 / math.sqrt(in_channel * kernel_size ** 2)
+        self.weight = nn.Parameter(
+            torch.randn(out_channel, in_channel, kernel_size, kernel_size)
+        )
+        self.scale = 1 / math.sqrt(in_channel * kernel_size**2)
 
         self.stride = stride
         self.padding = padding
@@ -97,18 +122,26 @@ class EqualConv2d(nn.Module):
             self.bias = None
 
     def forward(self, input):
-
-        return F.conv2d(input, self.weight * self.scale, bias=self.bias, stride=self.stride, padding=self.padding)
+        return F.conv2d(
+            input,
+            self.weight * self.scale,
+            bias=self.bias,
+            stride=self.stride,
+            padding=self.padding,
+        )
 
     def __repr__(self):
         return (
-            f'{self.__class__.__name__}({self.weight.shape[1]}, {self.weight.shape[0]},'
-            f' {self.weight.shape[2]}, stride={self.stride}, padding={self.padding})'
+            f"{self.__class__.__name__}({self.weight.shape[1]}, {self.weight.shape[0]},"
+            f" {self.weight.shape[2]}, stride={self.stride}, padding={self.padding})"
         )
 
 
 class EqualLinear(nn.Module):
-    def __init__(self, in_dim, out_dim, bias=True, bias_init=0, lr_mul=1, activation=None):
+
+    def __init__(
+        self, in_dim, out_dim, bias=True, bias_init=0, lr_mul=1, activation=None
+    ):
         super().__init__()
 
         self.weight = nn.Parameter(torch.randn(out_dim, in_dim).div_(lr_mul))
@@ -124,29 +157,33 @@ class EqualLinear(nn.Module):
         self.lr_mul = lr_mul
 
     def forward(self, input):
-
         if self.activation:
             out = F.linear(input, self.weight * self.scale)
             out = fused_leaky_relu(out, self.bias * self.lr_mul)
         else:
-            out = F.linear(input, self.weight * self.scale, bias=self.bias * self.lr_mul)
+            out = F.linear(
+                input, self.weight * self.scale, bias=self.bias * self.lr_mul
+            )
 
         return out
 
     def __repr__(self):
-        return (f'{self.__class__.__name__}({self.weight.shape[1]}, {self.weight.shape[0]})')
+        return (
+            f"{self.__class__.__name__}({self.weight.shape[1]}, {self.weight.shape[0]})"
+        )
 
 
 class ConvLayer(nn.Sequential):
+
     def __init__(
-            self,
-            in_channel,
-            out_channel,
-            kernel_size,
-            downsample=False,
-            blur_kernel=[1, 3, 3, 1],
-            bias=True,
-            activate=True,
+        self,
+        in_channel,
+        out_channel,
+        kernel_size,
+        downsample=False,
+        blur_kernel=[1, 3, 3, 1],
+        bias=True,
+        activate=True,
     ):
         layers = []
 
@@ -165,8 +202,16 @@ class ConvLayer(nn.Sequential):
             stride = 1
             self.padding = kernel_size // 2
 
-        layers.append(EqualConv2d(in_channel, out_channel, kernel_size, padding=self.padding, stride=stride,
-                                  bias=bias and not activate))
+        layers.append(
+            EqualConv2d(
+                in_channel,
+                out_channel,
+                kernel_size,
+                padding=self.padding,
+                stride=stride,
+                bias=bias and not activate,
+            )
+        )
 
         if activate:
             if bias:
@@ -178,13 +223,16 @@ class ConvLayer(nn.Sequential):
 
 
 class ResBlock(nn.Module):
+
     def __init__(self, in_channel, out_channel, blur_kernel=[1, 3, 3, 1]):
         super().__init__()
 
         self.conv1 = ConvLayer(in_channel, in_channel, 3)
         self.conv2 = ConvLayer(in_channel, out_channel, 3, downsample=True)
 
-        self.skip = ConvLayer(in_channel, out_channel, 1, downsample=True, activate=False, bias=False)
+        self.skip = ConvLayer(
+            in_channel, out_channel, 1, downsample=True, activate=False, bias=False
+        )
 
     def forward(self, input):
         out = self.conv1(input)
@@ -195,23 +243,26 @@ class ResBlock(nn.Module):
 
         return out
 
+
 class WeightedSumLayer(nn.Module):
+
     def __init__(self, num_tensors=8):
         super(WeightedSumLayer, self).__init__()
 
         self.weights = nn.Parameter(torch.randn(num_tensors))
-    
-    def forward(self, tensor_list):
 
+    def forward(self, tensor_list):
         weights = torch.softmax(self.weights, dim=0)
         weighted_sum = torch.zeros_like(tensor_list[0])
         for tensor, weight in zip(tensor_list, weights):
             weighted_sum += tensor * weight
-        
+
         return weighted_sum
 
+
 class EncoderApp(nn.Module):
-    def __init__(self, size, w_dim=512, fusion_type=''):
+
+    def __init__(self, size, w_dim=512, fusion_type=""):
         super(EncoderApp, self).__init__()
 
         channels = {
@@ -223,7 +274,7 @@ class EncoderApp(nn.Module):
             128: 128,
             256: 64,
             512: 32,
-            1024: 16
+            1024: 16,
         }
 
         self.w_dim = w_dim
@@ -239,11 +290,11 @@ class EncoderApp(nn.Module):
             in_channel = out_channel
 
         self.convs.append(EqualConv2d(in_channel, self.w_dim, 4, padding=0, bias=False))
-        
+
         self.fusion_type = fusion_type
-        assert self.fusion_type == 'weighted_sum'
-        if self.fusion_type == 'weighted_sum':
-            print(f'HAL layer is enabled!')
+        assert self.fusion_type == "weighted_sum"
+        if self.fusion_type == "weighted_sum":
+            print(f"HAL layer is enabled!")
             self.adaptive_pool = nn.AdaptiveAvgPool2d((1, 1))
             self.fc1 = EqualLinear(64, 512)
             self.fc2 = EqualLinear(128, 512)
@@ -251,14 +302,13 @@ class EncoderApp(nn.Module):
             self.ws = WeightedSumLayer()
 
     def forward(self, x):
-
         res = []
         h = x
         pooled_h_lists = []
         for i, conv in enumerate(self.convs):
             h = conv(h)
-            if self.fusion_type == 'weighted_sum':
-                pooled_h = self.adaptive_pool(h).view(x.size(0), -1) 
+            if self.fusion_type == "weighted_sum":
+                pooled_h = self.adaptive_pool(h).view(x.size(0), -1)
                 if i == 0:
                     pooled_h_lists.append(self.fc1(pooled_h))
                 elif i == 1:
@@ -268,53 +318,55 @@ class EncoderApp(nn.Module):
                 else:
                     pooled_h_lists.append(pooled_h)
             res.append(h)
-        
-        if self.fusion_type == 'weighted_sum':
+
+        if self.fusion_type == "weighted_sum":
             last_layer = self.ws(pooled_h_lists)
-        else:  
+        else:
             last_layer = res[-1].squeeze(-1).squeeze(-1)
         layer_features = res[::-1][2:]
-        
+
         return last_layer, layer_features
 
 
 class DecouplingModel(nn.Module):
+
     def __init__(self, input_dim, hidden_dim, output_dim):
         super(DecouplingModel, self).__init__()
-        
+
         # identity_excluded_net is called identity encoder in the paper
         self.identity_net = nn.Sequential(
             nn.Linear(input_dim, hidden_dim),
             nn.ReLU(),
-            nn.Linear(hidden_dim, output_dim)
+            nn.Linear(hidden_dim, output_dim),
         )
-        
+
         self.identity_net_density = nn.Sequential(
             nn.Linear(input_dim, hidden_dim),
             nn.ReLU(),
-            nn.Linear(hidden_dim, output_dim)
+            nn.Linear(hidden_dim, output_dim),
         )
-        
+
         # identity_excluded_net is called motion encoder in the paper
         self.identity_excluded_net = nn.Sequential(
             nn.Linear(input_dim, hidden_dim),
             nn.ReLU(),
-            nn.Linear(hidden_dim, output_dim)
+            nn.Linear(hidden_dim, output_dim),
         )
 
     def forward(self, x):
-
-        id_, id_rm =  self.identity_net(x), self.identity_excluded_net(x)
+        id_, id_rm = self.identity_net(x), self.identity_excluded_net(x)
         id_density = self.identity_net_density(id_)
         return id_, id_rm, id_density
 
+
 class Encoder(nn.Module):
+
     def __init__(self, size, dim=512, dim_motion=20, weighted_sum=False):
         super(Encoder, self).__init__()
 
         # image encoder
         self.net_app = EncoderApp(size, dim, weighted_sum)
-        
+
         # decouping network
         self.net_decouping = DecouplingModel(dim, dim, dim)
 
@@ -327,48 +379,63 @@ class Encoder(nn.Module):
         self.fc = nn.Sequential(*fc)
 
     def enc_app(self, x):
-
         h_source = self.net_app(x)
 
         return h_source
 
     def enc_motion(self, x):
-
         h, _ = self.net_app(x)
         h_motion = self.fc(h)
 
         return h_motion
-    
+
     def encode_image_obj(self, image_obj):
         feat, _ = self.net_app(image_obj)
         id_emb, idrm_emb, id_density_emb = self.net_decouping(feat)
         return id_emb, idrm_emb, id_density_emb
 
     def forward(self, input_source, input_target, input_face, input_aug):
-
-
         if input_target is not None:
-
             h_source, feats = self.net_app(input_source)
             h_target, _ = self.net_app(input_target)
             h_face, _ = self.net_app(input_face)
             h_aug, _ = self.net_app(input_aug)
-            
-            h_source_id_emb, h_source_idrm_emb, h_source_id_density_emb = self.net_decouping(h_source)
-            h_target_id_emb, h_target_idrm_emb, h_target_id_density_emb = self.net_decouping(h_target)
-            h_face_id_emb, h_face_idrm_emb, h_face_id_density_emb = self.net_decouping(h_face)
-            h_aug_id_emb, h_aug_idrm_emb, h_aug_id_density_emb = self.net_decouping(h_aug)
+
+            h_source_id_emb, h_source_idrm_emb, h_source_id_density_emb = (
+                self.net_decouping(h_source)
+            )
+            h_target_id_emb, h_target_idrm_emb, h_target_id_density_emb = (
+                self.net_decouping(h_target)
+            )
+            h_face_id_emb, h_face_idrm_emb, h_face_id_density_emb = self.net_decouping(
+                h_face
+            )
+            h_aug_id_emb, h_aug_idrm_emb, h_aug_id_density_emb = self.net_decouping(
+                h_aug
+            )
 
             h_target_motion_target = self.fc(h_target_idrm_emb)
-            h_another_face_target =  self.fc(h_face_idrm_emb)
-            
+            h_another_face_target = self.fc(h_face_idrm_emb)
+
         else:
             h_source, feats = self.net_app(input_source)
 
-
-        return {'h_source':h_source, 'h_motion':h_target_motion_target, 'feats':feats, 'h_another_face_target':h_another_face_target, 'h_face':h_face, \
-                'h_source_id_emb':h_source_id_emb, 'h_source_idrm_emb':h_source_idrm_emb,  'h_source_id_density_emb':h_source_id_density_emb, \
-                'h_target_id_emb':h_target_id_emb, 'h_target_idrm_emb':h_target_idrm_emb,  'h_target_id_density_emb':h_target_id_density_emb, \
-                'h_face_id_emb':h_face_id_emb, 'h_face_idrm_emb':h_face_idrm_emb, 'h_face_id_density_emb':h_face_id_density_emb, \
-                'h_aug_id_emb':h_aug_id_emb, 'h_aug_idrm_emb':h_aug_idrm_emb ,'h_aug_id_density_emb':h_aug_id_density_emb, \
-                }
+        return {
+            "h_source": h_source,
+            "h_motion": h_target_motion_target,
+            "feats": feats,
+            "h_another_face_target": h_another_face_target,
+            "h_face": h_face,
+            "h_source_id_emb": h_source_id_emb,
+            "h_source_idrm_emb": h_source_idrm_emb,
+            "h_source_id_density_emb": h_source_id_density_emb,
+            "h_target_id_emb": h_target_id_emb,
+            "h_target_idrm_emb": h_target_idrm_emb,
+            "h_target_id_density_emb": h_target_id_density_emb,
+            "h_face_id_emb": h_face_id_emb,
+            "h_face_idrm_emb": h_face_idrm_emb,
+            "h_face_id_density_emb": h_face_id_density_emb,
+            "h_aug_id_emb": h_aug_id_emb,
+            "h_aug_idrm_emb": h_aug_idrm_emb,
+            "h_aug_id_density_emb": h_aug_id_density_emb,
+        }

@@ -6,7 +6,6 @@ from loguru import logger
 from numpy import float32
 from numpy.typing import NDArray
 from soundfile import write
-
 from vocalizr import AUDIO_FILE_PATH, PIPELINE
 
 

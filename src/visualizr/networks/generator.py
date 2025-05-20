@@ -1,15 +1,26 @@
 from torch import nn
+
 from .encoder import Encoder
 from .styledecoder import Synthesis
 
 
 class Generator(nn.Module):
-    def __init__(self, size, style_dim=512, motion_dim=20, channel_multiplier=1, blur_kernel=[1, 3, 3, 1]):
+
+    def __init__(
+        self,
+        size,
+        style_dim=512,
+        motion_dim=20,
+        channel_multiplier=1,
+        blur_kernel=[1, 3, 3, 1],
+    ):
         super(Generator, self).__init__()
 
         # encoder
         self.enc = Encoder(size, style_dim, motion_dim)
-        self.dec = Synthesis(size, style_dim, motion_dim, blur_kernel, channel_multiplier)
+        self.dec = Synthesis(
+            size, style_dim, motion_dim, blur_kernel, channel_multiplier
+        )
 
     def get_direction(self):
         return self.dec.direction(None)
