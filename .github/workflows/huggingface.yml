@@ -37,4 +37,4 @@ jobs:
       - name: Check if logged in
         run: uv run huggingface-cli whoami
       - name: Upload
-        run: uv run huggingface-cli upload AlphaSphereDotAI/Visualizr . . --repo-type space
+        run: uv run huggingface-cli upload AlphaSphereDotAI/Vocalizr . . --repo-type space
