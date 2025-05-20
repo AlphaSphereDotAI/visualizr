@@ -22,7 +22,7 @@ jobs:
           activate-environment: true
       - name: Install the project
         # if: steps.uv.outputs.cache-hit != 'true'
-        run: uv sync --frozen
+        run: uv sync
       - name: Remove Unnecessary Files
         run: |
           echo "" >> .gitignore
