@@ -8,8 +8,8 @@ ENV UV_COMPILE_BYTECODE=1 \
     GRADIO_SERVER_PORT=7860 \
     GRADIO_SERVER_NAME=0.0.0.0
 
-RUN groupadd vocalizr && \
-    useradd -g vocalizr -s /bin/bash -d /app vocalizr && \
+RUN groupadd visualizr && \
+    useradd -g visualizr -s /bin/bash -d /app visualizr && \
     uv tool install --quiet huggingface-hub[cli] && \
     huggingface-cli download taocode/anitalker_ckpts --quiet --local-dir /app/ckpts && \
     uv tool uninstall --quiet huggingface-hub
@@ -23,12 +23,12 @@ RUN --mount=type=bind,source=uv.lock,target=uv.lock \
     uv export --no-hashes --no-editable --no-dev --quiet -o pylock.toml && \
     uv pip sync pylock.toml
 
-RUN chown -R vocalizr:vocalizr /app
+RUN chown -R visualizr:visualizr /app
 
-COPY --chown=vocalizr:vocalizr . /app
+COPY --chown=visualizr:visualizr . /app
 
-USER vocalizr
+USER visualizr
 
 EXPOSE ${GRADIO_SERVER_PORT}
 
-CMD ["python", "src/vocalizr"]
+CMD ["python", "src/visualizr"]
