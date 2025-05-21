@@ -332,6 +332,7 @@ def main(args):
     else:
         return predicted_video_256_path, predicted_video_256_path
 
+
 def generate_video(
     uploaded_img,
     uploaded_audio,
