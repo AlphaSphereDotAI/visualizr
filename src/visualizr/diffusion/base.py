@@ -5,21 +5,24 @@ https://github.com/hojonathanho/diffusion/blob/1e0dceb3b3495bbe19116a5e1b3596cd0
 Docstrings have been added, as well as DDIM sampling and a new collection of beta schedules.
 """
 
-from model.unet_autoenc import AutoencReturn
-from config_base import BaseConfig
-import enum
 import math
+from dataclasses import dataclass
+from typing import NamedTuple, Tuple
 
 import numpy as np
 import torch as th
-from model import *
-from model.nn import mean_flat
-from typing import NamedTuple, Tuple
-from choices import *
+from config_base import BaseConfig
 from torch.cuda.amp import autocast
-import torch.nn.functional as F
 
-from dataclasses import dataclass
+from visualizr.choices import (
+    GenerativeType,
+    LossType,
+    ModelMeanType,
+    ModelType,
+    ModelVarType,
+)
+from visualizr.model import Model
+from visualizr.model.nn import mean_flat
 
 
 @dataclass

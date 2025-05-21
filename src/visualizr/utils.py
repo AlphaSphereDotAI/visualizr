@@ -1,26 +1,29 @@
 import argparse
-import torch
-from PIL import Image
-import gradio as gr
-import shutil
-import librosa
-import python_speech_features
-import time
-from visualizr.LIA_Model import LIA_Model
 import os
-from tqdm import tqdm
-import numpy as np
-from torchvision import transforms
-from visualizr.templates import *
-from moviepy.editor import (
-    ImageClip,
-    concatenate_videoclips,
-    AudioFileClip,
-    VideoFileClip,
-    ffhq256_autoenc,
-    LitModel,
-)
+import shutil
+import sys
+import time
 from importlib.util import find_spec
+
+import gradio as gr
+import librosa
+import numpy as np
+import python_speech_features
+import torch
+from moviepy.editor import (
+    AudioFileClip,
+    ImageClip,
+    VideoFileClip,
+    concatenate_videoclips,
+)
+from PIL import Image
+from torch import Tensor
+from torchvision import transforms
+from tqdm import tqdm
+
+from visualizr.experiment import LitModel
+from visualizr.LIA_Model import LIA_Model
+from visualizr.templates import ffhq256_autoenc
 
 
 def check_package_installed(package_name) -> bool:
@@ -32,7 +35,7 @@ def check_package_installed(package_name) -> bool:
         return True
 
 
-def frames_to_video(input_path, audio_path, output_path, fps=25):
+def frames_to_video(input_path, audio_path, output_path, fps=25) -> None:
     image_files: list[str] = [
         os.path.join(input_path, img) for img in sorted(os.listdir(input_path))
     ]
@@ -57,16 +60,16 @@ def load_image(filename, size):
     return img / 255.0
 
 
-def img_preprocessing(img_path, size):
+def img_preprocessing(img_path, size) -> Tensor:
     img = load_image(img_path, size)  # [0, 1]
-    img = torch.from_numpy(img).unsqueeze(0).float()  # [0, 1]
-    imgs_norm = (img - 0.5) * 2.0  # [-1, 1]
+    img: Tensor = torch.from_numpy(img).unsqueeze(0).float()  # [0, 1]
+    imgs_norm: Tensor = (img - 0.5) * 2.0  # [-1, 1]
     return imgs_norm
 
 
-def saved_image(img_tensor, img_path):
-    toPIL = transforms.ToPILImage()
-    img = toPIL(img_tensor.detach().cpu().squeeze(0))  # 使用squeeze(0)来移除批次维度
+def saved_image(img_tensor, img_path) -> None:
+    to_pil = transforms.ToPILImage()
+    img = to_pil(img_tensor.detach().cpu().squeeze(0))
     img.save(img_path)
 
 
@@ -116,15 +119,15 @@ def main(args):
         conf.mfcc = False
     else:
         print("Type NOT Found!")
-        exit(0)
+        sys.exit(0)
 
     if not os.path.exists(args.test_image_path):
         print(f"{args.test_image_path} does not exist!")
-        exit(0)
+        sys.exit(0)
 
     if not os.path.exists(args.test_audio_path):
         print(f"{args.test_audio_path} does not exist!")
-        exit(0)
+        sys.exit(0)
 
     img_source = img_preprocessing(args.test_image_path, args.image_size).to("cuda")
     one_shot_lia_start, one_shot_lia_direction, feats = lia.get_start_direction_code(
@@ -132,7 +135,7 @@ def main(args):
     )
 
     # ======Loading Stage 2 model=========
-    model = LitModel(conf)
+    model: LitModel = LitModel(conf)
     state = torch.load(args.stage2_checkpoint_path, map_location="cpu")
     model.load_state_dict(state, strict=True)
     model.ema_model.eval()
@@ -142,7 +145,7 @@ def main(args):
     # ======Audio Input=========
     if conf.infer_type.startswith("mfcc"):
         # MFCC features
-        wav, sr = librosa.load(args.test_audio_path, sr=16000)
+        wav, sr = librosa.load(path=args.test_audio_path, sr=16000)
         input_values = python_speech_features.mfcc(
             signal=wav, samplerate=sr, numcep=13, winlen=0.025, winstep=0.01
         )
@@ -167,11 +170,11 @@ def main(args):
         if not os.path.exists(args.test_hubert_path):
             if not check_package_installed("transformers"):
                 print("Please install transformers module first.")
-                exit(0)
+                sys.exit(0)
             hubert_model_path = "ckpt/chinese-hubert-large"
             if not os.path.exists(hubert_model_path):
                 print("Please download the hubert weight into the ckpts path first.")
-                exit(0)
+                sys.exit(0)
             print(
                 "You did not extract the audio features in advance, extracting online now, which will increase processing delay"
             )
@@ -179,7 +182,7 @@ def main(args):
             start_time = time.time()
 
             # load hubert model
-            from transformers import Wav2Vec2FeatureExtractor, HubertModel
+            from transformers import HubertModel, Wav2Vec2FeatureExtractor
 
             audio_model = HubertModel.from_pretrained(hubert_model_path).to("cuda")
             feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained(
@@ -189,7 +192,7 @@ def main(args):
             audio_model.eval()
 
             # hubert model forward pass
-            audio, sr = librosa.load(args.test_audio_path, sr=16000)
+            audio, sr = librosa.load(path=args.test_audio_path, sr=16000)
             input_values = feature_extractor(
                 audio,
                 sampling_rate=16000,
@@ -232,7 +235,7 @@ def main(args):
     # ============================
 
     # Diffusion Noise
-    noisyT = torch.randn((1, frame_end, args.motion_dim)).to("cuda")
+    noisyT: Tensor = torch.randn((1, frame_end, args.motion_dim)).to("cuda")
 
     # ======Inputs for Attribute Control=========
     if os.path.exists(args.pose_driven_path):
@@ -240,10 +243,10 @@ def main(args):
 
         if len(pose_obj.shape) != 2:
             print("please check your pose information. The shape must be like (T, 3).")
-            exit(0)
+            sys.exit(0)
         if pose_obj.shape[1] != 3:
             print("please check your pose information. The shape must be like (T, 3).")
-            exit(0)
+            sys.exit(0)
 
         if pose_obj.shape[0] >= frame_end:
             pose_obj = pose_obj[:frame_end, :]
@@ -262,11 +265,13 @@ def main(args):
 
     pose_signal = torch.clamp(pose_signal, -1, 1)
 
-    face_location_signal = torch.zeros(1, frame_end, 1).to("cuda") + args.face_location
-    face_scae_signal = torch.zeros(1, frame_end, 1).to("cuda") + args.face_scale
+    face_location_signal: Tensor = (
+        torch.zeros(1, frame_end, 1).to("cuda") + args.face_location
+    )
+    face_scae_signal: Tensor = torch.zeros(1, frame_end, 1).to("cuda") + args.face_scale
     # ===========================================
 
-    start_time = time.time()
+    start_time: float = time.time()
 
     # ======Diffusion Denosing Process=========
     generated_directions = model.render(
@@ -313,8 +318,9 @@ def main(args):
 
     # Enhancer
     if args.face_sr and check_package_installed("gfpgan"):
-        from face_sr.face_enhancer import enhancer_list
         import imageio
+
+        from visualizr.face_sr.face_enhancer import enhancer_list
 
         # Super-resolution
         imageio.mimsave(

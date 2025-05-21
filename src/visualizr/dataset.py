@@ -1,15 +1,12 @@
 import os
-import librosa
-from PIL import Image
-from torchvision import transforms
-import python_speech_features
 import random
-import os
+
+import librosa
 import numpy as np
-from tqdm import tqdm
-import torchvision
-import torchvision.transforms as transforms
+import python_speech_features
 from PIL import Image
+from torchvision.transforms import Compose, Normalize, Resize, ToTensor
+from tqdm import tqdm
 
 
 class LatentDataLoader(object):
@@ -38,11 +35,11 @@ class LatentDataLoader(object):
         self.raw_audio_prefix = raw_audio_prefix
         self.mfcc_mode = mfcc_mode
 
-        self.transform = torchvision.transforms.Compose(
+        self.transform = Compose(
             [
-                transforms.Resize((size, size)),
-                transforms.ToTensor(),
-                transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)),
+                Resize((size, size)),
+                ToTensor(),
+                Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)),
             ]
         )
 

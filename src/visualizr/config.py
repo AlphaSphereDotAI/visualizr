@@ -1,12 +1,11 @@
-from model.unet import ScaleAt
-from model.latentnet import *
-from diffusion.resample import UniformSampler
-from diffusion.diffusion import space_timesteps
+import os
+from multiprocessing import get_context
 from typing import Tuple
 
-from torch.utils.data import DataLoader
-
+from choices import *
 from config_base import BaseConfig
+from dataset import LatentDataLoader
+from dataset_util import *
 from diffusion import *
 from diffusion.base import (
     GenerativeType,
@@ -15,13 +14,13 @@ from diffusion.base import (
     ModelVarType,
     get_named_beta_schedule,
 )
+from diffusion.diffusion import space_timesteps
+from diffusion.resample import UniformSampler
 from model import *
-from choices import *
-from multiprocessing import get_context
-import os
-from dataset_util import *
+from model.latentnet import *
+from model.unet import ScaleAt
+from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
-from dataset import LatentDataLoader
 
 
 @dataclass
@@ -95,13 +94,13 @@ class TrainConfig(BaseConfig):
     net_beatgans_resnet_use_zero_module: bool = True
     net_beatgans_resnet_scale_at: ScaleAt = ScaleAt.after_norm
     net_beatgans_resnet_cond_channels: int = None
-    net_ch_mult: Tuple[int] = None
+    net_ch_mult: Tuple[int, ...] = None
     net_ch: int = 64
     net_enc_attn: Tuple[int] = None
     net_enc_k: int = None
     # number of resblocks for the encoder (half-unet)
     net_enc_num_res_blocks: int = 2
-    net_enc_channel_mult: Tuple[int] = None
+    net_enc_channel_mult: Tuple[int, ...] = None
     net_enc_grad_checkpoint: bool = False
     net_autoenc_stochastic: bool = False
     net_latent_activation: Activation = Activation.silu
