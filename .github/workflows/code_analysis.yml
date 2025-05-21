@@ -17,4 +17,4 @@ jobs:
         uses: trunk-io/trunk-action@v1
         with:
           post-annotations: true
-          check-mode: all
+          arguments: --github-annotate-new-only=false
