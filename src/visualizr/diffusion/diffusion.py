@@ -1,5 +1,6 @@
-from .base import *
 from dataclasses import dataclass
+
+from .base import *
 
 
 def space_timesteps(num_timesteps, section_counts):
@@ -94,10 +95,14 @@ class SpacedDiffusionBeatGans(GaussianDiffusionBeatGans):
         conf.betas = np.array(new_betas)
         super().__init__(conf)
 
-    def p_mean_variance(self, model: Model, *args, **kwargs):  # pylint: disable=signature-differs
+    def p_mean_variance(
+        self, model: Model, *args, **kwargs
+    ):  # pylint: disable=signature-differs
         return super().p_mean_variance(self._wrap_model(model), *args, **kwargs)
 
-    def training_losses(self, model: Model, *args, **kwargs):  # pylint: disable=signature-differs
+    def training_losses(
+        self, model: Model, *args, **kwargs
+    ):  # pylint: disable=signature-differs
         return super().training_losses(self._wrap_model(model), *args, **kwargs)
 
     def condition_mean(self, cond_fn, *args, **kwargs):

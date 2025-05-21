@@ -4,12 +4,12 @@ import os
 import numpy as np
 import pytorch_lightning as pl
 import torch
+from model.seq2seq import DiffusionPredictor
 from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning.callbacks import *
 from torch.cuda import amp
 from torch.optim.optimizer import Optimizer
 from torch.utils.data.dataset import TensorDataset
-from model.seq2seq import DiffusionPredictor
 
 from visualizr.config import *
 from visualizr.dist_utils import *
@@ -185,11 +185,15 @@ class LitModel(pl.LightningModule):
         """
         with amp.autocast(False):
             motion_start = batch["motion_start"]  # torch.Size([B, 512])
-            motion_direction = batch["motion_direction"]  # torch.Size([B, 125, 20])
-            audio_feats = batch["audio_feats"].float()  # torch.Size([B, 25, 250, 1024])
-            face_location = batch["face_location"].float()  # torch.Size([B, 125])
+            # torch.Size([B, 125, 20])
+            motion_direction = batch["motion_direction"]
+            # torch.Size([B, 25, 250, 1024])
+            audio_feats = batch["audio_feats"].float()
+            # torch.Size([B, 125])
+            face_location = batch["face_location"].float()
             face_scale = batch["face_scale"].float()  # torch.Size([B, 125, 1])
-            yaw_pitch_roll = batch["yaw_pitch_roll"].float()  # torch.Size([B, 125, 3])
+            # torch.Size([B, 125, 3])
+            yaw_pitch_roll = batch["yaw_pitch_roll"].float()
             motion_direction_start = batch[
                 "motion_direction_start"
             ].float()  # torch.Size([B, 20])

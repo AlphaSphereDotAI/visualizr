@@ -7,9 +7,9 @@
 # MIT License for more details.
 
 import math
+
 import torch
 from einops import rearrange
-
 from model.base import BaseModule
 
 

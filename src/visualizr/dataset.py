@@ -174,7 +174,8 @@ class LatentDataLoader(object):
         for i, line in enumerate(lmd_lines):
             # Split the coordinates and filter out any empty strings
             coords = [c for c in line.strip().split(" ") if c]
-            coords = coords[1:]  # do not include the file name in the first row
+            # do not include the file name in the first row
+            coords = coords[1:]
             lmd_obj = []
             if upper_face:
                 # Ensure that the coordinates are parsed as integers

@@ -1,13 +1,11 @@
 import os
+
+import cv2
 import torch
-
 from gfpgan import GFPGANer
-
 from tqdm import tqdm
 
 from .videoio import load_video_to_cv2
-
-import cv2
 
 
 class GeneratorWithLen(object):
