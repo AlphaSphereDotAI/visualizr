@@ -17,3 +17,4 @@ jobs:
         uses: trunk-io/trunk-action@v1
         with:
           post-annotations: true
+          check-mode: populate_cache_only
