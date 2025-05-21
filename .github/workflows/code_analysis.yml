@@ -1,47 +1,19 @@
-name: Code Analysis
+name: Trunk Code Quality
 on:
   push:
+  pull_request:
   workflow_dispatch:
 permissions:
-  contents: read
-env:
-  RUFF_NO_CACHE: "true"
-  UV_FROZEN: "1"
-  UV_LINK_MODE: "copy"
+  checks: write # For trunk to post annotations
+  contents: read # For repo checkout
 jobs:
-  python:
-    name: Analysis python code with ${{ matrix.analyzer }}
-    runs-on: ubuntu-latest
-    strategy:  
-      fail-fast: false
-      matrix:
-        analyzer: ["ruff", "ty"]
-        include:
-          - analyzer: ruff
-            command: ruff check .
-          - analyzer: ty
-            command: ty check
-    steps:
-      - name: Checkout Actions Repository
-        uses: actions/checkout@v4
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
-        id: uv
-        with:
-          enable-cache: true
-          cache-dependency-glob: "uv.lock"
-          activate-environment: true
-      - name: Install the project
-        # if: steps.uv.outputs.cache-hit != 'true'
-        run: uv sync
-      - name: Run ${{ matrix.analyzer }}
-        run: uv run ${{ matrix.command }}
-  dockerfile:
-    name: Analysis Dockerfile
+  trunk:
+    name: Trunk Code Quality
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Actions Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
-      - uses: hadolint/hadolint-action@v3.1.0
+      - name: Trunk Code Quality
+        uses: trunk-io/trunk-action@v1
         with:
-          config: ./.github/hadolint.yml
+          post-annotations: true
