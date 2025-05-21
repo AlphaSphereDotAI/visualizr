@@ -17,6 +17,7 @@ runtimes:
 # This is the section where you manage your linters. (https://docs.trunk.io/check/configuration)
 lint:
   enabled:
+    - snyk@1.1295.0
     - yapf@0.43.0
     - trivy@0.62.1
     - pyright@1.1.400
