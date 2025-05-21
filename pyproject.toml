@@ -3,23 +3,19 @@ name = "visualizr"
 version = "0.1.0"
 description = "Video Generator part of the Chatacter Backend"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
-    "espnet>=202304",
+    "espnet>=202412",
     "facexlib>=0.3.0",
     "gfpgan>=1.3.8",
-    "gradio[mcp]>=4.44.1",
-    "moviepy>=2.1.2",
-    "numpy>=2.0.2",
+    "gradio[mcp]>=5.30.0",
+    "moviepy>=1.0.3",
     "python-speech-features>=0.6",
-    "pytorch-lightning>=2.3.3",
-    "scipy>=1.13.1",
-    "tb-nightly>=2.20.0a20250520",
-    "torch~=2.0.0",
+    "pytorch-lightning>=2.5.1.post0",
+    "torch>=2.7.0",
     "torchmetrics>=1.7.1",
-    "torchvision>=0.15.1",
+    "torchvision>=0.22.0",
     "tqdm>=4.67.1",
-    "transformers>=4.52.1",
 ]
 
 [project.scripts]
