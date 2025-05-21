@@ -1,27 +1,25 @@
 import argparse
-import importlib.util
+from importlib.util import find_spec
 import os
 import shutil
 import time
-from datetime import datetime
-from pathlib import Path
-
 import gradio as gr
 import librosa
 import numpy as np
 import python_speech_features
-import spaces
+
+# import spaces
 import torch
-from LIA_Model import LIA_Model
+from visualizr.LIA_Model import LIA_Model
 from moviepy.editor import *
 from PIL import Image
-from templates import *
+from visualizr.templates import *
 from torchvision import transforms
 from tqdm import tqdm
 
-def check_package_installed(package_name):
-    package_spec = importlib.util.find_spec(package_name)
-    if package_spec is None:
+
+def check_package_installed(package_name) -> bool:
+    if find_spec(package_name) is None:
         print(f"{package_name} is not installed.")
         return False
     else:
@@ -30,7 +28,7 @@ def check_package_installed(package_name):
 
 
 def frames_to_video(input_path, audio_path, output_path, fps=25):
-    image_files = [
+    image_files: list[str] = [
         os.path.join(input_path, img) for img in sorted(os.listdir(input_path))
     ]
     clips = [ImageClip(m).set_duration(1 / fps) for m in image_files]
