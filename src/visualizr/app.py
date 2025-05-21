@@ -108,15 +108,15 @@ def main(args):
         conf.mfcc = False
     else:
         print("Type NOT Found!")
-        exit(0)
+        sys.exit(0)
 
     if not os.path.exists(args.test_image_path):
         print(f"{args.test_image_path} does not exist!")
-        exit(0)
+        sys.exit(0)
 
     if not os.path.exists(args.test_audio_path):
         print(f"{args.test_audio_path} does not exist!")
-        exit(0)
+        sys.exit(0)
 
     img_source = img_preprocessing(args.test_image_path, args.image_size).to("cuda")
     one_shot_lia_start, one_shot_lia_direction, feats = lia.get_start_direction_code(
@@ -159,11 +159,11 @@ def main(args):
         if not os.path.exists(args.test_hubert_path):
             if not check_package_installed("transformers"):
                 print("Please install transformers module first.")
-                exit(0)
+                sys.exit(0)
             hubert_model_path = "ckpt/chinese-hubert-large"
             if not os.path.exists(hubert_model_path):
                 print("Please download the hubert weight into the ckpts path first.")
-                exit(0)
+                sys.exit(0)
             print(
                 "You did not extract the audio features in advance, extracting online now, which will increase processing delay"
             )
@@ -232,10 +232,10 @@ def main(args):
 
         if len(pose_obj.shape) != 2:
             print("please check your pose information. The shape must be like (T, 3).")
-            exit(0)
+            sys.exit(0)
         if pose_obj.shape[1] != 3:
             print("please check your pose information. The shape must be like (T, 3).")
-            exit(0)
+            sys.exit(0)
 
         if pose_obj.shape[0] >= frame_end:
             pose_obj = pose_obj[:frame_end, :]
@@ -330,8 +330,6 @@ def main(args):
     else:
         return predicted_video_256_path, predicted_video_256_path
 
-
-@spaces.GPU(duration=300)
 def generate_video(
     uploaded_img,
     uploaded_audio,
