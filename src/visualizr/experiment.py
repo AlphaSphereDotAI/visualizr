@@ -11,9 +11,9 @@ from torch.optim.optimizer import Optimizer
 from torch.utils.data.dataset import TensorDataset
 from model.seq2seq import DiffusionPredictor
 
-from config import *
-from dist_utils import *
-from renderer import *
+from visualizr.config import *
+from visualizr.dist_utils import *
+from visualizr.renderer import *
 
 
 # This part is modified from: https://github.com/phizaz/diffae/blob/master/experiment.py

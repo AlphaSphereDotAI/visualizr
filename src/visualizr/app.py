@@ -12,8 +12,14 @@ from tqdm import tqdm
 import numpy as np
 from torchvision import transforms
 from visualizr.templates import *
-import shutil
-from moviepy.editor import *
+from moviepy.editor import (
+    ImageClip,
+    concatenate_videoclips,
+    AudioFileClip,
+    VideoFileClip,
+    ffhq256_autoenc,
+    LitModel,
+)
 from importlib.util import find_spec
 
 
@@ -36,7 +42,10 @@ def frames_to_video(input_path, audio_path, output_path, fps=25):
     audio = AudioFileClip(audio_path)
     final_video = video.set_audio(audio)
     final_video.write_videofile(
-        output_path, fps=fps, codec="libx264", audio_codec="aac"
+        output_path,
+        fps=fps,
+        codec="libx264",
+        audio_codec="aac",
     )
 
 
