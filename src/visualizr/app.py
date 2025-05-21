@@ -1,8 +1,9 @@
 import argparse
-from importlib.util import find_spec
 import os
 import shutil
 import time
+from importlib.util import find_spec
+
 import gradio as gr
 import librosa
 import numpy as np
@@ -10,12 +11,13 @@ import python_speech_features
 
 # import spaces
 import torch
-from visualizr.LIA_Model import LIA_Model
 from moviepy.editor import *
 from PIL import Image
-from visualizr.templates import *
 from torchvision import transforms
 from tqdm import tqdm
+
+from visualizr.LIA_Model import LIA_Model
+from visualizr.templates import *
 
 
 def check_package_installed(package_name) -> bool:
