@@ -11,7 +11,6 @@ import torch
 
 
 class BaseModule(torch.nn.Module):
-
     def __init__(self):
         super(BaseModule, self).__init__()
 

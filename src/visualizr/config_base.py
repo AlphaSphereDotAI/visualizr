@@ -6,7 +6,6 @@ from dataclasses import dataclass
 
 @dataclass
 class BaseConfig:
-
     def clone(self):
         return deepcopy(self)
 

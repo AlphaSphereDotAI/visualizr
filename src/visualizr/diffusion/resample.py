@@ -57,7 +57,6 @@ class ScheduleSampler(ABC):
 
 
 class UniformSampler(ScheduleSampler):
-
     def __init__(self, num_timesteps):
         self._weights = np.ones([num_timesteps])
 

@@ -1,8 +1,7 @@
 import math
-
 import torch
-from torch import nn
 from torch.nn import functional as F
+from torch import nn
 
 
 def fused_leaky_relu(input, bias, negative_slope=0.2, scale=2**0.5):
@@ -10,7 +9,6 @@ def fused_leaky_relu(input, bias, negative_slope=0.2, scale=2**0.5):
 
 
 class FusedLeakyReLU(nn.Module):
-
     def __init__(self, channel, negative_slope=0.2, scale=2**0.5):
         super().__init__()
         self.bias = nn.Parameter(torch.zeros(1, channel, 1, 1))
@@ -77,7 +75,6 @@ def make_kernel(k):
 
 
 class Blur(nn.Module):
-
     def __init__(self, kernel, pad, upsample_factor=1):
         super().__init__()
 
@@ -95,7 +92,6 @@ class Blur(nn.Module):
 
 
 class ScaledLeakyReLU(nn.Module):
-
     def __init__(self, negative_slope=0.2):
         super().__init__()
 
@@ -106,7 +102,6 @@ class ScaledLeakyReLU(nn.Module):
 
 
 class EqualConv2d(nn.Module):
-
     def __init__(
         self, in_channel, out_channel, kernel_size, stride=1, padding=0, bias=True
     ):
@@ -142,7 +137,6 @@ class EqualConv2d(nn.Module):
 
 
 class EqualLinear(nn.Module):
-
     def __init__(
         self, in_dim, out_dim, bias=True, bias_init=0, lr_mul=1, activation=None
     ):
@@ -178,7 +172,6 @@ class EqualLinear(nn.Module):
 
 
 class ConvLayer(nn.Sequential):
-
     def __init__(
         self,
         in_channel,
@@ -227,7 +220,6 @@ class ConvLayer(nn.Sequential):
 
 
 class ResBlock(nn.Module):
-
     def __init__(self, in_channel, out_channel, blur_kernel=[1, 3, 3, 1]):
         super().__init__()
 
@@ -249,7 +241,6 @@ class ResBlock(nn.Module):
 
 
 class Discriminator(nn.Module):
-
     def __init__(self, size, channel_multiplier=1, blur_kernel=[1, 3, 3, 1]):
         super().__init__()
 

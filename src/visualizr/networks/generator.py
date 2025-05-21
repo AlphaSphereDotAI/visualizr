@@ -1,11 +1,9 @@
 from torch import nn
-
 from .encoder import Encoder
 from .styledecoder import Synthesis
 
 
 class Generator(nn.Module):
-
     def __init__(
         self,
         size,

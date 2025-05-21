@@ -1,9 +1,8 @@
 import math
-
-import numpy as np
 import torch
 from torch import nn
 from torch.nn import functional as F
+import numpy as np
 
 
 def fused_leaky_relu(input, bias, negative_slope=0.2, scale=2**0.5):
@@ -11,7 +10,6 @@ def fused_leaky_relu(input, bias, negative_slope=0.2, scale=2**0.5):
 
 
 class FusedLeakyReLU(nn.Module):
-
     def __init__(self, channel, negative_slope=0.2, scale=2**0.5):
         super().__init__()
         self.bias = nn.Parameter(torch.zeros(1, channel, 1, 1))
@@ -62,7 +60,6 @@ def upfirdn2d(input, kernel, up=1, down=1, pad=(0, 0)):
 
 
 class PixelNorm(nn.Module):
-
     def __init__(self):
         super().__init__()
 
@@ -71,7 +68,6 @@ class PixelNorm(nn.Module):
 
 
 class MotionPixelNorm(nn.Module):
-
     def __init__(self):
         super().__init__()
 
@@ -91,7 +87,6 @@ def make_kernel(k):
 
 
 class Upsample(nn.Module):
-
     def __init__(self, kernel, factor=2):
         super().__init__()
 
@@ -111,7 +106,6 @@ class Upsample(nn.Module):
 
 
 class Downsample(nn.Module):
-
     def __init__(self, kernel, factor=2):
         super().__init__()
 
@@ -131,7 +125,6 @@ class Downsample(nn.Module):
 
 
 class Blur(nn.Module):
-
     def __init__(self, kernel, pad, upsample_factor=1):
         super().__init__()
 
@@ -149,7 +142,6 @@ class Blur(nn.Module):
 
 
 class EqualConv2d(nn.Module):
-
     def __init__(
         self, in_channel, out_channel, kernel_size, stride=1, padding=0, bias=True
     ):
@@ -185,7 +177,6 @@ class EqualConv2d(nn.Module):
 
 
 class EqualLinear(nn.Module):
-
     def __init__(
         self, in_dim, out_dim, bias=True, bias_init=0, lr_mul=1, activation=None
     ):
@@ -221,7 +212,6 @@ class EqualLinear(nn.Module):
 
 
 class ScaledLeakyReLU(nn.Module):
-
     def __init__(self, negative_slope=0.2):
         super().__init__()
 
@@ -232,7 +222,6 @@ class ScaledLeakyReLU(nn.Module):
 
 
 class ModulatedConv2d(nn.Module):
-
     def __init__(
         self,
         in_channel,
@@ -329,7 +318,6 @@ class ModulatedConv2d(nn.Module):
 
 
 class NoiseInjection(nn.Module):
-
     def __init__(self):
         super().__init__()
 
@@ -343,7 +331,6 @@ class NoiseInjection(nn.Module):
 
 
 class ConstantInput(nn.Module):
-
     def __init__(self, channel, size=4):
         super().__init__()
 
@@ -357,7 +344,6 @@ class ConstantInput(nn.Module):
 
 
 class StyledConv(nn.Module):
-
     def __init__(
         self,
         in_channel,
@@ -392,7 +378,6 @@ class StyledConv(nn.Module):
 
 
 class ConvLayer(nn.Sequential):
-
     def __init__(
         self,
         in_channel,
@@ -441,7 +426,6 @@ class ConvLayer(nn.Sequential):
 
 
 class ToRGB(nn.Module):
-
     def __init__(self, in_channel, style_dim, upsample=True, blur_kernel=[1, 3, 3, 1]):
         super().__init__()
 
@@ -463,7 +447,6 @@ class ToRGB(nn.Module):
 
 
 class ToFlow(nn.Module):
-
     def __init__(self, in_channel, style_dim, upsample=True, blur_kernel=[1, 3, 3, 1]):
         super().__init__()
 
@@ -509,7 +492,6 @@ class ToFlow(nn.Module):
 
 
 class Direction(nn.Module):
-
     def __init__(self, motion_dim):
         super(Direction, self).__init__()
 
@@ -532,7 +514,6 @@ class Direction(nn.Module):
 
 
 class Synthesis(nn.Module):
-
     def __init__(
         self,
         size,

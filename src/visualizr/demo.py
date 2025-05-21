@@ -1,19 +1,20 @@
-import argparse
-import importlib.util
-import os
-import shutil
-import time
-
-import librosa
-import numpy as np
-import python_speech_features
-import torch
 from LIA_Model import LIA_Model
-from moviepy.editor import *
+import torch
+import numpy as np
+import os
 from PIL import Image
-from templates import *
-from torchvision import transforms
 from tqdm import tqdm
+import argparse
+import numpy as np
+from torchvision import transforms
+from templates import *
+import argparse
+import shutil
+from moviepy.editor import *
+import librosa
+import python_speech_features
+import importlib.util
+import time
 
 
 def check_package_installed(package_name):
@@ -177,7 +178,7 @@ def main(args):
             start_time = time.time()
 
             # load hubert model
-            from transformers import HubertModel, Wav2Vec2FeatureExtractor
+            from transformers import Wav2Vec2FeatureExtractor, HubertModel
 
             audio_model = HubertModel.from_pretrained(hubert_model_path).to(args.device)
             feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained(
@@ -315,8 +316,8 @@ def main(args):
     # Code is modified from https://github.com/OpenTalker/SadTalker/blob/cd4c0465ae0b54a6f85af57f5c65fec9fe23e7f8/src/utils/face_enhancer.py#L26
 
     if args.face_sr and check_package_installed("gfpgan"):
-        import imageio
         from face_sr.face_enhancer import enhancer_list
+        import imageio
 
         # Super-resolution
         imageio.mimsave(

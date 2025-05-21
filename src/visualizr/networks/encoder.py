@@ -1,5 +1,4 @@
 import math
-
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -10,7 +9,6 @@ def fused_leaky_relu(input, bias, negative_slope=0.2, scale=2**0.5):
 
 
 class FusedLeakyReLU(nn.Module):
-
     def __init__(self, channel, negative_slope=0.2, scale=2**0.5):
         super().__init__()
         self.bias = nn.Parameter(torch.zeros(1, channel, 1, 1))
@@ -73,7 +71,6 @@ def make_kernel(k):
 
 
 class Blur(nn.Module):
-
     def __init__(self, kernel, pad, upsample_factor=1):
         super().__init__()
 
@@ -91,7 +88,6 @@ class Blur(nn.Module):
 
 
 class ScaledLeakyReLU(nn.Module):
-
     def __init__(self, negative_slope=0.2):
         super().__init__()
 
@@ -102,7 +98,6 @@ class ScaledLeakyReLU(nn.Module):
 
 
 class EqualConv2d(nn.Module):
-
     def __init__(
         self, in_channel, out_channel, kernel_size, stride=1, padding=0, bias=True
     ):
@@ -138,7 +133,6 @@ class EqualConv2d(nn.Module):
 
 
 class EqualLinear(nn.Module):
-
     def __init__(
         self, in_dim, out_dim, bias=True, bias_init=0, lr_mul=1, activation=None
     ):
@@ -174,7 +168,6 @@ class EqualLinear(nn.Module):
 
 
 class ConvLayer(nn.Sequential):
-
     def __init__(
         self,
         in_channel,
@@ -223,7 +216,6 @@ class ConvLayer(nn.Sequential):
 
 
 class ResBlock(nn.Module):
-
     def __init__(self, in_channel, out_channel, blur_kernel=[1, 3, 3, 1]):
         super().__init__()
 
@@ -245,7 +237,6 @@ class ResBlock(nn.Module):
 
 
 class WeightedSumLayer(nn.Module):
-
     def __init__(self, num_tensors=8):
         super(WeightedSumLayer, self).__init__()
 
@@ -261,7 +252,6 @@ class WeightedSumLayer(nn.Module):
 
 
 class EncoderApp(nn.Module):
-
     def __init__(self, size, w_dim=512, fusion_type=""):
         super(EncoderApp, self).__init__()
 
@@ -329,7 +319,6 @@ class EncoderApp(nn.Module):
 
 
 class DecouplingModel(nn.Module):
-
     def __init__(self, input_dim, hidden_dim, output_dim):
         super(DecouplingModel, self).__init__()
 
@@ -360,7 +349,6 @@ class DecouplingModel(nn.Module):
 
 
 class Encoder(nn.Module):
-
     def __init__(self, size, dim=512, dim_motion=20, weighted_sum=False):
         super(Encoder, self).__init__()
 

@@ -1,11 +1,12 @@
-import os
-from multiprocessing import get_context
+from model.unet import ScaleAt
+from model.latentnet import *
+from diffusion.resample import UniformSampler
+from diffusion.diffusion import space_timesteps
 from typing import Tuple
 
-from choices import *
+from torch.utils.data import DataLoader
+
 from config_base import BaseConfig
-from dataset import LatentDataLoader
-from dataset_util import *
 from diffusion import *
 from diffusion.base import (
     GenerativeType,
@@ -14,13 +15,13 @@ from diffusion.base import (
     ModelVarType,
     get_named_beta_schedule,
 )
-from diffusion.diffusion import space_timesteps
-from diffusion.resample import UniformSampler
 from model import *
-from model.latentnet import *
-from model.unet import ScaleAt
-from torch.utils.data import DataLoader
+from choices import *
+from multiprocessing import get_context
+import os
+from dataset_util import *
 from torch.utils.data.distributed import DistributedSampler
+from dataset import LatentDataLoader
 
 
 @dataclass

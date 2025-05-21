@@ -7,20 +7,18 @@
 # MIT License for more details.
 
 import math
-
 import torch
 from einops import rearrange
+
 from model.base import BaseModule
 
 
 class Mish(BaseModule):
-
     def forward(self, x):
         return x * torch.tanh(torch.nn.functional.softplus(x))
 
 
 class Upsample(BaseModule):
-
     def __init__(self, dim):
         super(Upsample, self).__init__()
         self.conv = torch.nn.ConvTranspose2d(dim, dim, 4, 2, 1)
@@ -30,7 +28,6 @@ class Upsample(BaseModule):
 
 
 class Downsample(BaseModule):
-
     def __init__(self, dim):
         super(Downsample, self).__init__()
         self.conv = torch.nn.Conv2d(dim, dim, 3, 2, 1)
@@ -40,7 +37,6 @@ class Downsample(BaseModule):
 
 
 class Rezero(BaseModule):
-
     def __init__(self, fn):
         super(Rezero, self).__init__()
         self.fn = fn
@@ -51,7 +47,6 @@ class Rezero(BaseModule):
 
 
 class Block(BaseModule):
-
     def __init__(self, dim, dim_out, groups=8):
         super(Block, self).__init__()
         self.block = torch.nn.Sequential(
@@ -66,7 +61,6 @@ class Block(BaseModule):
 
 
 class ResnetBlock(BaseModule):
-
     def __init__(self, dim, dim_out, time_emb_dim, groups=8):
         super(ResnetBlock, self).__init__()
         self.mlp = torch.nn.Sequential(Mish(), torch.nn.Linear(time_emb_dim, dim_out))
@@ -87,7 +81,6 @@ class ResnetBlock(BaseModule):
 
 
 class LinearAttention(BaseModule):
-
     def __init__(self, dim, heads=4, dim_head=32):
         super(LinearAttention, self).__init__()
         self.heads = heads
@@ -111,7 +104,6 @@ class LinearAttention(BaseModule):
 
 
 class Residual(BaseModule):
-
     def __init__(self, fn):
         super(Residual, self).__init__()
         self.fn = fn
@@ -122,7 +114,6 @@ class Residual(BaseModule):
 
 
 class SinusoidalPosEmb(BaseModule):
-
     def __init__(self, dim):
         super(SinusoidalPosEmb, self).__init__()
         self.dim = dim
@@ -138,7 +129,6 @@ class SinusoidalPosEmb(BaseModule):
 
 
 class GradLogPEstimator2d(BaseModule):
-
     def __init__(
         self,
         dim,
@@ -260,7 +250,6 @@ def get_noise(t, beta_init, beta_term, cumulative=False):
 
 
 class Diffusion(BaseModule):
-
     def __init__(
         self,
         n_feats,

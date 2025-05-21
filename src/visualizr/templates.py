@@ -1,4 +1,4 @@
-from visualizr.experiment import *
+from experiment import *
 
 
 def ddpm():

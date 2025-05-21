@@ -1,12 +1,11 @@
 import torch
-import torch.nn.functional as F
-from espnet.nets.pytorch_backend.conformer.encoder import Encoder as ConformerEncoder
-from model.base import BaseModule
 from torch import nn
+from model.base import BaseModule
+from espnet.nets.pytorch_backend.conformer.encoder import Encoder as ConformerEncoder
+import torch.nn.functional as F
 
 
 class LSTM(nn.Module):
-
     def __init__(self, motion_dim, output_dim, num_layers=2, hidden_dim=128):
         super().__init__()
         self.lstm = nn.LSTM(
@@ -23,7 +22,6 @@ class LSTM(nn.Module):
 
 
 class DiffusionPredictor(BaseModule):
-
     def __init__(self, conf):
         super(DiffusionPredictor, self).__init__()
 

@@ -6,7 +6,6 @@ from networks.styledecoder import Synthesis
 
 # This part is modified from: https://github.com/wyhsirius/LIA
 class LIA_Model(torch.nn.Module):
-
     def __init__(
         self,
         size=256,

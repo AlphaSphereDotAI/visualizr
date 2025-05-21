@@ -1,12 +1,12 @@
 from enum import Enum
 
 import torch
-from choices import *
 from torch import Tensor
 from torch.nn.functional import silu
 
 from .latentnet import *
 from .unet import *
+from choices import *
 
 
 @dataclass
@@ -25,7 +25,6 @@ class BeatGANsAutoencConfig(BeatGANsUNetConfig):
 
 
 class BeatGANsAutoencModel(BeatGANsUNetModel):
-
     def __init__(self, conf: BeatGANsAutoencConfig):
         super().__init__(conf)
         self.conf = conf
@@ -190,9 +189,9 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
         # override the style if given
         style = style or res.style
 
-        assert (y is not None) == (
-            self.conf.num_classes is not None
-        ), "must specify y if and only if the model is class-conditional"
+        assert (y is not None) == (self.conf.num_classes is not None), (
+            "must specify y if and only if the model is class-conditional"
+        )
 
         if self.conf.num_classes is not None:
             raise NotImplementedError()

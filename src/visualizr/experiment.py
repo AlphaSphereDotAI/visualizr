@@ -9,16 +9,15 @@ from pytorch_lightning.callbacks import *
 from torch.cuda import amp
 from torch.optim.optimizer import Optimizer
 from torch.utils.data.dataset import TensorDataset
+from model.seq2seq import DiffusionPredictor
 
-from visualizr.config import *
-from visualizr.dist_utils import *
-from visualizr.model.seq2seq import DiffusionPredictor
-from visualizr.renderer import *
+from config import *
+from dist_utils import *
+from renderer import *
 
 
 # This part is modified from: https://github.com/phizaz/diffae/blob/master/experiment.py
 class LitModel(pl.LightningModule):
-
     def __init__(self, conf: TrainConfig):
         super().__init__()
         assert conf.train_mode != TrainMode.manipulate
@@ -315,7 +314,6 @@ def ema(source, target, decay):
 
 
 class WarmupLR:
-
     def __init__(self, warmup) -> None:
         self.warmup = warmup
 

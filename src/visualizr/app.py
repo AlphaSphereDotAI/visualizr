@@ -1,23 +1,29 @@
 import argparse
-import os
-import shutil
-import time
-from importlib.util import find_spec
-
-import gradio as gr
-import librosa
 import numpy as np
-import python_speech_features
-
-# import spaces
 import torch
-from moviepy.editor import *
 from PIL import Image
-from torchvision import transforms
-from tqdm import tqdm
-
+import gradio as gr
+import shutil
+import librosa
+import python_speech_features
+import time
 from visualizr.LIA_Model import LIA_Model
+import os
+from tqdm import tqdm
+import argparse
+import numpy as np
+from torchvision import transforms
 from visualizr.templates import *
+import argparse
+import shutil
+from moviepy.editor import *
+import librosa
+import python_speech_features
+from importlib.util import find_spec
+import time
+import os
+import time
+import numpy as np
 
 
 def check_package_installed(package_name) -> bool:
@@ -110,15 +116,15 @@ def main(args):
         conf.mfcc = False
     else:
         print("Type NOT Found!")
-        sys.exit(0)
+        exit(0)
 
     if not os.path.exists(args.test_image_path):
         print(f"{args.test_image_path} does not exist!")
-        sys.exit(0)
+        exit(0)
 
     if not os.path.exists(args.test_audio_path):
         print(f"{args.test_audio_path} does not exist!")
-        sys.exit(0)
+        exit(0)
 
     img_source = img_preprocessing(args.test_image_path, args.image_size).to("cuda")
     one_shot_lia_start, one_shot_lia_direction, feats = lia.get_start_direction_code(
@@ -161,11 +167,11 @@ def main(args):
         if not os.path.exists(args.test_hubert_path):
             if not check_package_installed("transformers"):
                 print("Please install transformers module first.")
-                sys.exit(0)
+                exit(0)
             hubert_model_path = "ckpt/chinese-hubert-large"
             if not os.path.exists(hubert_model_path):
                 print("Please download the hubert weight into the ckpts path first.")
-                sys.exit(0)
+                exit(0)
             print(
                 "You did not extract the audio features in advance, extracting online now, which will increase processing delay"
             )
@@ -173,7 +179,7 @@ def main(args):
             start_time = time.time()
 
             # load hubert model
-            from transformers import HubertModel, Wav2Vec2FeatureExtractor
+            from transformers import Wav2Vec2FeatureExtractor, HubertModel
 
             audio_model = HubertModel.from_pretrained(hubert_model_path).to("cuda")
             feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained(
@@ -234,10 +240,10 @@ def main(args):
 
         if len(pose_obj.shape) != 2:
             print("please check your pose information. The shape must be like (T, 3).")
-            sys.exit(0)
+            exit(0)
         if pose_obj.shape[1] != 3:
             print("please check your pose information. The shape must be like (T, 3).")
-            sys.exit(0)
+            exit(0)
 
         if pose_obj.shape[0] >= frame_end:
             pose_obj = pose_obj[:frame_end, :]
@@ -307,8 +313,8 @@ def main(args):
 
     # Enhancer
     if args.face_sr and check_package_installed("gfpgan"):
-        import imageio
         from face_sr.face_enhancer import enhancer_list
+        import imageio
 
         # Super-resolution
         imageio.mimsave(
@@ -331,6 +337,7 @@ def main(args):
         return predicted_video_256_path, predicted_video_512_path
     else:
         return predicted_video_256_path, predicted_video_256_path
+
 
 def generate_video(
     uploaded_img,

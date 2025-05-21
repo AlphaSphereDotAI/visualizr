@@ -1,18 +1,18 @@
 import os
-import random
-
 import librosa
-import numpy as np
+from PIL import Image
+from torchvision import transforms
 import python_speech_features
+import random
+import os
+import numpy as np
+from tqdm import tqdm
 import torchvision
 import torchvision.transforms as transforms
 from PIL import Image
-from torchvision import transforms
-from tqdm import tqdm
 
 
 class LatentDataLoader(object):
-
     def __init__(
         self,
         window_size,
