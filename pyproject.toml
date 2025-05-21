@@ -5,21 +5,25 @@ description = "Video Generator part of the Chatacter Backend"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
-    "espnet",
-    "facexlib",
-    "gfpgan",
-    "moviepy",
-    "python-speech-features",
-    "pytorch-lightning",
-    "torch",
-    "torchmetrics",
-    "torchvision",
-    "tqdm",
+    "espnet>=202304",
+    "facexlib>=0.3.0",
+    "gfpgan>=1.3.8",
+    "moviepy>=2.1.2",
+    "python-speech-features>=0.6",
 ]
+
+[project.scripts]
+visualizr = "visualizr.__main__:main"
+
+[build-system]
+requires = ["uv_build"]
+build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "huggingface-hub[cli,hf-transfer]>=0.31.4",
     "pyrefly>=0.16.1",
     "ruff>=0.11.10",
     "ty>=0.0.1a6",
+    "watchfiles>=1.0.5",
 ]
