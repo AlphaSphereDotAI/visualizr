@@ -17,12 +17,3 @@ name = "ruff"
 
 [[transformers]]
 name = "isort"
-
-[[transformers]]
-name = "yapf"
-
-[[transformers]]
-name = "autopep8"
-
-[[transformers]]
-name = "black"
