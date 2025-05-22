@@ -71,7 +71,7 @@ jobs:
       - build_image
       - check_image
     runs-on: ubuntu-latest
-    strategy:  
+    strategy:
       fail-fast: false
       matrix:
         commands: ["quickview", "cves", "recommendations"]
