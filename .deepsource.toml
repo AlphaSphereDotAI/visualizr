@@ -14,6 +14,3 @@ name = "secrets"
 
 [[transformers]]
 name = "ruff"
-
-[[transformers]]
-name = "isort"
