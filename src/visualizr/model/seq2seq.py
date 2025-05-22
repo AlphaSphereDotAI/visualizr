@@ -1,6 +1,7 @@
 import torch
 import torch.nn.functional as F
-from espnet.nets.pytorch_backend.conformer.encoder import Encoder as ConformerEncoder
+from espnet.nets.pytorch_backend.conformer.encoder import \
+    Encoder as ConformerEncoder
 from model.base import BaseModule
 from torch import nn
 

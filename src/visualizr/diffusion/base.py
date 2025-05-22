@@ -14,13 +14,8 @@ import torch as th
 from config_base import BaseConfig
 from torch.cuda.amp import autocast
 
-from visualizr.choices import (
-    GenerativeType,
-    LossType,
-    ModelMeanType,
-    ModelType,
-    ModelVarType,
-)
+from visualizr.choices import (GenerativeType, LossType, ModelMeanType,
+                               ModelType, ModelVarType)
 from visualizr.model import Model
 from visualizr.model.nn import mean_flat
 

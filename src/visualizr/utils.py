@@ -11,11 +11,7 @@ import numpy as np
 import python_speech_features
 import torch
 from moviepy.editor import concatenate_videoclips  # type: ignore
-from moviepy.editor import (
-    AudioFileClip,
-    ImageClip,
-    VideoFileClip,
-)
+from moviepy.editor import AudioFileClip, ImageClip, VideoFileClip
 from moviepy.video.compositing.CompositeVideoClip import CompositeVideoClip
 from moviepy.video.VideoClip import VideoClip
 from numpy import asarray, float32, transpose
@@ -40,15 +36,14 @@ def check_package_installed(package_name: str) -> bool:
         return True
 
 
-def frames_to_video(input_path: str,
-                    audio_path: str,
-                    output_path,
-                    fps=25) -> None:
+def frames_to_video(input_path: str, audio_path: str, output_path, fps=25) -> None:
     image_files: list[str] = [
         os.path.join(input_path, img) for img in sorted(os.listdir(input_path))
     ]
     clips = [ImageClip(img=m).set_duration(1 / fps) for m in image_files]
-    video: VideoClip | CompositeVideoClip = concatenate_videoclips(clips, method="compose")
+    video: VideoClip | CompositeVideoClip = concatenate_videoclips(
+        clips, method="compose"
+    )
 
     audio = AudioFileClip(filename=audio_path)
     final_video = video.set_audio(audio)
@@ -60,7 +55,7 @@ def frames_to_video(input_path: str,
     )
 
 
-def load_image(filename, size)-> NDArray[float32]:
+def load_image(filename, size) -> NDArray[float32]:
     img: Image.Image = Image.open(fp=filename).convert(mode="RGB")
     img: Image.Image = img.resize((size, size))
     img: NDArray[float32] = asarray(a=img)
@@ -84,13 +79,16 @@ def saved_image(img_tensor, img_path) -> None:
 def main(args):
     frames_result_saved_path: str = os.path.join(args.result_path, "frames")
     os.makedirs(name=frames_result_saved_path, exist_ok=True)
-    test_image_name: str = os.path.splitext(p=os.path.basename(
-        p=args.test_image_path))[0]
+    test_image_name: str = os.path.splitext(p=os.path.basename(p=args.test_image_path))[
+        0
+    ]
     audio_name: str = os.path.splitext(p=os.path.basename(args.test_audio_path))[0]
     predicted_video_256_path: str = os.path.join(
-        args.result_path, f"{test_image_name}-{audio_name}.mp4")
+        args.result_path, f"{test_image_name}-{audio_name}.mp4"
+    )
     predicted_video_512_path: str = os.path.join(
-        args.result_path, f"{test_image_name}-{audio_name}_SR.mp4")
+        args.result_path, f"{test_image_name}-{audio_name}_SR.mp4"
+    )
 
     # ======Loading Stage 1 model=========
     lia = LIA_Model(motion_dim=args.motion_dim, fusion_type="weighted_sum")
@@ -136,10 +134,10 @@ def main(args):
         print(f"{args.test_audio_path} does not exist!")
         sys.exit(0)
 
-    img_source = img_preprocessing(args.test_image_path,
-                                   args.image_size).to("cuda")
+    img_source = img_preprocessing(args.test_image_path, args.image_size).to("cuda")
     one_shot_lia_start, one_shot_lia_direction, feats = lia.get_start_direction_code(
-        img_source, img_source, img_source, img_source)
+        img_source, img_source, img_source, img_source
+    )
 
     # ======Loading Stage 2 model=========
     model: LitModel = LitModel(conf)
@@ -153,11 +151,9 @@ def main(args):
     if conf.infer_type.startswith("mfcc"):
         # MFCC features
         wav, sr = librosa.load(path=args.test_audio_path, sr=16000)
-        input_values = python_speech_features.mfcc(signal=wav,
-                                                   samplerate=sr,
-                                                   numcep=13,
-                                                   winlen=0.025,
-                                                   winstep=0.01)
+        input_values = python_speech_features.mfcc(
+            signal=wav, samplerate=sr, numcep=13, winlen=0.025, winstep=0.01
+        )
         d_mfcc_feat = python_speech_features.base.delta(input_values, 1)
         d_mfcc_feat2 = python_speech_features.base.delta(input_values, 2)
         audio_driven_obj = np.hstack((input_values, d_mfcc_feat, d_mfcc_feat2))
@@ -167,8 +163,12 @@ def main(args):
             int(frame_end * 4),
         )  # The video frame is fixed to 25 hz and the audio is fixed to 100 hz
 
-        audio_driven = (torch.Tensor(audio_driven_obj[
-            audio_start:audio_end, :]).unsqueeze(0).float().to("cuda"))
+        audio_driven = (
+            torch.Tensor(audio_driven_obj[audio_start:audio_end, :])
+            .unsqueeze(0)
+            .float()
+            .to("cuda")
+        )
 
     elif conf.infer_type.startswith("hubert"):
         # Hubert features
@@ -178,9 +178,7 @@ def main(args):
                 sys.exit(0)
             hubert_model_path = "ckpt/chinese-hubert-large"
             if not os.path.exists(hubert_model_path):
-                print(
-                    "Please download the hubert weight into the ckpts path first."
-                )
+                print("Please download the hubert weight into the ckpts path first.")
                 sys.exit(0)
             print(
                 "You did not extract the audio features in advance, extracting online now, which will increase processing delay"
@@ -191,10 +189,10 @@ def main(args):
             # load hubert model
             from transformers import HubertModel, Wav2Vec2FeatureExtractor
 
-            audio_model = HubertModel.from_pretrained(hubert_model_path).to(
-                "cuda")
+            audio_model = HubertModel.from_pretrained(hubert_model_path).to("cuda")
             feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained(
-                hubert_model_path)
+                hubert_model_path
+            )
             audio_model.feature_extractor._freeze_parameters()
             audio_model.eval()
 
@@ -212,13 +210,12 @@ def main(args):
             with torch.no_grad():
                 outputs = audio_model(input_values, output_hidden_states=True)
                 for i in range(len(outputs.hidden_states)):
-                    ws_feats.append(
-                        outputs.hidden_states[i].detach().cpu().numpy())
+                    ws_feats.append(outputs.hidden_states[i].detach().cpu().numpy())
                 ws_feat_obj = np.array(ws_feats)
                 ws_feat_obj = np.squeeze(ws_feat_obj, 1)
                 ws_feat_obj = np.pad(
-                    ws_feat_obj, ((0, 0), (0, 1), (0, 0)),
-                    "edge")  # align the audio length with video frame
+                    ws_feat_obj, ((0, 0), (0, 1), (0, 0)), "edge"
+                )  # align the audio length with video frame
 
             execution_time = time.time() - start_time
             print(f"Extraction Audio Feature: {execution_time:.2f} Seconds")
@@ -234,9 +231,12 @@ def main(args):
             int(frame_end * 2),
         )  # The video frame is fixed to 25 hz and the audio is fixed to 50 hz
 
-        audio_driven = (torch.Tensor(
-            audio_driven_obj[:, audio_start:audio_end, :]).unsqueeze(
-                0).float().to("cuda"))
+        audio_driven = (
+            torch.Tensor(audio_driven_obj[:, audio_start:audio_end, :])
+            .unsqueeze(0)
+            .float()
+            .to("cuda")
+        )
     # ============================
 
     # Diffusion Noise
@@ -247,39 +247,33 @@ def main(args):
         pose_obj = np.load(args.pose_driven_path)
 
         if len(pose_obj.shape) != 2:
-            print(
-                "please check your pose information. The shape must be like (T, 3)."
-            )
+            print("please check your pose information. The shape must be like (T, 3).")
             sys.exit(0)
         if pose_obj.shape[1] != 3:
-            print(
-                "please check your pose information. The shape must be like (T, 3)."
-            )
+            print("please check your pose information. The shape must be like (T, 3).")
             sys.exit(0)
 
         if pose_obj.shape[0] >= frame_end:
             pose_obj = pose_obj[:frame_end, :]
         else:
-            padding = np.tile(pose_obj[-1, :],
-                              (frame_end - pose_obj.shape[0], 1))
+            padding = np.tile(pose_obj[-1, :], (frame_end - pose_obj.shape[0], 1))
             pose_obj = np.vstack((pose_obj, padding))
 
-        pose_signal = (torch.Tensor(pose_obj).unsqueeze(0).to("cuda") / 90
-                       )  # 90 is for normalization here
+        pose_signal = (
+            torch.Tensor(pose_obj).unsqueeze(0).to("cuda") / 90
+        )  # 90 is for normalization here
     else:
         yaw_signal = torch.zeros(1, frame_end, 1).to("cuda") + args.pose_yaw
-        pitch_signal = torch.zeros(1, frame_end,
-                                   1).to("cuda") + args.pose_pitch
+        pitch_signal = torch.zeros(1, frame_end, 1).to("cuda") + args.pose_pitch
         roll_signal = torch.zeros(1, frame_end, 1).to("cuda") + args.pose_roll
-        pose_signal = torch.cat((yaw_signal, pitch_signal, roll_signal),
-                                dim=-1)
+        pose_signal = torch.cat((yaw_signal, pitch_signal, roll_signal), dim=-1)
 
     pose_signal = torch.clamp(pose_signal, -1, 1)
 
-    face_location_signal: Tensor = (torch.zeros(1, frame_end, 1).to("cuda") +
-                                    args.face_location)
-    face_scae_signal: Tensor = torch.zeros(1, frame_end,
-                                           1).to("cuda") + args.face_scale
+    face_location_signal: Tensor = (
+        torch.zeros(1, frame_end, 1).to("cuda") + args.face_location
+    )
+    face_scae_signal: Tensor = torch.zeros(1, frame_end, 1).to("cuda") + args.face_scale
     # ===========================================
 
     start_time: float = time.time()
@@ -314,15 +308,16 @@ def main(args):
         ori_img_recon = ori_img_recon.clamp(-1, 1)
         wav_pred = (ori_img_recon.detach() + 1) / 2
         saved_image(
-            wav_pred,
-            os.path.join(frames_result_saved_path, "%06d.png" % (pred_index)))
+            wav_pred, os.path.join(frames_result_saved_path, "%06d.png" % (pred_index))
+        )
     # ==============================================
 
     execution_time = time.time() - start_time
     print(f"Renderer Model: {execution_time:.2f} Seconds")
 
-    frames_to_video(frames_result_saved_path, args.test_audio_path,
-                    predicted_video_256_path)
+    frames_to_video(
+        frames_result_saved_path, args.test_audio_path, predicted_video_256_path
+    )
 
     shutil.rmtree(frames_result_saved_path)
 
@@ -335,9 +330,7 @@ def main(args):
         # Super-resolution
         imageio.mimsave(
             predicted_video_512_path + ".tmp.mp4",
-            enhancer_list(predicted_video_256_path,
-                          method="gfpgan",
-                          bg_upsampler=None),
+            enhancer_list(predicted_video_256_path, method="gfpgan", bg_upsampler=None),
             fps=float(25),
         )
 
@@ -345,9 +338,9 @@ def main(args):
         video_clip = VideoFileClip(predicted_video_512_path + ".tmp.mp4")
         audio_clip = AudioFileClip(predicted_video_256_path)
         final_clip = video_clip.set_audio(audio_clip)
-        final_clip.write_videofile(predicted_video_512_path,
-                                   codec="libx264",
-                                   audio_codec="aac")
+        final_clip.write_videofile(
+            predicted_video_512_path, codec="libx264", audio_codec="aac"
+        )
 
         os.remove(predicted_video_512_path + ".tmp.mp4")
 
@@ -383,8 +376,7 @@ def generate_video(
         "hubert_full_control": "ckpt/stage2_full_control_hubert.ckpt",
     }
 
-    stage2_checkpoint_path = model_mapping.get(infer_type,
-                                               "default_checkpoint.ckpt")
+    stage2_checkpoint_path = model_mapping.get(infer_type, "default_checkpoint.ckpt")
     try:
         args = argparse.Namespace(
             infer_type=infer_type,
@@ -480,33 +472,31 @@ with gr.Blocks() as demo:
             ],
             value="hubert_audio_only",
         )
-        face_sr = gr.Checkbox(label="Enable Face Super-Resolution (512*512)",
-                              value=False)
+        face_sr = gr.Checkbox(
+            label="Enable Face Super-Resolution (512*512)", value=False
+        )
         seed = gr.Number(label="Seed", value=default_values["seed"])
-        pose_yaw = gr.Slider(label="pose_yaw",
-                             minimum=-1,
-                             maximum=1,
-                             value=default_values["pose_yaw"])
+        pose_yaw = gr.Slider(
+            label="pose_yaw", minimum=-1, maximum=1, value=default_values["pose_yaw"]
+        )
         pose_pitch = gr.Slider(
             label="pose_pitch",
             minimum=-1,
             maximum=1,
             value=default_values["pose_pitch"],
         )
-        pose_roll = gr.Slider(label="pose_roll",
-                              minimum=-1,
-                              maximum=1,
-                              value=default_values["pose_roll"])
+        pose_roll = gr.Slider(
+            label="pose_roll", minimum=-1, maximum=1, value=default_values["pose_roll"]
+        )
         face_location = gr.Slider(
             label="face_location",
             minimum=0,
             maximum=1,
             value=default_values["face_location"],
         )
-        face_scale = gr.Slider(label="face_scale",
-                               minimum=0,
-                               maximum=1,
-                               value=default_values["face_scale"])
+        face_scale = gr.Slider(
+            label="face_scale", minimum=0, maximum=1, value=default_values["face_scale"]
+        )
         step_T = gr.Slider(
             label="step_T",
             minimum=1,
@@ -535,14 +525,10 @@ with gr.Blocks() as demo:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="EchoMimic")
-    parser.add_argument("--server_name",
-                        type=str,
-                        default="0.0.0.0",
-                        help="Server name")
-    parser.add_argument("--server_port",
-                        type=int,
-                        default=3001,
-                        help="Server port")
+    parser.add_argument(
+        "--server_name", type=str, default="0.0.0.0", help="Server name"
+    )
+    parser.add_argument("--server_port", type=int, default=3001, help="Server port")
     args: argparse.Namespace = parser.parse_args()
 
     demo.launch()
