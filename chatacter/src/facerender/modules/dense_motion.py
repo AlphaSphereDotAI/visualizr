@@ -1,7 +1,9 @@
 import torch
 import torch.nn.functional as F
-from src.facerender.modules.util import Hourglass, kp2gaussian, make_coordinate_grid
-from src.facerender.sync_batchnorm import SynchronizedBatchNorm3d as BatchNorm3d
+from src.facerender.modules.util import (Hourglass, kp2gaussian,
+                                         make_coordinate_grid)
+from src.facerender.sync_batchnorm import \
+    SynchronizedBatchNorm3d as BatchNorm3d
 from torch import nn
 
 

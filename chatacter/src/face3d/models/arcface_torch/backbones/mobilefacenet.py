@@ -5,7 +5,8 @@ Original author cavalleria
 
 import torch
 import torch.nn as nn
-from torch.nn import BatchNorm1d, BatchNorm2d, Conv2d, Linear, Module, PReLU, Sequential
+from torch.nn import (BatchNorm1d, BatchNorm2d, Conv2d, Linear, Module, PReLU,
+                      Sequential)
 
 
 class Flatten(Module):
