@@ -42,6 +42,8 @@ def save_video_with_watermark(video, audio, save_path, watermark=False):
             dir_path = os.path.dirname(os.path.realpath(__file__))
             watarmark_path = dir_path + "/../../docs/sadtalker_logo.png"
 
-        cmd: str = f'ffmpeg -y -hide_banner -loglevel error -i "{temp_file}" -i "{watarmark_path}" -filter_complex "[1]scale=100:-1[wm];[0][wm]overlay=(main_w-overlay_w)-10:10" "{save_path}"'
+        cmd: str = (
+            f'ffmpeg -y -hide_banner -loglevel error -i "{temp_file}" -i "{watarmark_path}" -filter_complex "[1]scale=100:-1[wm];[0][wm]overlay=(main_w-overlay_w)-10:10" "{save_path}"'
+        )
         os.system(command=cmd)
         os.remove(path=temp_file)
