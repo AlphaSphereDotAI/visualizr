@@ -1,4 +1,5 @@
 {
   "venvPath": ".",
+  "reportMissingParameterType": true,
   "venv": ".venv"
 }
