@@ -7,8 +7,13 @@ from config_base import BaseConfig
 from dataset import LatentDataLoader
 from dataset_util import *
 from diffusion import *
-from diffusion.base import (GenerativeType, LossType, ModelMeanType,
-                            ModelVarType, get_named_beta_schedule)
+from diffusion.base import (
+    GenerativeType,
+    LossType,
+    ModelMeanType,
+    ModelVarType,
+    get_named_beta_schedule,
+)
 from diffusion.diffusion import space_timesteps
 from diffusion.resample import UniformSampler
 from model import *

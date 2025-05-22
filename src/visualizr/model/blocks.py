@@ -9,8 +9,15 @@ from choices import *
 from config_base import BaseConfig
 from torch import nn
 
-from .nn import (avg_pool_nd, conv_nd, linear, normalization,
-                 timestep_embedding, torch_checkpoint, zero_module)
+from .nn import (
+    avg_pool_nd,
+    conv_nd,
+    linear,
+    normalization,
+    timestep_embedding,
+    torch_checkpoint,
+    zero_module,
+)
 
 
 class ScaleAt(Enum):
