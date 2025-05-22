@@ -5,13 +5,8 @@ import os.path
 
 import numpy as np
 import torch
-from data.base_dataset import (
-    BaseDataset,
-    apply_img_affine,
-    apply_lm_affine,
-    get_affine_mat,
-    get_transform,
-)
+from data.base_dataset import (BaseDataset, apply_img_affine, apply_lm_affine,
+                               get_affine_mat, get_transform)
 from PIL import Image
 from util.load_mats import load_lm3d
 from util.preprocess import align_img, estimate_norm

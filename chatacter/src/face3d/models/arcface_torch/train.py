@@ -12,11 +12,8 @@ from dataset import DataLoaderX, MXFaceDataset, SyntheticDataset
 from partial_fc import PartialFC
 from torch.nn.utils import clip_grad_norm_
 from utils.utils_amp import MaxClipGradScaler
-from utils.utils_callbacks import (
-    CallBackLogging,
-    CallBackModelCheckpoint,
-    CallBackVerification,
-)
+from utils.utils_callbacks import (CallBackLogging, CallBackModelCheckpoint,
+                                   CallBackVerification)
 from utils.utils_config import get_config
 from utils.utils_logging import AverageMeter, init_logging
 

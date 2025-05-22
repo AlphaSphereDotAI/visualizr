@@ -1,12 +1,9 @@
 import torch
 import torch.nn.functional as F
-from src.facerender.modules.util import (
-    AntiAliasInterpolation2d,
-    KPHourglass,
-    ResBottleneck,
-    make_coordinate_grid,
-)
-from src.facerender.sync_batchnorm import SynchronizedBatchNorm2d as BatchNorm2d
+from src.facerender.modules.util import (AntiAliasInterpolation2d, KPHourglass,
+                                         ResBottleneck, make_coordinate_grid)
+from src.facerender.sync_batchnorm import \
+    SynchronizedBatchNorm2d as BatchNorm2d
 from torch import nn
 
 

@@ -3,7 +3,6 @@ import warnings
 
 import cv2
 import numpy as np
-
 # 3dmm extraction
 import safetensors
 import safetensors.torch

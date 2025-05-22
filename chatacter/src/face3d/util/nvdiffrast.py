@@ -4,12 +4,8 @@ Attention, antialiasing step is missing in current version.
 
 import pytorch3d.ops
 import torch
-from pytorch3d.renderer import (
-    FoVPerspectiveCameras,
-    MeshRasterizer,
-    MeshRenderer,
-    RasterizationSettings,
-)
+from pytorch3d.renderer import (FoVPerspectiveCameras, MeshRasterizer,
+                                MeshRenderer, RasterizationSettings)
 from pytorch3d.structures import Meshes
 from torch import nn
 
