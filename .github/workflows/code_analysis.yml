@@ -14,7 +14,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Trunk Code Quality
-        uses: trunk-io/trunk-action@v1
+        uses: trunk-io/trunk-action@v1.2.3
         with:
           post-annotations: true
           arguments: --github-annotate-new-only=false
