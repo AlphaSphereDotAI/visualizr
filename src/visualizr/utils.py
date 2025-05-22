@@ -4,6 +4,7 @@ import shutil
 import sys
 import time
 from importlib.util import find_spec
+
 import gradio as gr
 import librosa
 import numpy as np
@@ -75,8 +76,7 @@ def saved_image(img_tensor, img_path) -> None:
 def main(args):
     frames_result_saved_path = os.path.join(args.result_path, "frames")
     os.makedirs(frames_result_saved_path, exist_ok=True)
-    test_image_name = os.path.splitext(
-        os.path.basename(args.test_image_path))[0]
+    test_image_name = os.path.splitext(os.path.basename(args.test_image_path))[0]
     audio_name = os.path.splitext(os.path.basename(args.test_audio_path))[0]
     predicted_video_256_path = os.path.join(
         args.result_path, f"{test_image_name}-{audio_name}.mp4"
@@ -129,8 +129,7 @@ def main(args):
         print(f"{args.test_audio_path} does not exist!")
         sys.exit(0)
 
-    img_source = img_preprocessing(
-        args.test_image_path, args.image_size).to("cuda")
+    img_source = img_preprocessing(args.test_image_path, args.image_size).to("cuda")
     one_shot_lia_start, one_shot_lia_direction, feats = lia.get_start_direction_code(
         img_source, img_source, img_source, img_source
     )
@@ -185,8 +184,7 @@ def main(args):
             # load hubert model
             from transformers import HubertModel, Wav2Vec2FeatureExtractor
 
-            audio_model = HubertModel.from_pretrained(
-                hubert_model_path).to("cuda")
+            audio_model = HubertModel.from_pretrained(hubert_model_path).to("cuda")
             feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained(
                 hubert_model_path
             )
@@ -207,8 +205,7 @@ def main(args):
             with torch.no_grad():
                 outputs = audio_model(input_values, output_hidden_states=True)
                 for i in range(len(outputs.hidden_states)):
-                    ws_feats.append(
-                        outputs.hidden_states[i].detach().cpu().numpy())
+                    ws_feats.append(outputs.hidden_states[i].detach().cpu().numpy())
                 ws_feat_obj = np.array(ws_feats)
                 ws_feat_obj = np.squeeze(ws_feat_obj, 1)
                 ws_feat_obj = np.pad(
@@ -254,8 +251,7 @@ def main(args):
         if pose_obj.shape[0] >= frame_end:
             pose_obj = pose_obj[:frame_end, :]
         else:
-            padding = np.tile(
-                pose_obj[-1, :], (frame_end - pose_obj.shape[0], 1))
+            padding = np.tile(pose_obj[-1, :], (frame_end - pose_obj.shape[0], 1))
             pose_obj = np.vstack((pose_obj, padding))
 
         pose_signal = (
@@ -263,19 +259,16 @@ def main(args):
         )  # 90 is for normalization here
     else:
         yaw_signal = torch.zeros(1, frame_end, 1).to("cuda") + args.pose_yaw
-        pitch_signal = torch.zeros(1, frame_end, 1).to(
-            "cuda") + args.pose_pitch
+        pitch_signal = torch.zeros(1, frame_end, 1).to("cuda") + args.pose_pitch
         roll_signal = torch.zeros(1, frame_end, 1).to("cuda") + args.pose_roll
-        pose_signal = torch.cat(
-            (yaw_signal, pitch_signal, roll_signal), dim=-1)
+        pose_signal = torch.cat((yaw_signal, pitch_signal, roll_signal), dim=-1)
 
     pose_signal = torch.clamp(pose_signal, -1, 1)
 
     face_location_signal: Tensor = (
         torch.zeros(1, frame_end, 1).to("cuda") + args.face_location
     )
-    face_scae_signal: Tensor = torch.zeros(
-        1, frame_end, 1).to("cuda") + args.face_scale
+    face_scae_signal: Tensor = torch.zeros(1, frame_end, 1).to("cuda") + args.face_scale
     # ===========================================
 
     start_time: float = time.time()
@@ -310,8 +303,7 @@ def main(args):
         ori_img_recon = ori_img_recon.clamp(-1, 1)
         wav_pred = (ori_img_recon.detach() + 1) / 2
         saved_image(
-            wav_pred, os.path.join(
-                frames_result_saved_path, "%06d.png" % (pred_index))
+            wav_pred, os.path.join(frames_result_saved_path, "%06d.png" % (pred_index))
         )
     # ==============================================
 
@@ -333,8 +325,7 @@ def main(args):
         # Super-resolution
         imageio.mimsave(
             predicted_video_512_path + ".tmp.mp4",
-            enhancer_list(predicted_video_256_path,
-                          method="gfpgan", bg_upsampler=None),
+            enhancer_list(predicted_video_256_path, method="gfpgan", bg_upsampler=None),
             fps=float(25),
         )
 
@@ -380,8 +371,7 @@ def generate_video(
         "hubert_full_control": "ckpt/stage2_full_control_hubert.ckpt",
     }
 
-    stage2_checkpoint_path = model_mapping.get(
-        infer_type, "default_checkpoint.ckpt")
+    stage2_checkpoint_path = model_mapping.get(infer_type, "default_checkpoint.ckpt")
     try:
         args = argparse.Namespace(
             infer_type=infer_type,
@@ -533,8 +523,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--server_name", type=str, default="0.0.0.0", help="Server name"
     )
-    parser.add_argument("--server_port", type=int,
-                        default=3001, help="Server port")
+    parser.add_argument("--server_port", type=int, default=3001, help="Server port")
     args = parser.parse_args()
 
     demo.launch()
