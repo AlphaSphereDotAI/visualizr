@@ -11,10 +11,14 @@ import numpy as np
 import python_speech_features
 import torch
 from moviepy.editor import concatenate_videoclips  # type: ignore
-from moviepy.editor import AudioFileClip, ImageClip, VideoFileClip
+from moviepy.editor import (
+    AudioFileClip,
+    ImageClip,
+    VideoFileClip,
+)
 from moviepy.video.compositing.CompositeVideoClip import CompositeVideoClip
 from moviepy.video.VideoClip import VideoClip
-from numpy import asarray, float32, transpose
+from numpy import asarray, float32, transpose  # type: ignore
 from numpy.typing import NDArray
 from PIL import Image
 from torch import Tensor
@@ -36,13 +40,13 @@ def check_package_installed(package_name: str) -> bool:
         return True
 
 
-def frames_to_video(input_path: str, audio_path: str, output_path, fps=25) -> None:
+def frames_to_video(input_path: str, audio_path: str, output_path:str, fps:int=25) -> None:
     image_files: list[str] = [
-        os.path.join(input_path, img) for img in sorted(os.listdir(input_path))
+        os.path.join(input_path, img) for img in sorted(os.listdir(path=input_path))
     ]
     clips = [ImageClip(img=m).set_duration(1 / fps) for m in image_files]
     video: VideoClip | CompositeVideoClip = concatenate_videoclips(
-        clips, method="compose"
+        clips=clips, method="compose"
     )
 
     audio = AudioFileClip(filename=audio_path)
@@ -55,12 +59,12 @@ def frames_to_video(input_path: str, audio_path: str, output_path, fps=25) -> No
     )
 
 
-def load_image(filename, size) -> NDArray[float32]:
+def load_image(filename:str, size:int) -> NDArray[float32]:
     img: Image.Image = Image.open(fp=filename).convert(mode="RGB")
-    img: Image.Image = img.resize((size, size))
-    img: NDArray[float32] = asarray(a=img)
-    img: NDArray[float32] = transpose(a=img, axes=(2, 0, 1))  # 3 x 256 x 256
-    return img / 255.0
+    img_resized: Image.Image = img.resize(size=(size, size))
+    img_np: NDArray[float32] = asarray(a=img_resized)
+    img_transposed: NDArray[float32] = transpose(a=img_np, axes=(2, 0, 1))  # 3 x 256 x 256
+    return img_transposed / 255.0
 
 
 def img_preprocessing(img_path, size) -> Tensor:
@@ -82,7 +86,7 @@ def main(args):
     test_image_name: str = os.path.splitext(p=os.path.basename(p=args.test_image_path))[
         0
     ]
-    audio_name: str = os.path.splitext(p=os.path.basename(args.test_audio_path))[0]
+    audio_name: str = os.path.splitext(p=os.path.basename(p=args.test_audio_path))[0]
     predicted_video_256_path: str = os.path.join(
         args.result_path, f"{test_image_name}-{audio_name}.mp4"
     )
@@ -248,62 +252,62 @@ def main(args):
 
         if len(pose_obj.shape) != 2:
             print("please check your pose information. The shape must be like (T, 3).")
-            sys.exit(0)
+            sys.exit(status=0)
         if pose_obj.shape[1] != 3:
             print("please check your pose information. The shape must be like (T, 3).")
-            sys.exit(0)
+            sys.exit(status=0)
 
         if pose_obj.shape[0] >= frame_end:
             pose_obj = pose_obj[:frame_end, :]
         else:
-            padding = np.tile(pose_obj[-1, :], (frame_end - pose_obj.shape[0], 1))
-            pose_obj = np.vstack((pose_obj, padding))
+            padding = np.tile(A=pose_obj[-1, :], reps=(frame_end - pose_obj.shape[0], 1))
+            pose_obj = np.vstack(tup=(pose_obj, padding))
 
         pose_signal = (
-            torch.Tensor(pose_obj).unsqueeze(0).to("cuda") / 90
+            torch.Tensor(pose_obj).unsqueeze(dim=0).to(device="cuda") / 90
         )  # 90 is for normalization here
     else:
-        yaw_signal = torch.zeros(1, frame_end, 1).to("cuda") + args.pose_yaw
-        pitch_signal = torch.zeros(1, frame_end, 1).to("cuda") + args.pose_pitch
-        roll_signal = torch.zeros(1, frame_end, 1).to("cuda") + args.pose_roll
-        pose_signal = torch.cat((yaw_signal, pitch_signal, roll_signal), dim=-1)
+        yaw_signal: Tensor = torch.zeros(1, frame_end, 1).to(device="cuda") + args.pose_yaw
+        pitch_signal : Tensor= torch.zeros(1, frame_end, 1).to(device="cuda") + args.pose_pitch
+        roll_signal : Tensor= torch.zeros(1, frame_end, 1).to(device="cuda") + args.pose_roll
+        pose_signal = torch.cat(tensors=(yaw_signal, pitch_signal, roll_signal), dim=-1)
 
-    pose_signal = torch.clamp(pose_signal, -1, 1)
+    pose_signal: Tensor = torch.clamp(input=pose_signal, min=-1, max=1)
 
     face_location_signal: Tensor = (
-        torch.zeros(1, frame_end, 1).to("cuda") + args.face_location
+        torch.zeros(1, frame_end, 1).to(device="cuda") + args.face_location
     )
-    face_scae_signal: Tensor = torch.zeros(1, frame_end, 1).to("cuda") + args.face_scale
+    face_scae_signal: Tensor = torch.zeros(1, frame_end, 1).to(device="cuda") + args.face_scale
     # ===========================================
 
     start_time: float = time.time()
 
     # ======Diffusion Denosing Process=========
     generated_directions = model.render(
-        one_shot_lia_start,
-        one_shot_lia_direction,
-        audio_driven,
-        face_location_signal,
-        face_scae_signal,
-        pose_signal,
-        noisyT,
-        args.step_T,
+        start=one_shot_lia_start,
+        motion_direction_start=one_shot_lia_direction,
+        audio_driven=audio_driven,
+        face_location=face_location_signal,
+        face_scale=face_scae_signal,
+        ypr_info=pose_signal,
+        noisyT=noisyT,
+        step_T=args.step_T,
         control_flag=args.control_flag,
     )
     # =========================================
 
-    execution_time = time.time() - start_time
+    execution_time: float = time.time() - start_time
     print(f"Motion Diffusion Model: {execution_time:.2f} Seconds")
 
-    generated_directions = generated_directions.detach().cpu().numpy()
+    generated_directions: NDArray = generated_directions.detach().cpu().numpy()
 
     start_time = time.time()
     # ======Rendering images frame-by-frame=========
-    for pred_index in tqdm(range(generated_directions.shape[1])):
+    for pred_index in tqdm(iterable=range(generated_directions.shape[1])):
         ori_img_recon = lia.render(
-            one_shot_lia_start,
-            torch.Tensor(generated_directions[:, pred_index, :]).to("cuda"),
-            feats,
+            start=one_shot_lia_start,
+            direction=torch.Tensor(generated_directions[:, pred_index, :]).to(device="cuda"),
+            feats=feats,
         )
         ori_img_recon = ori_img_recon.clamp(-1, 1)
         wav_pred = (ori_img_recon.detach() + 1) / 2
@@ -351,9 +355,9 @@ def main(args):
 
 
 def generate_video(
-    uploaded_img,
-    uploaded_audio,
-    infer_type,
+    uploaded_img: str,
+    uploaded_audio:str,
+    infer_type:str,
     pose_yaw,
     pose_pitch,
     pose_roll,
@@ -363,12 +367,12 @@ def generate_video(
     face_sr,
     seed,
 ):
-    if uploaded_img is None or uploaded_audio is None:
+    if not uploaded_img or not uploaded_audio :
         return None, gr.Markdown(
-            "Error: Input image or audio file is empty. Please check and upload both files."
+            value="Error: Input image or audio file is empty. Please check and upload both files."
         )
 
-    model_mapping = {
+    model_mapping: dict[str, str] = {
         "mfcc_pose_only": "ckpt/stage2_pose_only_mfcc.ckpt",
         "mfcc_full_control": "ckpt/stage2_more_controllable_mfcc.ckpt",
         "hubert_audio_only": "ckpt/stage2_audio_only_hubert.ckpt",
@@ -376,7 +380,7 @@ def generate_video(
         "hubert_full_control": "ckpt/stage2_full_control_hubert.ckpt",
     }
 
-    stage2_checkpoint_path = model_mapping.get(infer_type, "default_checkpoint.ckpt")
+    stage2_checkpoint_path: str = model_mapping.get(infer_type, "default_checkpoint.ckpt")
     try:
         args = argparse.Namespace(
             infer_type=infer_type,
@@ -402,133 +406,28 @@ def generate_video(
             face_sr=face_sr,
         )
 
-        output_256_video_path, output_512_video_path = main(args)
+        output_256_video_path, output_512_video_path = main(args=args)
 
-        if not os.path.exists(output_256_video_path):
+        if not os.path.exists(path=output_256_video_path):
             return None, gr.Markdown(
-                "Error: Video generation failed. Please check your inputs and try again."
+                value="Error: Video generation failed. Please check your inputs and try again."
             )
         if output_256_video_path == output_512_video_path:
             return (
                 gr.Video(value=output_256_video_path),
                 None,
-                gr.Markdown("Video (256*256 only) generated successfully!"),
+                gr.Markdown(value="Video (256*256 only) generated successfully!"),
             )
         return (
             gr.Video(value=output_256_video_path),
             gr.Video(value=output_512_video_path),
-            gr.Markdown("Video generated successfully!"),
+            gr.Markdown(value="Video generated successfully!"),
         )
 
     except Exception as e:
         return (
             None,
             None,
-            gr.Markdown(f"Error: An unexpected error occurred - {str(e)}"),
+            gr.Markdown(value=f"Error: An unexpected error occurred - {str(e)}"),
         )
 
-
-default_values = {
-    "pose_yaw": 0,
-    "pose_pitch": 0,
-    "pose_roll": 0,
-    "face_location": 0.5,
-    "face_scale": 0.5,
-    "step_T": 50,
-    "seed": 0,
-}
-
-with gr.Blocks() as demo:
-    gr.Markdown("# AniTalker")
-    gr.Markdown("![]()")
-    gr.Markdown(
-        "credits: [X-LANCE](https://github.com/X-LANCE/AniTalker) (creators of the github repository), [Yuhan Xu](https://github.com/yuhanxu01)(webui), Delik"
-    )
-    gr.Markdown(
-        "AniTalker: Animate Vivid and Diverse Talking Faces through Identity-Decoupled Facial Motion Encoding. [[arXiv]](https://arxiv.org/abs/2405.03121) [[project]](https://x-lance.github.io/AniTalker/)"
-    )
-    gr.HTML(
-        '<a href="https://discord.gg/AQsmBmgEPy"> <img src="https://img.shields.io/discord/1198701940511617164?color=%23738ADB&label=Discord&style=for-the-badge" alt="Discord"> </a>'
-    )
-    with gr.Row():
-        with gr.Column():
-            uploaded_img = gr.Image(type="filepath", label="Reference Image")
-            uploaded_audio = gr.Audio(type="filepath", label="Input Audio")
-        with gr.Column():
-            output_video_256 = gr.Video(label="Generated Video (256)")
-            output_video_512 = gr.Video(label="Generated Video (512)")
-            output_message = gr.Markdown()
-
-    generate_button = gr.Button("Generate Video")
-
-    with gr.Accordion("Configuration", open=True):
-        infer_type = gr.Dropdown(
-            label="Inference Type",
-            choices=[
-                "mfcc_pose_only",
-                "mfcc_full_control",
-                "hubert_audio_only",
-                "hubert_pose_only",
-            ],
-            value="hubert_audio_only",
-        )
-        face_sr = gr.Checkbox(
-            label="Enable Face Super-Resolution (512*512)", value=False
-        )
-        seed = gr.Number(label="Seed", value=default_values["seed"])
-        pose_yaw = gr.Slider(
-            label="pose_yaw", minimum=-1, maximum=1, value=default_values["pose_yaw"]
-        )
-        pose_pitch = gr.Slider(
-            label="pose_pitch",
-            minimum=-1,
-            maximum=1,
-            value=default_values["pose_pitch"],
-        )
-        pose_roll = gr.Slider(
-            label="pose_roll", minimum=-1, maximum=1, value=default_values["pose_roll"]
-        )
-        face_location = gr.Slider(
-            label="face_location",
-            minimum=0,
-            maximum=1,
-            value=default_values["face_location"],
-        )
-        face_scale = gr.Slider(
-            label="face_scale", minimum=0, maximum=1, value=default_values["face_scale"]
-        )
-        step_T = gr.Slider(
-            label="step_T",
-            minimum=1,
-            maximum=100,
-            step=1,
-            value=default_values["step_T"],
-        )
-
-    generate_button.click(
-        generate_video,
-        inputs=[
-            uploaded_img,
-            uploaded_audio,
-            infer_type,
-            pose_yaw,
-            pose_pitch,
-            pose_roll,
-            face_location,
-            face_scale,
-            step_T,
-            face_sr,
-            seed,
-        ],
-        outputs=[output_video_256, output_video_512, output_message],
-    )
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="EchoMimic")
-    parser.add_argument(
-        "--server_name", type=str, default="0.0.0.0", help="Server name"
-    )
-    parser.add_argument("--server_port", type=int, default=3001, help="Server port")
-    args: argparse.Namespace = parser.parse_args()
-
-    demo.launch()

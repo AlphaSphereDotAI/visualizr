@@ -1,3 +1,5 @@
+from argparse import ArgumentParser, Namespace
+
 from gradio import Blocks
 
 from visualizr import DEBUG, SERVER_NAME, SERVER_PORT
@@ -6,6 +8,12 @@ from visualizr.gui import app_block
 
 def main() -> None:
     """Launch the Gradio voice generation web application."""
+    parser = ArgumentParser(description="EchoMimic")
+    parser.add_argument(
+        "--server_name", type=str, default="0.0.0.0", help="Server name"
+    )
+    parser.add_argument("--server_port", type=int, default=3001, help="Server port")
+    args: Namespace = parser.parse_args()
     app: Blocks = app_block()
     app.queue(api_open=True).launch(
         server_name=SERVER_NAME,

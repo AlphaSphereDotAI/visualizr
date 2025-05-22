@@ -34,7 +34,7 @@ LOG_DIR.mkdir(exist_ok=True)
 
 CUDA_AVAILABLE: bool = cuda.is_available()
 logger.add(
-    LOG_FILE_PATH,
+    sink=LOG_FILE_PATH,
     format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}",
     colorize=True,
 )
@@ -45,3 +45,13 @@ logger.info(f"Results directory: {RESULTS_DIR}")
 logger.info(f"Log directory: {LOG_DIR}")
 logger.info(f"Audio file path: {AUDIO_FILE_PATH}")
 logger.info(f"Log file path: {LOG_FILE_PATH}")
+
+default_values: dict[str, int | float] = {
+    "pose_yaw": 0,
+    "pose_pitch": 0,
+    "pose_roll": 0,
+    "face_location": 0.5,
+    "face_scale": 0.5,
+    "step_T": 50,
+    "seed": 0,
+}

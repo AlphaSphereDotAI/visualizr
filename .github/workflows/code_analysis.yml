@@ -2,7 +2,9 @@ name: Trunk Code Quality
 on:
   push:
   pull_request:
-  workflow_dispatch:
+  workflow_run:
+    workflows: ["Pull Request"]
+    types: [completed]
 permissions:
   checks: write
   contents: read
