@@ -18,8 +18,8 @@ name = "secrets"
 [[transformers]]
 name = "ruff"
 
-[[transformers]]
-name = "isort"
+# [[transformers]]
+# name = "isort"
 
 # [[transformers]]
 # name = "yapf"
