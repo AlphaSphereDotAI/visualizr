@@ -22,7 +22,6 @@ lint:
     - yapf@0.43.0
     - trivy@0.62.1
     - pyright@1.1.400
-    - pylint@3.3.7
     - mypy@1.15.0
     - markdown-table-prettify@3.6.0
     - markdown-link-check@3.13.7
