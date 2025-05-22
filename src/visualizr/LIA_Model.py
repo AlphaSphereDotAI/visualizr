@@ -7,7 +7,6 @@ from visualizr.networks.styledecoder import Synthesis
 
 
 class LIA_Model(nn.Module):
-
     def __init__(
         self,
         size: int = 256,
@@ -18,20 +17,20 @@ class LIA_Model(nn.Module):
         fusion_type: str = "",
     ) -> None:
         super().__init__()
-        self.enc = Encoder(size=size,
-                           dim=style_dim,
-                           dim_motion=motion_dim,
-                           weighted_sum=fusion_type)
-        self.dec = Synthesis(size=size,
-                             style_dim=style_dim,
-                             motion_dim=motion_dim,
-                             blur_kernel=blur_kernel,
-                             channel_multiplier=channel_multiplier)
+        self.enc = Encoder(
+            size=size, dim=style_dim, dim_motion=motion_dim, weighted_sum=fusion_type
+        )
+        self.dec = Synthesis(
+            size=size,
+            style_dim=style_dim,
+            motion_dim=motion_dim,
+            blur_kernel=blur_kernel,
+            channel_multiplier=channel_multiplier,
+        )
 
     def get_start_direction_code(self, x_start, x_target, x_face, x_aug):
         enc_dic = self.enc(x_start, x_target, x_face, x_aug)
-        wa, alpha, feats = enc_dic["h_source"], enc_dic["h_motion"], enc_dic[
-            "feats"]
+        wa, alpha, feats = enc_dic["h_source"], enc_dic["h_motion"], enc_dic["feats"]
 
         return wa, alpha, feats
 
@@ -52,7 +51,8 @@ class LIA_Model(nn.Module):
                     continue
             if selfState[name].size() != state[origName].size():
                 print(
-                    "Wrong parameter length: %s, model: %s, loaded: %s" %
-                    (origName, selfState[name].size(), state[origName].size()))
+                    "Wrong parameter length: %s, model: %s, loaded: %s"
+                    % (origName, selfState[name].size(), state[origName].size())
+                )
                 continue
             selfState[name].copy_(param)
