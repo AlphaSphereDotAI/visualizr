@@ -10,6 +10,7 @@ def fused_leaky_relu(input, bias, negative_slope=0.2, scale=2**0.5):
 
 
 class FusedLeakyReLU(nn.Module):
+
     def __init__(self, channel, negative_slope=0.2, scale=2**0.5):
         super().__init__()
         self.bias = nn.Parameter(torch.zeros(1, channel, 1, 1))
@@ -17,13 +18,13 @@ class FusedLeakyReLU(nn.Module):
         self.scale = scale
 
     def forward(self, input):
-        out = fused_leaky_relu(input, self.bias, self.negative_slope, self.scale)
+        out = fused_leaky_relu(input, self.bias, self.negative_slope,
+                               self.scale)
         return out
 
 
-def upfirdn2d_native(
-    input, kernel, up_x, up_y, down_x, down_y, pad_x0, pad_x1, pad_y0, pad_y1
-):
+def upfirdn2d_native(input, kernel, up_x, up_y, down_x, down_y, pad_x0, pad_x1,
+                     pad_y0, pad_y1):
     _, minor, in_h, in_w = input.shape
     kernel_h, kernel_w = kernel.shape
 
@@ -31,17 +32,20 @@ def upfirdn2d_native(
     out = F.pad(out, [0, up_x - 1, 0, 0, 0, up_y - 1, 0, 0])
     out = out.view(-1, minor, in_h * up_y, in_w * up_x)
 
-    out = F.pad(out, [max(pad_x0, 0), max(pad_x1, 0), max(pad_y0, 0), max(pad_y1, 0)])
+    out = F.pad(
+        out, [max(pad_x0, 0),
+              max(pad_x1, 0),
+              max(pad_y0, 0),
+              max(pad_y1, 0)])
     out = out[
         :,
         :,
-        max(-pad_y0, 0) : out.shape[2] - max(-pad_y1, 0),
-        max(-pad_x0, 0) : out.shape[3] - max(-pad_x1, 0),
+        max(-pad_y0, 0):out.shape[2] - max(-pad_y1, 0),
+        max(-pad_x0, 0):out.shape[3] - max(-pad_x1, 0),
     ]
 
     out = out.reshape(
-        [-1, 1, in_h * up_y + pad_y0 + pad_y1, in_w * up_x + pad_x0 + pad_x1]
-    )
+        [-1, 1, in_h * up_y + pad_y0 + pad_y1, in_w * up_x + pad_x0 + pad_x1])
     w = torch.flip(kernel, [0, 1]).view(1, 1, kernel_h, kernel_w)
     out = F.conv2d(out, w)
     out = out.reshape(
@@ -55,9 +59,8 @@ def upfirdn2d_native(
 
 
 def upfirdn2d(input, kernel, up=1, down=1, pad=(0, 0)):
-    return upfirdn2d_native(
-        input, kernel, up, up, down, down, pad[0], pad[1], pad[0], pad[1]
-    )
+    return upfirdn2d_native(input, kernel, up, up, down, down, pad[0], pad[1],
+                            pad[0], pad[1])
 
 
 def make_kernel(k):
@@ -72,6 +75,7 @@ def make_kernel(k):
 
 
 class Blur(nn.Module):
+
     def __init__(self, kernel, pad, upsample_factor=1):
         super().__init__()
 
@@ -89,6 +93,7 @@ class Blur(nn.Module):
 
 
 class ScaledLeakyReLU(nn.Module):
+
     def __init__(self, negative_slope=0.2):
         super().__init__()
 
@@ -99,14 +104,18 @@ class ScaledLeakyReLU(nn.Module):
 
 
 class EqualConv2d(nn.Module):
-    def __init__(
-        self, in_channel, out_channel, kernel_size, stride=1, padding=0, bias=True
-    ):
+
+    def __init__(self,
+                 in_channel,
+                 out_channel,
+                 kernel_size,
+                 stride=1,
+                 padding=0,
+                 bias=True):
         super().__init__()
 
         self.weight = nn.Parameter(
-            torch.randn(out_channel, in_channel, kernel_size, kernel_size)
-        )
+            torch.randn(out_channel, in_channel, kernel_size, kernel_size))
         self.scale = 1 / math.sqrt(in_channel * kernel_size**2)
 
         self.stride = stride
@@ -134,9 +143,14 @@ class EqualConv2d(nn.Module):
 
 
 class EqualLinear(nn.Module):
-    def __init__(
-        self, in_dim, out_dim, bias=True, bias_init=0, lr_mul=1, activation=None
-    ):
+
+    def __init__(self,
+                 in_dim,
+                 out_dim,
+                 bias=True,
+                 bias_init=0,
+                 lr_mul=1,
+                 activation=None):
         super().__init__()
 
         self.weight = nn.Parameter(torch.randn(out_dim, in_dim).div_(lr_mul))
@@ -156,9 +170,9 @@ class EqualLinear(nn.Module):
             out = F.linear(input, self.weight * self.scale)
             out = fused_leaky_relu(out, self.bias * self.lr_mul)
         else:
-            out = F.linear(
-                input, self.weight * self.scale, bias=self.bias * self.lr_mul
-            )
+            out = F.linear(input,
+                           self.weight * self.scale,
+                           bias=self.bias * self.lr_mul)
 
         return out
 
@@ -169,6 +183,7 @@ class EqualLinear(nn.Module):
 
 
 class ConvLayer(nn.Sequential):
+
     def __init__(
         self,
         in_channel,
@@ -204,8 +219,7 @@ class ConvLayer(nn.Sequential):
                 padding=self.padding,
                 stride=stride,
                 bias=bias and not activate,
-            )
-        )
+            ))
 
         if activate:
             if bias:
@@ -217,15 +231,19 @@ class ConvLayer(nn.Sequential):
 
 
 class ResBlock(nn.Module):
+
     def __init__(self, in_channel, out_channel, blur_kernel=[1, 3, 3, 1]):
         super().__init__()
 
         self.conv1 = ConvLayer(in_channel, in_channel, 3)
         self.conv2 = ConvLayer(in_channel, out_channel, 3, downsample=True)
 
-        self.skip = ConvLayer(
-            in_channel, out_channel, 1, downsample=True, activate=False, bias=False
-        )
+        self.skip = ConvLayer(in_channel,
+                              out_channel,
+                              1,
+                              downsample=True,
+                              activate=False,
+                              bias=False)
 
     def forward(self, input):
         out = self.conv1(input)
@@ -238,6 +256,7 @@ class ResBlock(nn.Module):
 
 
 class WeightedSumLayer(nn.Module):
+
     def __init__(self, num_tensors=8):
         super(WeightedSumLayer, self).__init__()
 
@@ -253,10 +272,11 @@ class WeightedSumLayer(nn.Module):
 
 
 class EncoderApp(nn.Module):
-    def __init__(self, size, w_dim=512, fusion_type=""):
+
+    def __init__(self, size, w_dim: int = 512, fusion_type: str = "") -> None:
         super(EncoderApp, self).__init__()
 
-        channels = {
+        channels: dict[int, int] = {
             4: 512,
             8: 512,
             16: 512,
@@ -268,19 +288,25 @@ class EncoderApp(nn.Module):
             1024: 16,
         }
 
-        self.w_dim = w_dim
-        log_size = int(math.log(size, 2))
+        self.w_dim: int = w_dim
+        log_size = int(math.log(x=size, base=2))
 
         self.convs = nn.ModuleList()
-        self.convs.append(ConvLayer(3, channels[size], 1))
+        self.convs.append(module=ConvLayer(
+            in_channel=3, out_channel=channels[size], kernel_size=1))
 
         in_channel = channels[size]
         for i in range(log_size, 2, -1):
-            out_channel = channels[2 ** (i - 1)]
-            self.convs.append(ResBlock(in_channel, out_channel))
-            in_channel = out_channel
+            out_channel: int = channels[2**(i - 1)]
+            self.convs.append(module=ResBlock(in_channel=in_channel,
+                                              out_channel=out_channel))
+            in_channel: int = out_channel
 
-        self.convs.append(EqualConv2d(in_channel, self.w_dim, 4, padding=0, bias=False))
+        self.convs.append(module=EqualConv2d(in_channel=in_channel,
+                                             out_channel=self.w_dim,
+                                             kernel_size=4,
+                                             padding=0,
+                                             bias=False))
 
         self.fusion_type = fusion_type
         assert self.fusion_type == "weighted_sum"
@@ -320,6 +346,7 @@ class EncoderApp(nn.Module):
 
 
 class DecouplingModel(nn.Module):
+
     def __init__(self, input_dim, hidden_dim, output_dim):
         super(DecouplingModel, self).__init__()
 
@@ -350,14 +377,23 @@ class DecouplingModel(nn.Module):
 
 
 class Encoder(nn.Module):
-    def __init__(self, size, dim=512, dim_motion=20, weighted_sum=False):
+
+    def __init__(self,
+                 size,
+                 dim: int = 512,
+                 dim_motion: int = 20,
+                 weighted_sum: bool = False) -> None:
         super(Encoder, self).__init__()
 
         # image encoder
-        self.net_app = EncoderApp(size, dim, weighted_sum)
+        self.net_app = EncoderApp(size=size,
+                                  w_dim=dim,
+                                  fusion_type=weighted_sum)
 
         # decouping network
-        self.net_decouping = DecouplingModel(dim, dim, dim)
+        self.net_decouping = DecouplingModel(input_dim=dim,
+                                             hidden_dim=dim,
+                                             output_dim=dim)
 
         # part of the motion encoder
         fc = [EqualLinear(dim, dim)]
@@ -391,17 +427,13 @@ class Encoder(nn.Module):
             h_aug, _ = self.net_app(input_aug)
 
             h_source_id_emb, h_source_idrm_emb, h_source_id_density_emb = (
-                self.net_decouping(h_source)
-            )
+                self.net_decouping(h_source))
             h_target_id_emb, h_target_idrm_emb, h_target_id_density_emb = (
-                self.net_decouping(h_target)
-            )
+                self.net_decouping(h_target))
             h_face_id_emb, h_face_idrm_emb, h_face_id_density_emb = self.net_decouping(
-                h_face
-            )
+                h_face)
             h_aug_id_emb, h_aug_idrm_emb, h_aug_id_density_emb = self.net_decouping(
-                h_aug
-            )
+                h_aug)
 
             h_target_motion_target = self.fc(h_target_idrm_emb)
             h_another_face_target = self.fc(h_face_idrm_emb)
