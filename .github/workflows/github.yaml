@@ -36,7 +36,7 @@ jobs:
             exit 1
           fi
   setup_and_build:
-    needs: [ details ]
+    needs: [details]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -62,7 +62,7 @@ jobs:
           path: dist/
   github_release:
     name: Create GitHub Release
-    needs: [ setup_and_build, details ]
+    needs: [setup_and_build, details]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -78,4 +78,5 @@ jobs:
         id: create_release
         env:
           GH_TOKEN: ${{ github.token }}
+        # trunk-ignore(yamllint/line-length)
         run: gh release create ${{ needs.details.outputs.tag_name }} dist/* --title ${{ needs.details.outputs.tag_name }} --generate-notes

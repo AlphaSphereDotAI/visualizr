@@ -46,12 +46,16 @@ logger.info(f"Log directory: {LOG_DIR}")
 logger.info(f"Audio file path: {AUDIO_FILE_PATH}")
 logger.info(f"Log file path: {LOG_FILE_PATH}")
 
-default_values: dict[str, int | float] = {
-    "pose_yaw": 0,
-    "pose_pitch": 0,
-    "pose_roll": 0,
+default_values: dict[str, int | float] = {"pose_yaw": 0.0,"pose_pitch": 0.0,"pose_roll": 0.0,
     "face_location": 0.5,
     "face_scale": 0.5,
     "step_T": 50,
     "seed": 0,
+}
+model_mapping: dict[str, str] = {
+    "mfcc_pose_only": "ckpt/stage2_pose_only_mfcc.ckpt",
+    "mfcc_full_control": "ckpt/stage2_more_controllable_mfcc.ckpt",
+    "hubert_audio_only": "ckpt/stage2_audio_only_hubert.ckpt",
+    "hubert_pose_only": "ckpt/stage2_pose_only_hubert.ckpt",
+    "hubert_full_control": "ckpt/stage2_full_control_hubert.ckpt",
 }

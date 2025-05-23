@@ -25,6 +25,7 @@ from torch import Tensor
 from torchvision import transforms
 from tqdm import tqdm
 
+from visualizr import model_mapping
 from visualizr.config import TrainConfig
 from visualizr.experiment import LitModel
 from visualizr.LIA_Model import LIA_Model
@@ -227,7 +228,7 @@ def main(args):
             audio_driven_obj = ws_feat_obj
         else:
             print(f"Using audio feature from path: {args.test_hubert_path}")
-            audio_driven_obj = np.load(args.test_hubert_path)
+            audio_driven_obj = np.load(file=args.test_hubert_path)
 
         frame_start, frame_end = 0, int(audio_driven_obj.shape[1] / 2)
         audio_start, audio_end = (
@@ -235,11 +236,11 @@ def main(args):
             int(frame_end * 2),
         )  # The video frame is fixed to 25 hz and the audio is fixed to 50 hz
 
-        audio_driven = (
+        audio_driven: Tensor = (
             torch.Tensor(audio_driven_obj[:, audio_start:audio_end, :])
-            .unsqueeze(0)
+            .unsqueeze(dim=0)
             .float()
-            .to("cuda")
+            .to(device="cuda")
         )
     # ============================
 
@@ -320,21 +321,21 @@ def main(args):
     print(f"Renderer Model: {execution_time:.2f} Seconds")
 
     frames_to_video(
-        frames_result_saved_path, args.test_audio_path, predicted_video_256_path
+        input_path=frames_result_saved_path, audio_path=args.test_audio_path, output_path=predicted_video_256_path
     )
 
-    shutil.rmtree(frames_result_saved_path)
+    shutil.rmtree(path=frames_result_saved_path)
 
     # Enhancer
-    if args.face_sr and check_package_installed("gfpgan"):
+    if args.face_sr and check_package_installed(package_name="gfpgan"):
         import imageio
 
         from visualizr.face_sr.face_enhancer import enhancer_list
 
         # Super-resolution
         imageio.mimsave(
-            predicted_video_512_path + ".tmp.mp4",
-            enhancer_list(predicted_video_256_path, method="gfpgan", bg_upsampler=None),
+            uri=predicted_video_512_path + ".tmp.mp4",
+            ims=enhancer_list(images=predicted_video_256_path, method="gfpgan", bg_upsampler=None),
             fps=float(25),
         )
 
@@ -357,28 +358,12 @@ def main(args):
 def generate_video(
     uploaded_img: str,
     uploaded_audio:str,
-    infer_type:str,
-    pose_yaw,
-    pose_pitch,
-    pose_roll,
-    face_location,
-    face_scale,
-    step_T,
-    face_sr,
-    seed,
-):
+    infer_type:str,pose_yaw:float,pose_pitch:float,pose_roll:float,face_location:float,face_scale:float,step_T:int,face_sr:bool,seed:int,
+) -> tuple[None, Markdown] | tuple[Video, None, Markdown] | tuple[Video, Video, Markdown] | tuple[None, None, Markdown]:
     if not uploaded_img or not uploaded_audio :
         return None, gr.Markdown(
             value="Error: Input image or audio file is empty. Please check and upload both files."
         )
-
-    model_mapping: dict[str, str] = {
-        "mfcc_pose_only": "ckpt/stage2_pose_only_mfcc.ckpt",
-        "mfcc_full_control": "ckpt/stage2_more_controllable_mfcc.ckpt",
-        "hubert_audio_only": "ckpt/stage2_audio_only_hubert.ckpt",
-        "hubert_pose_only": "ckpt/stage2_pose_only_hubert.ckpt",
-        "hubert_full_control": "ckpt/stage2_full_control_hubert.ckpt",
-    }
 
     stage2_checkpoint_path: str = model_mapping.get(infer_type, "default_checkpoint.ckpt")
     try:
@@ -405,13 +390,14 @@ def generate_video(
             decoder_layers=2,
             face_sr=face_sr,
         )
-
-        output_256_video_path, output_512_video_path = main(args=args)
+        video_path = main(args=args)
+        output_256_video_path= video_path[0]
+        output_512_video_path = video_path[1]
 
         if not os.path.exists(path=output_256_video_path):
-            return None, gr.Markdown(
+            return (None, gr.Markdown(
                 value="Error: Video generation failed. Please check your inputs and try again."
-            )
+            ))
         if output_256_video_path == output_512_video_path:
             return (
                 gr.Video(value=output_256_video_path),
