@@ -13,14 +13,12 @@ runtimes:
     - python@3.10.8
 lint:
   enabled:
+    - black@25.1.0
     - snyk@1.1295.0
-    # - yapf@0.43.0
     - trivy@0.62.1
     - pyright@1.1.400
-    # - markdown-table-prettify@3.6.0
     - markdown-link-check@3.13.7
     - gitleaks@8.26.0
-    # - autopep8@2.3.2
     - actionlint@1.7.7
     - bandit@1.8.3
     - checkov@3.2.427
@@ -36,7 +34,6 @@ lint:
     - yamllint@1.37.1
 actions:
   enabled:
-    - git-lfs
     - trunk-announce
     - trunk-check-pre-push
     - trunk-fmt-pre-commit

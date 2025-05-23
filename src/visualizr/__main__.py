@@ -10,7 +10,7 @@ def main() -> None:
     """Launch the Gradio voice generation web application."""
     parser = ArgumentParser(description="EchoMimic")
     parser.add_argument(
-        "--server_name", type=str, default="0.0.0.0", help="Server name"
+        "--server_name", type=str, default="localhost", help="Server name"
     )
     parser.add_argument("--server_port", type=int, default=3001, help="Server port")
     args: Namespace = parser.parse_args()

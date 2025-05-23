@@ -3,13 +3,14 @@ import os
 import shutil
 import sys
 import time
+from argparse import Namespace
 from importlib.util import find_spec
 
-import gradio as gr
 import librosa
 import numpy as np
 import python_speech_features
 import torch
+from gradio import Markdown, Video
 from moviepy.editor import concatenate_videoclips  # type: ignore
 from moviepy.editor import (
     AudioFileClip,
@@ -41,7 +42,9 @@ def check_package_installed(package_name: str) -> bool:
         return True
 
 
-def frames_to_video(input_path: str, audio_path: str, output_path:str, fps:int=25) -> None:
+def frames_to_video(
+    input_path: str, audio_path: str, output_path: str, fps: int = 25
+) -> None:
     image_files: list[str] = [
         os.path.join(input_path, img) for img in sorted(os.listdir(path=input_path))
     ]
@@ -60,28 +63,30 @@ def frames_to_video(input_path: str, audio_path: str, output_path:str, fps:int=2
     )
 
 
-def load_image(filename:str, size:int) -> NDArray[float32]:
+def load_image(filename: str, size: int) -> NDArray[float32]:
     img: Image.Image = Image.open(fp=filename).convert(mode="RGB")
     img_resized: Image.Image = img.resize(size=(size, size))
     img_np: NDArray[float32] = asarray(a=img_resized)
-    img_transposed: NDArray[float32] = transpose(a=img_np, axes=(2, 0, 1))  # 3 x 256 x 256
+    img_transposed: NDArray[float32] = transpose(
+        a=img_np, axes=(2, 0, 1)
+    )  # 3 x 256 x 256
     return img_transposed / 255.0
 
 
-def img_preprocessing(img_path, size) -> Tensor:
-    img: NDArray[float32] = load_image(filename=img_path, size=size)  # [0, 1]
-    img: Tensor = torch.from_numpy(ndarray=img).unsqueeze(dim=0).float()  # [0, 1]
+def img_preprocessing(img_path: str, size: int) -> Tensor:
+    img_np: NDArray[float32] = load_image(filename=img_path, size=size)  # [0, 1]
+    img: Tensor = torch.from_numpy(ndarray=img_np).unsqueeze(dim=0).float()  # [0, 1]
     imgs_norm: Tensor = (img - 0.5) * 2.0  # [-1, 1]
     return imgs_norm
 
 
-def saved_image(img_tensor, img_path) -> None:
+def saved_image(img_tensor: Tensor, img_path: str) -> None:
     to_pil = transforms.ToPILImage()
     img = to_pil(pic=img_tensor.detach().cpu().squeeze(0))
     img.save(img_path)
 
 
-def main(args):
+def main(args: Namespace):
     frames_result_saved_path: str = os.path.join(args.result_path, "frames")
     os.makedirs(name=frames_result_saved_path, exist_ok=True)
     test_image_name: str = os.path.splitext(p=os.path.basename(p=args.test_image_path))[
@@ -181,7 +186,7 @@ def main(args):
             if not check_package_installed("transformers"):
                 print("Please install transformers module first.")
                 sys.exit(0)
-            hubert_model_path = "ckpt/chinese-hubert-large"
+            hubert_model_path: str = "ckpt/chinese-hubert-large"
             if not os.path.exists(hubert_model_path):
                 print("Please download the hubert weight into the ckpts path first.")
                 sys.exit(0)
@@ -253,24 +258,32 @@ def main(args):
 
         if len(pose_obj.shape) != 2:
             print("please check your pose information. The shape must be like (T, 3).")
-            sys.exit(status=0)
+            sys.exit(0)
         if pose_obj.shape[1] != 3:
             print("please check your pose information. The shape must be like (T, 3).")
-            sys.exit(status=0)
+            sys.exit(0)
 
         if pose_obj.shape[0] >= frame_end:
             pose_obj = pose_obj[:frame_end, :]
         else:
-            padding = np.tile(A=pose_obj[-1, :], reps=(frame_end - pose_obj.shape[0], 1))
+            padding = np.tile(
+                A=pose_obj[-1, :], reps=(frame_end - pose_obj.shape[0], 1)
+            )
             pose_obj = np.vstack(tup=(pose_obj, padding))
 
         pose_signal = (
             torch.Tensor(pose_obj).unsqueeze(dim=0).to(device="cuda") / 90
         )  # 90 is for normalization here
     else:
-        yaw_signal: Tensor = torch.zeros(1, frame_end, 1).to(device="cuda") + args.pose_yaw
-        pitch_signal : Tensor= torch.zeros(1, frame_end, 1).to(device="cuda") + args.pose_pitch
-        roll_signal : Tensor= torch.zeros(1, frame_end, 1).to(device="cuda") + args.pose_roll
+        yaw_signal: Tensor = (
+            torch.zeros(1, frame_end, 1).to(device="cuda") + args.pose_yaw
+        )
+        pitch_signal: Tensor = (
+            torch.zeros(1, frame_end, 1).to(device="cuda") + args.pose_pitch
+        )
+        roll_signal: Tensor = (
+            torch.zeros(1, frame_end, 1).to(device="cuda") + args.pose_roll
+        )
         pose_signal = torch.cat(tensors=(yaw_signal, pitch_signal, roll_signal), dim=-1)
 
     pose_signal: Tensor = torch.clamp(input=pose_signal, min=-1, max=1)
@@ -278,7 +291,9 @@ def main(args):
     face_location_signal: Tensor = (
         torch.zeros(1, frame_end, 1).to(device="cuda") + args.face_location
     )
-    face_scae_signal: Tensor = torch.zeros(1, frame_end, 1).to(device="cuda") + args.face_scale
+    face_scae_signal: Tensor = (
+        torch.zeros(1, frame_end, 1).to(device="cuda") + args.face_scale
+    )
     # ===========================================
 
     start_time: float = time.time()
@@ -307,7 +322,9 @@ def main(args):
     for pred_index in tqdm(iterable=range(generated_directions.shape[1])):
         ori_img_recon = lia.render(
             start=one_shot_lia_start,
-            direction=torch.Tensor(generated_directions[:, pred_index, :]).to(device="cuda"),
+            direction=torch.Tensor(generated_directions[:, pred_index, :]).to(
+                device="cuda"
+            ),
             feats=feats,
         )
         ori_img_recon = ori_img_recon.clamp(-1, 1)
@@ -321,7 +338,9 @@ def main(args):
     print(f"Renderer Model: {execution_time:.2f} Seconds")
 
     frames_to_video(
-        input_path=frames_result_saved_path, audio_path=args.test_audio_path, output_path=predicted_video_256_path
+        input_path=frames_result_saved_path,
+        audio_path=args.test_audio_path,
+        output_path=predicted_video_256_path,
     )
 
     shutil.rmtree(path=frames_result_saved_path)
@@ -335,13 +354,15 @@ def main(args):
         # Super-resolution
         imageio.mimsave(
             uri=predicted_video_512_path + ".tmp.mp4",
-            ims=enhancer_list(images=predicted_video_256_path, method="gfpgan", bg_upsampler=None),
+            ims=enhancer_list(
+                images=predicted_video_256_path, method="gfpgan", bg_upsampler=None
+            ),
             fps=float(25),
         )
 
         # Merge audio and video
-        video_clip = VideoFileClip(predicted_video_512_path + ".tmp.mp4")
-        audio_clip = AudioFileClip(predicted_video_256_path)
+        video_clip: VideoFileClip = VideoFileClip(predicted_video_512_path + ".tmp.mp4")
+        audio_clip: AudioFileClip = AudioFileClip(predicted_video_256_path)
         final_clip = video_clip.set_audio(audio_clip)
         final_clip.write_videofile(
             predicted_video_512_path, codec="libx264", audio_codec="aac"
@@ -357,17 +378,31 @@ def main(args):
 
 def generate_video(
     uploaded_img: str,
-    uploaded_audio:str,
-    infer_type:str,pose_yaw:float,pose_pitch:float,pose_roll:float,face_location:float,face_scale:float,step_T:int,face_sr:bool,seed:int,
-) -> tuple[None, Markdown] | tuple[Video, None, Markdown] | tuple[Video, Video, Markdown] | tuple[None, None, Markdown]:
-    if not uploaded_img or not uploaded_audio :
-        return None, gr.Markdown(
+    uploaded_audio: str,
+    infer_type: str,
+    pose_yaw: float,
+    pose_pitch: float,
+    pose_roll: float,
+    face_location: float,
+    face_scale: float,
+    step_T: int,
+    face_sr: bool,
+    seed: int,
+) -> (
+    tuple[None, Markdown]
+    | tuple[Video, None, Markdown]
+    | tuple[Video, Video, Markdown]
+    | tuple[None, None, Markdown]
+):
+    if not uploaded_img or not uploaded_audio:
+        return None, Markdown(
             value="Error: Input image or audio file is empty. Please check and upload both files."
         )
-
-    stage2_checkpoint_path: str = model_mapping.get(infer_type, "default_checkpoint.ckpt")
+    stage2_checkpoint_path: str = model_mapping.get(
+        infer_type, "default_checkpoint.ckpt"
+    )
     try:
-        args = argparse.Namespace(
+        args: Namespace = argparse.Namespace(
             infer_type=infer_type,
             test_image_path=uploaded_img,
             test_audio_path=uploaded_audio,
@@ -390,30 +425,32 @@ def generate_video(
             decoder_layers=2,
             face_sr=face_sr,
         )
-        video_path = main(args=args)
-        output_256_video_path= video_path[0]
-        output_512_video_path = video_path[1]
+        video_path: tuple[str, str] = main(args=args)
+        output_256_video_path: str = video_path[0]
+        output_512_video_path: str = video_path[1]
 
         if not os.path.exists(path=output_256_video_path):
-            return (None, gr.Markdown(
-                value="Error: Video generation failed. Please check your inputs and try again."
-            ))
+            return (
+                None,
+                Markdown(
+                    value="Error: Video generation failed. Please check your inputs and try again."
+                ),
+            )
         if output_256_video_path == output_512_video_path:
             return (
-                gr.Video(value=output_256_video_path),
+                Video(value=output_256_video_path),
                 None,
-                gr.Markdown(value="Video (256*256 only) generated successfully!"),
+                Markdown(value="Video (256*256 only) generated successfully!"),
             )
         return (
-            gr.Video(value=output_256_video_path),
-            gr.Video(value=output_512_video_path),
-            gr.Markdown(value="Video generated successfully!"),
+            Video(value=output_256_video_path),
+            Video(value=output_512_video_path),
+            Markdown(value="Video generated successfully!"),
         )
 
     except Exception as e:
         return (
             None,
             None,
-            gr.Markdown(value=f"Error: An unexpected error occurred - {str(e)}"),
+            Markdown(value=f"Error: An unexpected error occurred - {str(e)}"),
         )
-
