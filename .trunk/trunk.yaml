@@ -13,6 +13,7 @@ runtimes:
     - python@3.10.8
 lint:
   enabled:
+    - prettier@3.5.3
     - black@25.1.0
     - snyk@1.1295.0
     - trivy@0.62.1
@@ -21,16 +22,15 @@ lint:
     - gitleaks@8.26.0
     - actionlint@1.7.7
     - bandit@1.8.3
-    - checkov@3.2.427
+    - checkov@3.2.432
     - git-diff-check
     - hadolint@2.12.1-beta
     - isort@6.0.1
     - markdownlint@0.45.0
-    - prettier@3.5.3
     - renovate@40.0.6
-    - ruff@0.11.10
+    - ruff@0.11.11
     - taplo@0.9.3
-    - trufflehog@3.88.32
+    - trufflehog@3.88.33
     - yamllint@1.37.1
 actions:
   enabled:

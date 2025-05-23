@@ -1,4 +1,3 @@
-# Following source doesn't work in most setups
 trustedRegistries:
   - docker.io
   - ghcr.io
