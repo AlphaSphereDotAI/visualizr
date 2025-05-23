@@ -60,7 +60,10 @@ def app_block() -> Blocks:
             )
             seed = Number(label="Seed", value=default_values["seed"])
             pose_yaw = Slider(
-                label="pose_yaw", minimum=-1, maximum=1, value=default_values["pose_yaw"],
+                label="pose_yaw",
+                minimum=-1,
+                maximum=1,
+                value=default_values["pose_yaw"],
             )
             pose_pitch = Slider(
                 label="pose_pitch",
@@ -69,7 +72,10 @@ def app_block() -> Blocks:
                 value=default_values["pose_pitch"],
             )
             pose_roll = Slider(
-                label="pose_roll", minimum=-1, maximum=1, value=default_values["pose_roll"],
+                label="pose_roll",
+                minimum=-1,
+                maximum=1,
+                value=default_values["pose_roll"],
             )
             face_location = Slider(
                 label="face_location",
@@ -78,7 +84,10 @@ def app_block() -> Blocks:
                 value=default_values["face_location"],
             )
             face_scale = Slider(
-                label="face_scale", minimum=0, maximum=1, value=default_values["face_scale"],
+                label="face_scale",
+                minimum=0,
+                maximum=1,
+                value=default_values["face_scale"],
             )
             step_T = Slider(
                 label="step_T",

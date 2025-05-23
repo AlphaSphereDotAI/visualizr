@@ -39,7 +39,7 @@ class AntiAliasInterpolation2d(nn.Module):
         inv_scale: float = 1 / scale
         self.int_inv_scale = int(inv_scale)
 
-    def forward(self, input: Tensor) -> Tensor :
+    def forward(self, input: Tensor) -> Tensor:
         if self.scale == 1.0:
             return input
 
