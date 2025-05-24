@@ -1,6 +1,6 @@
 import torch
-from torch import Tensor, nn
-from torch.nn.functional import conv2d, pad
+import torch.nn.functional as F
+from torch import nn
 
 
 class AntiAliasInterpolation2d(nn.Module):
@@ -8,10 +8,10 @@ class AntiAliasInterpolation2d(nn.Module):
     Band-limited downsampling, for better preservation of the input signal.
     """
 
-    def __init__(self, channels, scale) -> None:
+    def __init__(self, channels, scale):
         super(AntiAliasInterpolation2d, self).__init__()
-        sigma: float = (1 / scale - 1) / 2
-        kernel_size: int = 2 * round(sigma * 4) + 1
+        sigma = (1 / scale - 1) / 2
+        kernel_size = 2 * round(sigma * 4) + 1
         self.ka = kernel_size // 2
         self.kb = self.ka - 1 if kernel_size % 2 == 0 else self.ka
 
@@ -20,7 +20,7 @@ class AntiAliasInterpolation2d(nn.Module):
         # The gaussian kernel is the product of the
         # gaussian function of each dimension.
         kernel = 1
-        meshgrids: tuple[Tensor, ...] = torch.meshgrid(
+        meshgrids = torch.meshgrid(
             [torch.arange(size, dtype=torch.float32) for size in kernel_size]
         )
         for size, std, mgrid in zip(kernel_size, sigma, meshgrids):
@@ -36,15 +36,15 @@ class AntiAliasInterpolation2d(nn.Module):
         self.register_buffer("weight", kernel)
         self.groups = channels
         self.scale = scale
-        inv_scale: float = 1 / scale
+        inv_scale = 1 / scale
         self.int_inv_scale = int(inv_scale)
 
-    def forward(self, input: Tensor) -> Tensor:
+    def forward(self, input):
         if self.scale == 1.0:
             return input
 
-        out: Tensor = pad(input=input, pad=(self.ka, self.kb, self.ka, self.kb))
-        out: Tensor = conv2d(input=out, weight=self.weight, groups=self.groups)
-        out: Tensor = out[:, :, :: self.int_inv_scale, :: self.int_inv_scale]
+        out = F.pad(input, (self.ka, self.kb, self.ka, self.kb))
+        out = F.conv2d(out, weight=self.weight, groups=self.groups)
+        out = out[:, :, :: self.int_inv_scale, :: self.int_inv_scale]
 
         return out

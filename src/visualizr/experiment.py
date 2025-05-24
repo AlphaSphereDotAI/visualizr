@@ -4,16 +4,15 @@ import os
 import numpy as np
 import pytorch_lightning as pl
 import torch
+from config import *
+from dist_utils import *
 from model.seq2seq import DiffusionPredictor
 from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning.callbacks import *
+from renderer import *
 from torch.cuda import amp
 from torch.optim.optimizer import Optimizer
 from torch.utils.data.dataset import TensorDataset
-
-from visualizr.config import *
-from visualizr.dist_utils import *
-from visualizr.renderer import *
 
 
 # This part is modified from: https://github.com/phizaz/diffae/blob/master/experiment.py
@@ -185,15 +184,11 @@ class LitModel(pl.LightningModule):
         """
         with amp.autocast(False):
             motion_start = batch["motion_start"]  # torch.Size([B, 512])
-            # torch.Size([B, 125, 20])
-            motion_direction = batch["motion_direction"]
-            # torch.Size([B, 25, 250, 1024])
-            audio_feats = batch["audio_feats"].float()
-            # torch.Size([B, 125])
-            face_location = batch["face_location"].float()
+            motion_direction = batch["motion_direction"]  # torch.Size([B, 125, 20])
+            audio_feats = batch["audio_feats"].float()  # torch.Size([B, 25, 250, 1024])
+            face_location = batch["face_location"].float()  # torch.Size([B, 125])
             face_scale = batch["face_scale"].float()  # torch.Size([B, 125, 1])
-            # torch.Size([B, 125, 3])
-            yaw_pitch_roll = batch["yaw_pitch_roll"].float()
+            yaw_pitch_roll = batch["yaw_pitch_roll"].float()  # torch.Size([B, 125, 3])
             motion_direction_start = batch[
                 "motion_direction_start"
             ].float()  # torch.Size([B, 20])
@@ -244,6 +239,7 @@ class LitModel(pl.LightningModule):
         after each training step ...
         """
         if self.is_last_accum(batch_idx):
+
             if self.conf.train_mode == TrainMode.latent_diffusion:
                 # it trains only the latent hence change only the latent
                 ema(

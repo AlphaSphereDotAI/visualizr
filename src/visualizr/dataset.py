@@ -4,12 +4,15 @@ import random
 import librosa
 import numpy as np
 import python_speech_features
+import torchvision
+import torchvision.transforms as transforms
 from PIL import Image
-from torchvision.transforms import Compose, Normalize, Resize, ToTensor
+from torchvision import transforms
 from tqdm import tqdm
 
 
 class LatentDataLoader(object):
+
     def __init__(
         self,
         window_size,
@@ -35,11 +38,11 @@ class LatentDataLoader(object):
         self.raw_audio_prefix = raw_audio_prefix
         self.mfcc_mode = mfcc_mode
 
-        self.transform = Compose(
+        self.transform = torchvision.transforms.Compose(
             [
-                Resize((size, size)),
-                ToTensor(),
-                Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)),
+                transforms.Resize((size, size)),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)),
             ]
         )
 
@@ -47,6 +50,7 @@ class LatentDataLoader(object):
         for db_name in ["VoxCeleb2", "HDTF"]:
             db_png_path = os.path.join(frame_jpgs, db_name)
             for clip_name in tqdm(os.listdir(db_png_path)):
+
                 item_dict = dict()
                 item_dict["clip_name"] = clip_name
                 item_dict["frame_count"] = len(
@@ -174,8 +178,7 @@ class LatentDataLoader(object):
         for i, line in enumerate(lmd_lines):
             # Split the coordinates and filter out any empty strings
             coords = [c for c in line.strip().split(" ") if c]
-            # do not include the file name in the first row
-            coords = coords[1:]
+            coords = coords[1:]  # do not include the file name in the first row
             lmd_obj = []
             if upper_face:
                 # Ensure that the coordinates are parsed as integers
@@ -199,6 +202,7 @@ class LatentDataLoader(object):
         return distances
 
     def __getitem__(self, index):
+
         data_item = self.data[index]
         hubert_obj = data_item["hubert_obj"]
         frame_count = data_item["frame_count"]

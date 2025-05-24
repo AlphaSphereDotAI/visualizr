@@ -1,12 +1,11 @@
-from visualizr.choices import GenerativeType, ModelName
-from visualizr.config import PretrainConfig, TrainConfig
+from experiment import *
 
 
-def ddpm() -> TrainConfig:
+def ddpm():
     """
     base configuration for all DDIM-based models.
     """
-    conf: TrainConfig = TrainConfig()
+    conf = TrainConfig()
     conf.batch_size = 32
     conf.beatgans_gen_type = GenerativeType.ddim
     conf.beta_scheduler = "linear"
@@ -29,11 +28,11 @@ def ddpm() -> TrainConfig:
     return conf
 
 
-def autoenc_base() -> TrainConfig:
+def autoenc_base():
     """
     base configuration for all Diff-AE models.
     """
-    conf: TrainConfig = TrainConfig()
+    conf = TrainConfig()
     conf.batch_size = 32
     conf.beatgans_gen_type = GenerativeType.ddim
     conf.beta_scheduler = "linear"
@@ -59,8 +58,8 @@ def autoenc_base() -> TrainConfig:
     return conf
 
 
-def ffhq64_ddpm() -> TrainConfig:
-    conf: TrainConfig = ddpm()
+def ffhq64_ddpm():
+    conf = ddpm()
     conf.data_name = "ffhqlmdb256"
     conf.warmup = 0
     conf.total_samples = 72_000_000
@@ -68,8 +67,8 @@ def ffhq64_ddpm() -> TrainConfig:
     return conf
 
 
-def ffhq64_autoenc() -> TrainConfig:
-    conf: TrainConfig = autoenc_base()
+def ffhq64_autoenc():
+    conf = autoenc_base()
     conf.data_name = "ffhqlmdb256"
     conf.warmup = 0
     conf.total_samples = 72_000_000
@@ -82,8 +81,8 @@ def ffhq64_autoenc() -> TrainConfig:
     return conf
 
 
-def celeba64d2c_ddpm() -> TrainConfig:
-    conf: TrainConfig = ffhq128_ddpm()
+def celeba64d2c_ddpm():
+    conf = ffhq128_ddpm()
     conf.data_name = "celebalmdb"
     conf.eval_every_samples = 10_000_000
     conf.eval_ema_every_samples = 10_000_000
@@ -92,8 +91,8 @@ def celeba64d2c_ddpm() -> TrainConfig:
     return conf
 
 
-def celeba64d2c_autoenc() -> TrainConfig:
-    conf: TrainConfig = ffhq64_autoenc()
+def celeba64d2c_autoenc():
+    conf = ffhq64_autoenc()
     conf.data_name = "celebalmdb"
     conf.eval_every_samples = 10_000_000
     conf.eval_ema_every_samples = 10_000_000
@@ -102,8 +101,8 @@ def celeba64d2c_autoenc() -> TrainConfig:
     return conf
 
 
-def ffhq128_ddpm() -> TrainConfig:
-    conf: TrainConfig = ddpm()
+def ffhq128_ddpm():
+    conf = ddpm()
     conf.data_name = "ffhqlmdb256"
     conf.warmup = 0
     conf.total_samples = 48_000_000
@@ -123,8 +122,8 @@ def ffhq128_ddpm() -> TrainConfig:
     return conf
 
 
-def ffhq128_autoenc_base() -> TrainConfig:
-    conf: TrainConfig = autoenc_base()
+def ffhq128_autoenc_base():
+    conf = autoenc_base()
     conf.data_name = "ffhqlmdb256"
     conf.scale_up_gpus(4)
     conf.img_size = 128
@@ -139,8 +138,8 @@ def ffhq128_autoenc_base() -> TrainConfig:
     return conf
 
 
-def ffhq256_autoenc() -> TrainConfig:
-    conf: TrainConfig = ffhq128_autoenc_base()
+def ffhq256_autoenc():
+    conf = ffhq128_autoenc_base()
     conf.img_size = 256
     conf.net_ch = 128
     conf.net_ch_mult = (1, 1, 2, 2, 4, 4)
@@ -241,8 +240,8 @@ def bedroom128_autoenc():
     return conf
 
 
-def pretrain_celeba64d2c_72M() -> TrainConfig:
-    conf: TrainConfig = celeba64d2c_autoenc()
+def pretrain_celeba64d2c_72M():
+    conf = celeba64d2c_autoenc()
     conf.pretrain = PretrainConfig(
         name="72M",
         path=f"checkpoints/{celeba64d2c_autoenc().name}/last.ckpt",
@@ -251,8 +250,8 @@ def pretrain_celeba64d2c_72M() -> TrainConfig:
     return conf
 
 
-def pretrain_ffhq128_autoenc72M() -> TrainConfig:
-    conf: TrainConfig = ffhq128_autoenc_base()
+def pretrain_ffhq128_autoenc72M():
+    conf = ffhq128_autoenc_base()
     conf.postfix = ""
     conf.pretrain = PretrainConfig(
         name="72M",

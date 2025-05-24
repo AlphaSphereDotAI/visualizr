@@ -94,13 +94,13 @@ class TrainConfig(BaseConfig):
     net_beatgans_resnet_use_zero_module: bool = True
     net_beatgans_resnet_scale_at: ScaleAt = ScaleAt.after_norm
     net_beatgans_resnet_cond_channels: int = None
-    net_ch_mult: Tuple[int, ...] = None
+    net_ch_mult: Tuple[int] = None
     net_ch: int = 64
     net_enc_attn: Tuple[int] = None
     net_enc_k: int = None
     # number of resblocks for the encoder (half-unet)
     net_enc_num_res_blocks: int = 2
-    net_enc_channel_mult: Tuple[int, ...] = None
+    net_enc_channel_mult: Tuple[int] = None
     net_enc_grad_checkpoint: bool = False
     net_autoenc_stochastic: bool = False
     net_latent_activation: Activation = Activation.silu

@@ -118,6 +118,7 @@ class EqualConv2d(nn.Module):
             self.bias = None
 
     def forward(self, input):
+
         return F.conv2d(
             input,
             self.weight * self.scale,
@@ -152,6 +153,7 @@ class EqualLinear(nn.Module):
         self.lr_mul = lr_mul
 
     def forward(self, input):
+
         if self.activation:
             out = F.linear(input, self.weight * self.scale)
             out = fused_leaky_relu(out, self.bias * self.lr_mul)
@@ -244,6 +246,7 @@ class WeightedSumLayer(nn.Module):
         self.weights = nn.Parameter(torch.randn(num_tensors))
 
     def forward(self, tensor_list):
+
         weights = torch.softmax(self.weights, dim=0)
         weighted_sum = torch.zeros_like(tensor_list[0])
         for tensor, weight in zip(tensor_list, weights):
@@ -253,10 +256,10 @@ class WeightedSumLayer(nn.Module):
 
 
 class EncoderApp(nn.Module):
-    def __init__(self, size, w_dim: int = 512, fusion_type: str = "") -> None:
+    def __init__(self, size, w_dim=512, fusion_type=""):
         super(EncoderApp, self).__init__()
 
-        channels: dict[int, int] = {
+        channels = {
             4: 512,
             8: 512,
             16: 512,
@@ -268,31 +271,19 @@ class EncoderApp(nn.Module):
             1024: 16,
         }
 
-        self.w_dim: int = w_dim
-        log_size = int(math.log(x=size, base=2))
+        self.w_dim = w_dim
+        log_size = int(math.log(size, 2))
 
         self.convs = nn.ModuleList()
-        self.convs.append(
-            module=ConvLayer(in_channel=3, out_channel=channels[size], kernel_size=1)
-        )
+        self.convs.append(ConvLayer(3, channels[size], 1))
 
         in_channel = channels[size]
         for i in range(log_size, 2, -1):
-            out_channel: int = channels[2 ** (i - 1)]
-            self.convs.append(
-                module=ResBlock(in_channel=in_channel, out_channel=out_channel)
-            )
-            in_channel: int = out_channel
+            out_channel = channels[2 ** (i - 1)]
+            self.convs.append(ResBlock(in_channel, out_channel))
+            in_channel = out_channel
 
-        self.convs.append(
-            module=EqualConv2d(
-                in_channel=in_channel,
-                out_channel=self.w_dim,
-                kernel_size=4,
-                padding=0,
-                bias=False,
-            )
-        )
+        self.convs.append(EqualConv2d(in_channel, self.w_dim, 4, padding=0, bias=False))
 
         self.fusion_type = fusion_type
         assert self.fusion_type == "weighted_sum"
@@ -305,6 +296,7 @@ class EncoderApp(nn.Module):
             self.ws = WeightedSumLayer()
 
     def forward(self, x):
+
         res = []
         h = x
         pooled_h_lists = []
@@ -356,24 +348,21 @@ class DecouplingModel(nn.Module):
         )
 
     def forward(self, x):
+
         id_, id_rm = self.identity_net(x), self.identity_excluded_net(x)
         id_density = self.identity_net_density(id_)
         return id_, id_rm, id_density
 
 
 class Encoder(nn.Module):
-    def __init__(
-        self, size, dim: int = 512, dim_motion: int = 20, weighted_sum: bool = False
-    ) -> None:
+    def __init__(self, size, dim=512, dim_motion=20, weighted_sum=False):
         super(Encoder, self).__init__()
 
         # image encoder
-        self.net_app = EncoderApp(size=size, w_dim=dim, fusion_type=weighted_sum)
+        self.net_app = EncoderApp(size, dim, weighted_sum)
 
         # decouping network
-        self.net_decouping = DecouplingModel(
-            input_dim=dim, hidden_dim=dim, output_dim=dim
-        )
+        self.net_decouping = DecouplingModel(dim, dim, dim)
 
         # part of the motion encoder
         fc = [EqualLinear(dim, dim)]
@@ -384,11 +373,13 @@ class Encoder(nn.Module):
         self.fc = nn.Sequential(*fc)
 
     def enc_app(self, x):
+
         h_source = self.net_app(x)
 
         return h_source
 
     def enc_motion(self, x):
+
         h, _ = self.net_app(x)
         h_motion = self.fc(h)
 
@@ -400,7 +391,9 @@ class Encoder(nn.Module):
         return id_emb, idrm_emb, id_density_emb
 
     def forward(self, input_source, input_target, input_face, input_aug):
+
         if input_target is not None:
+
             h_source, feats = self.net_app(input_source)
             h_target, _ = self.net_app(input_target)
             h_face, _ = self.net_app(input_face)

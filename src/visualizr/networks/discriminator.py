@@ -122,6 +122,7 @@ class EqualConv2d(nn.Module):
             self.bias = None
 
     def forward(self, input):
+
         return F.conv2d(
             input,
             self.weight * self.scale,
@@ -156,6 +157,7 @@ class EqualLinear(nn.Module):
         self.lr_mul = lr_mul
 
     def forward(self, input):
+
         if self.activation:
             out = F.linear(input, self.weight * self.scale)
             out = fused_leaky_relu(out, self.bias * self.lr_mul)

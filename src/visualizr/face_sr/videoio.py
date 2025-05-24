@@ -31,7 +31,7 @@ def save_video_with_watermark(video, audio, save_path, watermark=False):
     else:
         # watermark
         try:
-            # check if stable-diffusion-webui
+            ##### check if stable-diffusion-webui
             import webui
             from modules import paths
 

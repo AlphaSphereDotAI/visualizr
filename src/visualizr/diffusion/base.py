@@ -5,24 +5,20 @@ https://github.com/hojonathanho/diffusion/blob/1e0dceb3b3495bbe19116a5e1b3596cd0
 Docstrings have been added, as well as DDIM sampling and a new collection of beta schedules.
 """
 
+import enum
 import math
 from dataclasses import dataclass
 from typing import NamedTuple, Tuple
 
 import numpy as np
 import torch as th
+import torch.nn.functional as F
+from choices import *
 from config_base import BaseConfig
+from model import *
+from model.nn import mean_flat
+from model.unet_autoenc import AutoencReturn
 from torch.cuda.amp import autocast
-
-from visualizr.choices import (
-    GenerativeType,
-    LossType,
-    ModelMeanType,
-    ModelType,
-    ModelVarType,
-)
-from visualizr.model import Model
-from visualizr.model.nn import mean_flat
 
 
 @dataclass
@@ -170,6 +166,7 @@ class GaussianDiffusionBeatGans:
 
             if self.loss_type == LossType.mse:
                 if self.model_mean_type == ModelMeanType.eps:
+
                     direction_loss = mean_flat((target - predicted_direction) ** 2)
                     # import pdb;pdb.set_trace()
                     location_loss = mean_flat(
@@ -834,6 +831,7 @@ class GaussianDiffusionBeatGans:
             indices = tqdm(indices)
 
         for i in indices:
+
             if isinstance(model_kwargs, list):
                 # index dependent model kwargs
                 # (T-1, ..., 0)

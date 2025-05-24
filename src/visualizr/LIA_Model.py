@@ -1,35 +1,29 @@
-from torch import load, nn
+import torch
+import torch.nn as nn
+from networks.encoder import Encoder
+from networks.styledecoder import Synthesis
 
-from visualizr.networks.encoder import Encoder
-from visualizr.networks.styledecoder import Synthesis
 
 # This part is modified from: https://github.com/wyhsirius/LIA
-
-
-class LIA_Model(nn.Module):
+class LIA_Model(torch.nn.Module):
     def __init__(
         self,
-        size: int = 256,
-        style_dim: int = 512,
-        motion_dim: int = 20,
-        channel_multiplier: int = 1,
-        blur_kernel: list[int] = [1, 3, 3, 1],
-        fusion_type: str = "",
-    ) -> None:
+        size=256,
+        style_dim=512,
+        motion_dim=20,
+        channel_multiplier=1,
+        blur_kernel=[1, 3, 3, 1],
+        fusion_type="",
+    ):
         super().__init__()
-        self.enc = Encoder(
-            size=size, dim=style_dim, dim_motion=motion_dim, weighted_sum=fusion_type
-        )
+        self.enc = Encoder(size, style_dim, motion_dim, fusion_type)
         self.dec = Synthesis(
-            size=size,
-            style_dim=style_dim,
-            motion_dim=motion_dim,
-            blur_kernel=blur_kernel,
-            channel_multiplier=channel_multiplier,
+            size, style_dim, motion_dim, blur_kernel, channel_multiplier
         )
 
     def get_start_direction_code(self, x_start, x_target, x_face, x_aug):
         enc_dic = self.enc(x_start, x_target, x_face, x_aug)
+
         wa, alpha, feats = enc_dic["h_source"], enc_dic["h_motion"], enc_dic["feats"]
 
         return wa, alpha, feats
@@ -40,9 +34,10 @@ class LIA_Model(nn.Module):
     def load_lightning_model(self, lia_pretrained_model_path):
         selfState = self.state_dict()
 
-        state = load(f=lia_pretrained_model_path, map_location="cpu")
+        state = torch.load(lia_pretrained_model_path, map_location="cpu")
         for name, param in state.items():
             origName = name
+
             if name not in selfState:
                 name = name.replace("lia.", "")
                 if name not in selfState:
