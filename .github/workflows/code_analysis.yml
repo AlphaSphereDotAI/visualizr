@@ -1,5 +1,6 @@
 name: Trunk Code Quality
 on:
+  push:
   pull_request:
 permissions: read-all
 concurrency:
