@@ -1,7 +1,8 @@
 name: Docker Images
 on:
-  push:
-  workflow_dispatch:
+  workflow_run:
+    workflows: ["Trunk Code Quality"]
+    types: [completed]
 permissions:
   contents: read
   packages: write
