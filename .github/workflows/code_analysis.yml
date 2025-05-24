@@ -1,7 +1,6 @@
 name: Trunk Code Quality
 on:
   push:
-  pull_request:
   workflow_run:
     workflows: ["Pull Request"]
     types: [completed]
@@ -20,6 +19,3 @@ jobs:
         uses: actions/checkout@v4
       - name: Trunk Code Quality
         uses: trunk-io/trunk-action@v1
-        with:
-          post-annotations: true
-          arguments: --github-annotate-new-only=false
