@@ -1,48 +1,60 @@
 import argparse
-import importlib.util
-import os
 import shutil
+import sys
 import time
-from datetime import datetime
-from pathlib import Path
+from argparse import Namespace
+from importlib.util import find_spec
+from os import listdir, makedirs, path
 
-import gradio as gr
 import librosa
 import numpy as np
 import python_speech_features
 import torch
-from LIA_Model import LIA_Model
-from moviepy.editor import *
+from gradio import Markdown, Video
+from moviepy.editor import (
+    AudioFileClip,
+    ImageClip,
+    VideoFileClip,
+    concatenate_videoclips,
+)
+from moviepy.video.compositing.CompositeVideoClip import CompositeVideoClip
+from moviepy.video.VideoClip import VideoClip
+from numpy import asarray, float32, transpose
+from numpy.typing import NDArray
 from PIL import Image
-from templates import *
+from torch import Tensor
 from torchvision import transforms
 from tqdm import tqdm
 
-# Disable Gradio analytics to avoid network-related issues
-gr.analytics_enabled = False
+from visualizr import model_mapping
+from visualizr.config import TrainConfig
+from visualizr.experiment import LitModel
+from visualizr.LIA_Model import LIA_Model
+from visualizr.templates import ffhq256_autoenc
 
 
-def check_package_installed(package_name):
-    package_spec = importlib.util.find_spec(package_name)
-    if package_spec is None:
-        print(f"{package_name} is not installed.")
-        return False
-    else:
-        print(f"{package_name} is installed.")
-        return True
+def check_package_installed(package_name: str) -> bool:
+    return find_spec(name=package_name) is not None
 
 
-def frames_to_video(input_path, audio_path, output_path, fps=25):
-    image_files = [
-        os.path.join(input_path, img) for img in sorted(os.listdir(input_path))
+def frames_to_video(
+    input_path: str, audio_path: str, output_path: str, fps: int = 25
+) -> None:
+    image_files: list[str] = [
+        path.join(input_path, img) for img in sorted(listdir(path=input_path))
     ]
-    clips = [ImageClip(m).set_duration(1 / fps) for m in image_files]
-    video = concatenate_videoclips(clips, method="compose")
+    clips = [ImageClip(img=m).set_duration(1 / fps) for m in image_files]
+    video: VideoClip | CompositeVideoClip = concatenate_videoclips(
+        clips=clips, method="compose"
+    )
 
-    audio = AudioFileClip(audio_path)
+    audio = AudioFileClip(filename=audio_path)
     final_video = video.set_audio(audio)
     final_video.write_videofile(
-        output_path, fps=fps, codec="libx264", audio_codec="aac"
+        output_path,
+        fps=fps,
+        codec="libx264",
+        audio_codec="aac",
     )
 
 
@@ -63,19 +75,19 @@ def img_preprocessing(img_path, size):
 
 def saved_image(img_tensor, img_path):
     toPIL = transforms.ToPILImage()
-    img = toPIL(img_tensor.detach().cpu().squeeze(0))  # 使用squeeze(0)来移除批次维度
+    img = toPIL(img_tensor.detach().cpu().squeeze(0))
     img.save(img_path)
 
 
 def main(args):
-    frames_result_saved_path = os.path.join(args.result_path, "frames")
-    os.makedirs(frames_result_saved_path, exist_ok=True)
-    test_image_name = os.path.splitext(os.path.basename(args.test_image_path))[0]
-    audio_name = os.path.splitext(os.path.basename(args.test_audio_path))[0]
-    predicted_video_256_path = os.path.join(
+    frames_result_saved_path = path.join(args.result_path, "frames")
+    makedirs(frames_result_saved_path, exist_ok=True)
+    test_image_name = path.splitext(path.basename(args.test_image_path))[0]
+    audio_name = path.splitext(path.basename(args.test_audio_path))[0]
+    predicted_video_256_path = path.join(
         args.result_path, f"{test_image_name}-{audio_name}.mp4"
     )
-    predicted_video_512_path = os.path.join(
+    predicted_video_512_path = path.join(
         args.result_path, f"{test_image_name}-{audio_name}_SR.mp4"
     )
 
@@ -115,11 +127,11 @@ def main(args):
         print("Type NOT Found!")
         exit(0)
 
-    if not os.path.exists(args.test_image_path):
+    if not path.exists(args.test_image_path):
         print(f"{args.test_image_path} does not exist!")
         exit(0)
 
-    if not os.path.exists(args.test_audio_path):
+    if not path.exists(args.test_audio_path):
         print(f"{args.test_audio_path} does not exist!")
         exit(0)
 
@@ -161,12 +173,12 @@ def main(args):
 
     elif conf.infer_type.startswith("hubert"):
         # Hubert features
-        if not os.path.exists(args.test_hubert_path):
+        if not path.exists(args.test_hubert_path):
             if not check_package_installed("transformers"):
                 print("Please install transformers module first.")
                 exit(0)
             hubert_model_path = "ckpt/chinese-hubert-large"
-            if not os.path.exists(hubert_model_path):
+            if not path.exists(hubert_model_path):
                 print("Please download the hubert weight into the ckpts path first.")
                 exit(0)
             print(
@@ -232,7 +244,7 @@ def main(args):
     noisyT = torch.randn((1, frame_end, args.motion_dim)).to("cuda")
 
     # ======Inputs for Attribute Control=========
-    if os.path.exists(args.pose_driven_path):
+    if path.exists(args.pose_driven_path):
         pose_obj = np.load(args.pose_driven_path)
 
         if len(pose_obj.shape) != 2:
@@ -295,7 +307,7 @@ def main(args):
         ori_img_recon = ori_img_recon.clamp(-1, 1)
         wav_pred = (ori_img_recon.detach() + 1) / 2
         saved_image(
-            wav_pred, os.path.join(frames_result_saved_path, "%06d.png" % (pred_index))
+            wav_pred, path.join(frames_result_saved_path, "%06d.png" % (pred_index))
         )
     # ==============================================
 
@@ -328,7 +340,7 @@ def main(args):
             predicted_video_512_path, codec="libx264", audio_codec="aac"
         )
 
-        os.remove(predicted_video_512_path + ".tmp.mp4")
+        remove(predicted_video_512_path + ".tmp.mp4")
 
     if args.face_sr:
         return predicted_video_256_path, predicted_video_512_path
@@ -350,7 +362,7 @@ def generate_video(
     seed,
 ):
     if uploaded_img is None or uploaded_audio is None:
-        return None, gr.Markdown(
+        return None, Markdown(
             "Error: Input image or audio file is empty. Please check and upload both files."
         )
 
@@ -369,7 +381,7 @@ def generate_video(
             test_image_path=uploaded_img,
             test_audio_path=uploaded_audio,
             test_hubert_path="",
-            result_path="./outputs/",
+            result_path="./results/",
             stage1_checkpoint_path="ckpt/stage1.ckpt",
             stage2_checkpoint_path=stage2_checkpoint_path,
             seed=seed,
@@ -390,36 +402,25 @@ def generate_video(
 
         output_256_video_path, output_512_video_path = main(args)
 
-        if not os.path.exists(output_256_video_path):
-            return None, gr.Markdown(
+        if not path.exists(output_256_video_path):
+            return None, Markdown(
                 "Error: Video generation failed. Please check your inputs and try again."
             )
         if output_256_video_path == output_512_video_path:
             return (
-                gr.Video(value=output_256_video_path),
+                Video(value=output_256_video_path),
                 None,
-                gr.Markdown("Video (256*256 only) generated successfully!"),
+                Markdown("Video (256*256 only) generated successfully!"),
             )
         return (
-            gr.Video(value=output_256_video_path),
-            gr.Video(value=output_512_video_path),
-            gr.Markdown("Video generated successfully!"),
+            Video(value=output_256_video_path),
+            Video(value=output_512_video_path),
+            Markdown("Video generated successfully!"),
         )
 
     except Exception as e:
         return (
             None,
             None,
-            gr.Markdown(f"Error: An unexpected error occurred - {str(e)}"),
+            Markdown(f"Error: An unexpected error occurred - {str(e)}"),
         )
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="EchoMimic")
-    parser.add_argument(
-        "--server_name", type=str, default="localhost", help="Server name"
-    )
-    parser.add_argument("--server_port", type=int, default=3001, help="Server port")
-    args = parser.parse_args()
-
-    demo.launch()
