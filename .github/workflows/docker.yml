@@ -8,6 +8,9 @@ permissions:
   packages: write
   attestations: write
   id-token: write
+concurrency:
+  group: ${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
 jobs:
   check_image:
     name: Validate build configuration
