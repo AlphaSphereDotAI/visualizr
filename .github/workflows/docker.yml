@@ -1,7 +1,7 @@
 name: Docker Images
 on:
   workflow_run:
-    workflows: ["Trunk Code Quality"]
+    workflows: [Trunk Code Quality]
     types: [completed]
 permissions:
   contents: read
