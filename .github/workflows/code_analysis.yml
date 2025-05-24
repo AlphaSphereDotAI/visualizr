@@ -1,12 +1,7 @@
 name: Trunk Code Quality
 on:
-  push:
-  workflow_run:
-    workflows: ["Pull Request"]
-    types: [completed]
-permissions:
-  checks: write
-  contents: read
+  pull_request:
+permissions: read-all
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
@@ -14,6 +9,9 @@ jobs:
   trunk:
     name: Trunk Code Quality
     runs-on: ubuntu-latest
+    permissions:
+      checks: write 
+      contents: read 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
