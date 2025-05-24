@@ -166,7 +166,6 @@ class GaussianDiffusionBeatGans:
 
             if self.loss_type == LossType.mse:
                 if self.model_mean_type == ModelMeanType.eps:
-
                     direction_loss = mean_flat((target - predicted_direction) ** 2)
                     # import pdb;pdb.set_trace()
                     location_loss = mean_flat(
@@ -831,7 +830,6 @@ class GaussianDiffusionBeatGans:
             indices = tqdm(indices)
 
         for i in indices:
-
             if isinstance(model_kwargs, list):
                 # index dependent model kwargs
                 # (T-1, ..., 0)

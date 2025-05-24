@@ -148,8 +148,9 @@ def main(args):
         d_mfcc_feat2 = python_speech_features.base.delta(input_values, 2)
         audio_driven_obj = np.hstack((input_values, d_mfcc_feat, d_mfcc_feat2))
         frame_start, frame_end = 0, int(audio_driven_obj.shape[0] / 4)
-        audio_start, audio_end = int(frame_start * 4), int(
-            frame_end * 4
+        audio_start, audio_end = (
+            int(frame_start * 4),
+            int(frame_end * 4),
         )  # The video frame is fixed to 25 hz and the audio is fixed to 100 hz
 
         audio_driven = (
@@ -162,7 +163,6 @@ def main(args):
     elif conf.infer_type.startswith("hubert"):
         # Hubert features
         if not os.path.exists(args.test_hubert_path):
-
             if not check_package_installed("transformers"):
                 print("Please install transformers module first.")
                 exit(0)
@@ -216,8 +216,9 @@ def main(args):
             audio_driven_obj = np.load(args.test_hubert_path)
 
         frame_start, frame_end = 0, int(audio_driven_obj.shape[1] / 2)
-        audio_start, audio_end = int(frame_start * 2), int(
-            frame_end * 2
+        audio_start, audio_end = (
+            int(frame_start * 2),
+            int(frame_end * 2),
         )  # The video frame is fixed to 25 hz and the audio is fixed to 50 hz
 
         audio_driven = (

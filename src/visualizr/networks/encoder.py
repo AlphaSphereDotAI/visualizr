@@ -118,7 +118,6 @@ class EqualConv2d(nn.Module):
             self.bias = None
 
     def forward(self, input):
-
         return F.conv2d(
             input,
             self.weight * self.scale,
@@ -153,7 +152,6 @@ class EqualLinear(nn.Module):
         self.lr_mul = lr_mul
 
     def forward(self, input):
-
         if self.activation:
             out = F.linear(input, self.weight * self.scale)
             out = fused_leaky_relu(out, self.bias * self.lr_mul)
@@ -246,7 +244,6 @@ class WeightedSumLayer(nn.Module):
         self.weights = nn.Parameter(torch.randn(num_tensors))
 
     def forward(self, tensor_list):
-
         weights = torch.softmax(self.weights, dim=0)
         weighted_sum = torch.zeros_like(tensor_list[0])
         for tensor, weight in zip(tensor_list, weights):
@@ -296,7 +293,6 @@ class EncoderApp(nn.Module):
             self.ws = WeightedSumLayer()
 
     def forward(self, x):
-
         res = []
         h = x
         pooled_h_lists = []
@@ -348,7 +344,6 @@ class DecouplingModel(nn.Module):
         )
 
     def forward(self, x):
-
         id_, id_rm = self.identity_net(x), self.identity_excluded_net(x)
         id_density = self.identity_net_density(id_)
         return id_, id_rm, id_density
@@ -373,13 +368,11 @@ class Encoder(nn.Module):
         self.fc = nn.Sequential(*fc)
 
     def enc_app(self, x):
-
         h_source = self.net_app(x)
 
         return h_source
 
     def enc_motion(self, x):
-
         h, _ = self.net_app(x)
         h_motion = self.fc(h)
 
@@ -391,9 +384,7 @@ class Encoder(nn.Module):
         return id_emb, idrm_emb, id_density_emb
 
     def forward(self, input_source, input_target, input_face, input_aug):
-
         if input_target is not None:
-
             h_source, feats = self.net_app(input_source)
             h_target, _ = self.net_app(input_target)
             h_face, _ = self.net_app(input_face)

@@ -239,7 +239,6 @@ class LitModel(pl.LightningModule):
         after each training step ...
         """
         if self.is_last_accum(batch_idx):
-
             if self.conf.train_mode == TrainMode.latent_diffusion:
                 # it trains only the latent hence change only the latent
                 ema(
