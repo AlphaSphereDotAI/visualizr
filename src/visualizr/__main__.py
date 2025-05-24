@@ -8,7 +8,7 @@ from visualizr.gui import app_block
 
 def main() -> None:
     """Launch the Gradio voice generation web application."""
-    parser = ArgumentParser(description="EchoMimic")
+    parser: ArgumentParser = ArgumentParser(description="EchoMimic")
     parser.add_argument(
         "--server_name", type=str, default="localhost", help="Server name"
     )

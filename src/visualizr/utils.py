@@ -388,11 +388,6 @@ def generate_video(
     step_T: int,
     face_sr: bool,
     seed: int,
-) -> (
-    tuple[None, Markdown]
-    | tuple[Video, None, Markdown]
-    | tuple[Video, Video, Markdown]
-    | tuple[None, None, Markdown]
 ):
     if not uploaded_img or not uploaded_audio:
         return None, Markdown(

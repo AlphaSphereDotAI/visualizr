@@ -12,6 +12,8 @@ runtimes:
     - node@18.20.5
     - python@3.10.8
 lint:
+  disabled:
+    - yamllint
   enabled:
     - prettier@3.5.3
     - black@25.1.0
@@ -31,7 +33,6 @@ lint:
     - ruff@0.11.11
     - taplo@0.9.3
     - trufflehog@3.88.33
-    - yamllint@1.37.1
 actions:
   enabled:
     - trunk-announce
