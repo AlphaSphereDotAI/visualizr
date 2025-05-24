@@ -63,7 +63,6 @@ class DiffusionPredictor(BaseModule):
         motion_start_dim=512,
         HAL_layers=25,
     ):
-
         self.conf = conf
         # Speech downsampling
         if self.infer_type.startswith("mfcc"):
@@ -123,7 +122,6 @@ class DiffusionPredictor(BaseModule):
         t_emb,
         control_flag=False,
     ):
-
         if self.infer_type.startswith("mfcc"):
             x = self.mfcc_speech_downsample(seq_input_vector)
         elif self.infer_type.startswith("hubert"):

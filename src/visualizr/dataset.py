@@ -12,7 +12,6 @@ from tqdm import tqdm
 
 
 class LatentDataLoader(object):
-
     def __init__(
         self,
         window_size,
@@ -50,7 +49,6 @@ class LatentDataLoader(object):
         for db_name in ["VoxCeleb2", "HDTF"]:
             db_png_path = os.path.join(frame_jpgs, db_name)
             for clip_name in tqdm(os.listdir(db_png_path)):
-
                 item_dict = dict()
                 item_dict["clip_name"] = clip_name
                 item_dict["frame_count"] = len(
@@ -202,7 +200,6 @@ class LatentDataLoader(object):
         return distances
 
     def __getitem__(self, index):
-
         data_item = self.data[index]
         hubert_obj = data_item["hubert_obj"]
         frame_count = data_item["frame_count"]

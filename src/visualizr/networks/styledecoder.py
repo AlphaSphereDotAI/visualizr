@@ -162,7 +162,6 @@ class EqualConv2d(nn.Module):
             self.bias = None
 
     def forward(self, input):
-
         return F.conv2d(
             input,
             self.weight * self.scale,
@@ -197,7 +196,6 @@ class EqualLinear(nn.Module):
         self.lr_mul = lr_mul
 
     def forward(self, input):
-
         if self.activation:
             out = F.linear(input, self.weight * self.scale)
             out = fused_leaky_relu(out, self.bias * self.lr_mul)
@@ -327,7 +325,6 @@ class NoiseInjection(nn.Module):
         self.weight = nn.Parameter(torch.zeros(1))
 
     def forward(self, image, noise=None):
-
         if noise is None:
             return image
         else:
@@ -591,7 +588,6 @@ class Synthesis(nn.Module):
         self.n_latent = self.log_size * 2 - 2
 
     def forward(self, source_before_decoupling, target_motion, feats):
-
         directions = self.direction(target_motion)
         latent = source_before_decoupling + directions  # wa + directions
 
