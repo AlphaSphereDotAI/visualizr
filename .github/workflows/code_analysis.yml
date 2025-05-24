@@ -11,10 +11,19 @@ jobs:
     name: Trunk Code Quality
     runs-on: ubuntu-latest
     permissions:
-      checks: write 
-      contents: read 
+      checks: write
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        id: uv
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+          activate-environment: true
+      - name: Install the project
+        run: uv sync --frozen
       - name: Trunk Code Quality
         uses: trunk-io/trunk-action@v1
