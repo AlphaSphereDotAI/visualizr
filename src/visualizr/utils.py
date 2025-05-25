@@ -4,7 +4,7 @@ import sys
 import time
 from argparse import Namespace
 from importlib.util import find_spec
-from os import listdir, makedirs, path
+from os import listdir, makedirs, path, remove
 
 import librosa
 import numpy as np
@@ -25,6 +25,7 @@ from PIL import Image
 from torch import Tensor
 from torchvision import transforms
 from tqdm import tqdm
+from transformers.models.hubert.modeling_hubert import HubertModel
 
 from visualizr import model_mapping
 from visualizr.config import TrainConfig
@@ -130,23 +131,25 @@ def main(args):
         print("Type NOT Found!")
         exit(0)
 
-    if not path.exists(args.test_image_path):
+    if not path.exists(path=args.test_image_path):
         print(f"{args.test_image_path} does not exist!")
         exit(0)
 
-    if not path.exists(args.test_audio_path):
+    if not path.exists(path=args.test_audio_path):
         print(f"{args.test_audio_path} does not exist!")
         exit(0)
 
-    img_source = img_preprocessing(args.test_image_path, args.image_size).to("cuda")
+    img_source = img_preprocessing(
+        img_path=args.test_image_path, size=args.image_size
+    ).to(device="cuda")
     one_shot_lia_start, one_shot_lia_direction, feats = lia.get_start_direction_code(
-        img_source, img_source, img_source, img_source
+        x_start=img_source, x_target=img_source, x_face=img_source, x_aug=img_source
     )
 
     # ======Loading Stage 2 model=========
-    model = LitModel(conf)
-    state = torch.load(args.stage2_checkpoint_path, map_location="cpu")
-    model.load_state_dict(state, strict=True)
+    model = LitModel(conf=conf)
+    state = torch.load(f=args.stage2_checkpoint_path, map_location="cpu")
+    model.load_state_dict(state_dict=state, strict=True)
     model.ema_model.eval()
     model.ema_model.to("cuda")
     # =================================
@@ -167,17 +170,17 @@ def main(args):
             int(frame_end * 4),
         )  # The video frame is fixed to 25 hz and the audio is fixed to 100 hz
 
-        audio_driven = (
+        audio_driven: Tensor = (
             torch.Tensor(audio_driven_obj[audio_start:audio_end, :])
-            .unsqueeze(0)
+            .unsqueeze(dim=0)
             .float()
-            .to("cuda")
+            .to(device="cuda")
         )
 
     elif conf.infer_type.startswith("hubert"):
         # Hubert features
-        if not path.exists(args.test_hubert_path):
-            if not check_package_installed("transformers"):
+        if not path.exists(path=args.test_hubert_path):
+            if not check_package_installed(package_name="transformers"):
                 print("Please install transformers module first.")
                 exit(0)
             hubert_model_path = "ckpts/chinese-hubert-large"
@@ -193,9 +196,11 @@ def main(args):
             # load hubert model
             from transformers import HubertModel, Wav2Vec2FeatureExtractor
 
-            audio_model = HubertModel.from_pretrained(hubert_model_path).to("cuda")
+            audio_model: HubertModel = HubertModel.from_pretrained(
+                pretrained_model_name_or_path=hubert_model_path
+            ).to("cuda")
             feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained(
-                hubert_model_path
+                pretrained_model_name_or_path=hubert_model_path
             )
             audio_model.feature_extractor._freeze_parameters()
             audio_model.eval()
@@ -239,7 +244,7 @@ def main(args):
             torch.Tensor(audio_driven_obj[:, audio_start:audio_end, :])
             .unsqueeze(0)
             .float()
-            .to("cuda")
+            .to(device="cuda")
         )
     # ============================
 
@@ -278,7 +283,7 @@ def main(args):
     face_scae_signal = torch.zeros(1, frame_end, 1).to("cuda") + args.face_scale
     # ===========================================
 
-    start_time = time.time()
+    start_time: float = time.time()
 
     # ======Diffusion Denosing Process=========
     generated_directions = model.render(
@@ -310,40 +315,50 @@ def main(args):
         ori_img_recon = ori_img_recon.clamp(-1, 1)
         wav_pred = (ori_img_recon.detach() + 1) / 2
         saved_image(
-            wav_pred, path.join(frames_result_saved_path, "%06d.png" % (pred_index))
+            img_tensor=wav_pred,
+            img_path=path.join(frames_result_saved_path, "%06d.png" % (pred_index)),
         )
     # ==============================================
 
-    execution_time = time.time() - start_time
+    execution_time: float = time.time() - start_time
     print(f"Renderer Model: {execution_time:.2f} Seconds")
 
     frames_to_video(
-        frames_result_saved_path, args.test_audio_path, predicted_video_256_path
+        input_path=frames_result_saved_path,
+        audio_path=args.test_audio_path,
+        output_path=predicted_video_256_path,
     )
 
-    shutil.rmtree(frames_result_saved_path)
+    shutil.rmtree(path=frames_result_saved_path)
 
     # Enhancer
-    if args.face_sr and check_package_installed("gfpgan"):
-        import imageio
-        from face_sr.face_enhancer import enhancer_list
+    if args.face_sr and check_package_installed(package_name="gfpgan"):
+        from imageio import mimsave
+
+        from visualizr.face_sr.face_enhancer import enhancer_list
 
         # Super-resolution
-        imageio.mimsave(
-            predicted_video_512_path + ".tmp.mp4",
-            enhancer_list(predicted_video_256_path, method="gfpgan", bg_upsampler=None),
-            fps=float(25),
+        mimsave(
+            uri=f"{predicted_video_512_path}.tmp.mp4",
+            ims=enhancer_list(
+                images=predicted_video_256_path,
+                method="gfpgan",
+                bg_upsampler=None,
+            ),
+            fps=25.0,
         )
 
         # Merge audio and video
-        video_clip = VideoFileClip(predicted_video_512_path + ".tmp.mp4")
-        audio_clip = AudioFileClip(predicted_video_256_path)
+        video_clip = VideoFileClip(filename=f"{predicted_video_512_path}.tmp.mp4")
+        audio_clip = AudioFileClip(filename=predicted_video_256_path)
         final_clip = video_clip.set_audio(audio_clip)
         final_clip.write_videofile(
-            predicted_video_512_path, codec="libx264", audio_codec="aac"
+            predicted_video_512_path,
+            codec="libx264",
+            audio_codec="aac",
         )
 
-        remove(predicted_video_512_path + ".tmp.mp4")
+        remove(path=f"{predicted_video_512_path}.tmp.mp4")
 
     if args.face_sr:
         return predicted_video_256_path, predicted_video_512_path
@@ -352,21 +367,21 @@ def main(args):
 
 
 def generate_video(
-    uploaded_img,
-    uploaded_audio,
-    infer_type,
-    pose_yaw,
-    pose_pitch,
-    pose_roll,
-    face_location,
-    face_scale,
-    step_T,
-    face_sr,
-    seed,
+    uploaded_img: str,
+    uploaded_audio: str,
+    infer_type: str,
+    pose_yaw: float,
+    pose_pitch: float,
+    pose_roll: float,
+    face_location: float,
+    face_scale: float,
+    step_T: int,
+    face_sr: bool,
+    seed: int,
 ):
-    if uploaded_img is None or uploaded_audio is None:
+    if not uploaded_img or not uploaded_audio:
         return None, Markdown(
-            "Error: Input image or audio file is empty. Please check and upload both files."
+            value="Error: Input image or audio file is empty. Please check and upload both files."
         )
 
     try:
@@ -378,7 +393,8 @@ def generate_video(
             result_path="./results/",
             stage1_checkpoint_path="ckpts/stage1.ckpt",
             stage2_checkpoint_path=model_mapping.get(
-                infer_type, "default_checkpoint.ckpt"
+                infer_type,
+                "default_checkpoint.ckpt",
             ),
             seed=seed,
             control_flag=True,
@@ -396,27 +412,27 @@ def generate_video(
             face_sr=face_sr,
         )
 
-        output_256_video_path, output_512_video_path = main(args)
+        output_256_video_path, output_512_video_path = main(args=args)
 
-        if not path.exists(output_256_video_path):
+        if not path.exists(path=output_256_video_path):
             return None, Markdown(
-                "Error: Video generation failed. Please check your inputs and try again."
+                value="Error: Video generation failed. Please check your inputs and try again."
             )
         if output_256_video_path == output_512_video_path:
             return (
                 Video(value=output_256_video_path),
                 None,
-                Markdown("Video (256*256 only) generated successfully!"),
+                Markdown(value="Video (256*256 only) generated successfully!"),
             )
         return (
             Video(value=output_256_video_path),
             Video(value=output_512_video_path),
-            Markdown("Video generated successfully!"),
+            Markdown(value="Video generated successfully!"),
         )
 
     except Exception as e:
         return (
             None,
             None,
-            Markdown(f"Error: An unexpected error occurred - {str(e)}"),
+            Markdown(value=f"Error: An unexpected error occurred - {str(e)}"),
         )

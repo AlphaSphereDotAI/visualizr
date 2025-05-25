@@ -2,7 +2,7 @@ import math
 
 import numpy as np
 import torch
-from torch import nn
+from torch import Tensor, nn
 from torch.nn import functional as F
 
 
@@ -501,16 +501,15 @@ class Direction(nn.Module):
     def forward(self, input):
         # input: (bs*t) x 512
 
-        weight = self.weight + 1e-8
-        Q, R = torch.qr(weight)  # get eignvector, orthogonal [n1, n2, n3, n4]
+        weight: Tensor = self.weight + 1e-8
+        Q, _ = torch.qr(input=weight)  # get eignvector, orthogonal [n1, n2, n3, n4]
 
         if input is None:
             return Q
         else:
-            input_diag = torch.diag_embed(input)  # alpha, diagonal matrix
-            out = torch.matmul(input_diag, Q.T)
-            out = torch.sum(out, dim=1)
-
+            input_diag: Tensor = torch.diag_embed(input=input)  # alpha, diagonal matrix
+            out: Tensor = torch.matmul(input=input_diag, other=Q.T)
+            out = torch.sum(input=out, dim=1)
             return out
 
 
@@ -530,10 +529,10 @@ class Synthesis(nn.Module):
         self.motion_dim = motion_dim
 
         self.direction = Direction(
-            motion_dim
+            motion_dim=motion_dim
         )  # Linear Motion Decomposition (LMD) from LIA
 
-        self.channels = {
+        self.channels: dict[int, int] = {
             4: 512,
             8: 512,
             16: 512,
@@ -545,11 +544,17 @@ class Synthesis(nn.Module):
             1024: 16 * channel_multiplier,
         }
 
-        self.input = ConstantInput(self.channels[4])
+        self.input = ConstantInput(channel=self.channels[4])
         self.conv1 = StyledConv(
-            self.channels[4], self.channels[4], 3, style_dim, blur_kernel=blur_kernel
+            in_channel=self.channels[4],
+            out_channel=self.channels[4],
+            kernel_size=3,
+            style_dim=style_dim,
+            blur_kernel=blur_kernel,
         )
-        self.to_rgb1 = ToRGB(self.channels[4], style_dim, upsample=False)
+        self.to_rgb1 = ToRGB(
+            in_channel=self.channels[4], style_dim=style_dim, upsample=False
+        )
 
         self.log_size = int(math.log(size, 2))
         self.num_layers = (self.log_size - 2) * 2 + 1
@@ -559,29 +564,37 @@ class Synthesis(nn.Module):
         self.to_rgbs = nn.ModuleList()
         self.to_flows = nn.ModuleList()
 
-        in_channel = self.channels[4]
+        in_channel: int = self.channels[4]
 
         for i in range(3, self.log_size + 1):
-            out_channel = self.channels[2**i]
+            out_channel: int = self.channels[2**i]
 
             self.convs.append(
-                StyledConv(
-                    in_channel,
-                    out_channel,
-                    3,
-                    style_dim,
+                module=StyledConv(
+                    in_channel=in_channel,
+                    out_channel=out_channel,
+                    kernel_size=3,
+                    style_dim=style_dim,
                     upsample=True,
                     blur_kernel=blur_kernel,
                 )
             )
             self.convs.append(
-                StyledConv(
-                    out_channel, out_channel, 3, style_dim, blur_kernel=blur_kernel
+                module=StyledConv(
+                    in_channel=out_channel,
+                    out_channel=out_channel,
+                    kernel_size=3,
+                    style_dim=style_dim,
+                    blur_kernel=blur_kernel,
                 )
             )
-            self.to_rgbs.append(ToRGB(out_channel, style_dim))
+            self.to_rgbs.append(
+                module=ToRGB(in_channel=out_channel, style_dim=style_dim)
+            )
 
-            self.to_flows.append(ToFlow(out_channel, style_dim))
+            self.to_flows.append(
+                module=ToFlow(in_channel=out_channel, style_dim=style_dim)
+            )
 
             in_channel = out_channel
 

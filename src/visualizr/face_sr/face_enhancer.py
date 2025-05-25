@@ -1,17 +1,18 @@
-import os
+from os import path
 
 import cv2
 import torch
 from gfpgan import GFPGANer
+from numpy import dtype, generic, ndarray
 from tqdm import tqdm
 
-from .videoio import load_video_to_cv2
+from visualizr.face_sr.videoio import load_video_to_cv2
 
 
 class GeneratorWithLen(object):
     """From https://stackoverflow.com/a/7460929"""
 
-    def __init__(self, gen, length):
+    def __init__(self, gen, length) -> None:
         self.gen = gen
         self.length = length
 
@@ -27,29 +28,40 @@ def enhancer_list(images, method="gfpgan", bg_upsampler="realesrgan"):
     return list(gen)
 
 
-def enhancer_generator_with_len(images, method="gfpgan", bg_upsampler="realesrgan"):
+def enhancer_generator_with_len(
+    images, method="gfpgan", bg_upsampler="realesrgan"
+) -> GeneratorWithLen:
     """Provide a generator with a __len__ method so that it can passed to functions that
     call len()"""
 
-    if os.path.isfile(images):  # handle video to images
+    if path.isfile(path=images):  # handle video to images
         # TODO: Create a generator version of load_video_to_cv2
-        images = load_video_to_cv2(images)
+        images: list[ndarray[tuple[float, float, float], dtype[generic]]] = (
+            load_video_to_cv2(input_path=images)
+        )
 
-    gen = enhancer_generator_no_len(images, method=method, bg_upsampler=bg_upsampler)
-    gen_with_len = GeneratorWithLen(gen, len(images))
+    gen = enhancer_generator_no_len(
+        images_path=images, method=method, bg_upsampler=bg_upsampler
+    )
+    gen_with_len = GeneratorWithLen(gen=gen, length=len(images))
     return gen_with_len
 
 
-def enhancer_generator_no_len(images, method="gfpgan", bg_upsampler="realesrgan"):
+def enhancer_generator_no_len(
+    images_path: str,
+    method: str = "gfpgan",
+    bg_upsampler: str = "realesrgan",
+):
     """Provide a generator function so that all of the enhanced images don't need
     to be stored in memory at the same time. This can save tons of RAM compared to
     the enhancer function."""
 
     print("face enhancer....")
-    if not isinstance(images, list) and os.path.isfile(
-        images
-    ):  # handle video to images
-        images = load_video_to_cv2(images)
+    if not isinstance(images_path, list) and path.isfile(path=images_path):
+        # handle video to images
+        images: list[ndarray[tuple[float, float, float], dtype[generic]]] = (
+            load_video_to_cv2(input_path=images_path)
+        )
 
     # ------------------------ set up GFPGAN restorer ------------------------
     if method == "gfpgan":
@@ -76,7 +88,7 @@ def enhancer_generator_no_len(images, method="gfpgan", bg_upsampler="realesrgan"
             import warnings
 
             warnings.warn(
-                "The unoptimized RealESRGAN is slow on CPU. We do not use it. "
+                message="The unoptimized RealESRGAN is slow on CPU. We do not use it. "
                 "If you really want to use it, please modify the corresponding codes."
             )
             bg_upsampler = None
@@ -105,12 +117,12 @@ def enhancer_generator_no_len(images, method="gfpgan", bg_upsampler="realesrgan"
         bg_upsampler = None
 
     # determine model paths
-    model_path = os.path.join("gfpgan/weights", model_name + ".pth")
+    model_path = path.join("gfpgan/weights", model_name + ".pth")
 
-    if not os.path.isfile(model_path):
-        model_path = os.path.join("checkpoints", model_name + ".pth")
+    if not path.isfile(model_path):
+        model_path = path.join("checkpoints", model_name + ".pth")
 
-    if not os.path.isfile(model_path):
+    if not path.isfile(model_path):
         # download pre-trained models from url
         model_path = url
 
