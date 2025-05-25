@@ -38,7 +38,10 @@ def check_package_installed(package_name: str) -> bool:
 
 
 def frames_to_video(
-    input_path: str, audio_path: str, output_path: str, fps: int = 25
+    input_path: str,
+    audio_path: str,
+    output_path: str,
+    fps: int = 25,
 ) -> None:
     image_files: list[str] = [
         path.join(input_path, img) for img in sorted(listdir(path=input_path))
@@ -366,15 +369,6 @@ def generate_video(
             "Error: Input image or audio file is empty. Please check and upload both files."
         )
 
-    model_mapping = {
-        "mfcc_pose_only": "ckpt/stage2_pose_only_mfcc.ckpt",
-        "mfcc_full_control": "ckpt/stage2_more_controllable_mfcc.ckpt",
-        "hubert_audio_only": "ckpt/stage2_audio_only_hubert.ckpt",
-        "hubert_pose_only": "ckpt/stage2_pose_only_hubert.ckpt",
-        "hubert_full_control": "ckpt/stage2_full_control_hubert.ckpt",
-    }
-
-    stage2_checkpoint_path = model_mapping.get(infer_type, "default_checkpoint.ckpt")
     try:
         args = argparse.Namespace(
             infer_type=infer_type,
@@ -383,7 +377,9 @@ def generate_video(
             test_hubert_path="",
             result_path="./results/",
             stage1_checkpoint_path="ckpt/stage1.ckpt",
-            stage2_checkpoint_path=stage2_checkpoint_path,
+            stage2_checkpoint_path=model_mapping.get(
+                infer_type, "default_checkpoint.ckpt"
+            ),
             seed=seed,
             control_flag=True,
             pose_yaw=pose_yaw,

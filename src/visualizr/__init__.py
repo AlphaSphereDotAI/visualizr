@@ -4,6 +4,7 @@ from pathlib import Path
 from warnings import filterwarnings
 
 from dotenv import load_dotenv
+from huggingface_hub import snapshot_download
 from loguru import logger
 from torch import cuda
 
@@ -26,11 +27,13 @@ CURRENT_DATE: str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 BASE_DIR: Path = Path.cwd()
 RESULTS_DIR: Path = BASE_DIR / "results"
 LOG_DIR: Path = BASE_DIR / "logs"
+CHECKPOINT_DIR: Path = BASE_DIR / "ckpts"
 AUDIO_FILE_PATH: Path = RESULTS_DIR / f"{CURRENT_DATE}.wav"
 LOG_FILE_PATH: Path = LOG_DIR / f"{CURRENT_DATE}.log"
 
 RESULTS_DIR.mkdir(exist_ok=True)
 LOG_DIR.mkdir(exist_ok=True)
+CHECKPOINT_DIR.mkdir(exist_ok=True)
 
 CUDA_AVAILABLE: bool = cuda.is_available()
 logger.add(
@@ -45,6 +48,7 @@ logger.info(f"Results directory: {RESULTS_DIR}")
 logger.info(f"Log directory: {LOG_DIR}")
 logger.info(f"Audio file path: {AUDIO_FILE_PATH}")
 logger.info(f"Log file path: {LOG_FILE_PATH}")
+logger.info(f"Checkpoint path: {CHECKPOINT_DIR}")
 
 default_values: dict[str, int | float] = {
     "pose_yaw": 0.0,
@@ -55,10 +59,17 @@ default_values: dict[str, int | float] = {
     "step_T": 50,
     "seed": 0,
 }
+
 model_mapping: dict[str, str] = {
-    "mfcc_pose_only": "ckpt/stage2_pose_only_mfcc.ckpt",
-    "mfcc_full_control": "ckpt/stage2_more_controllable_mfcc.ckpt",
-    "hubert_audio_only": "ckpt/stage2_audio_only_hubert.ckpt",
-    "hubert_pose_only": "ckpt/stage2_pose_only_hubert.ckpt",
-    "hubert_full_control": "ckpt/stage2_full_control_hubert.ckpt",
+    "mfcc_pose_only": f"{CHECKPOINT_DIR}/stage2_pose_only_mfcc.ckpt",
+    "mfcc_full_control": f"{CHECKPOINT_DIR}/stage2_more_controllable_mfcc.ckpt",
+    "hubert_audio_only": f"{CHECKPOINT_DIR}/stage2_audio_only_hubert.ckpt",
+    "hubert_pose_only": f"{CHECKPOINT_DIR}/stage2_pose_only_hubert.ckpt",
+    "hubert_full_control": f"{CHECKPOINT_DIR}/stage2_full_control_hubert.ckpt",
 }
+
+snapshot_download(
+    repo_id="taocode/anitalker_ckpts",
+    local_dir=CHECKPOINT_DIR,
+    repo_type="model",
+)
