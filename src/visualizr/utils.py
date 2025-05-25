@@ -370,7 +370,7 @@ def generate_video(
         )
 
     try:
-        args = argparse.Namespace(
+        args: Namespace = argparse.Namespace(
             infer_type=infer_type,
             test_image_path=uploaded_img,
             test_audio_path=uploaded_audio,
