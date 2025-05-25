@@ -376,7 +376,7 @@ def generate_video(
             test_audio_path=uploaded_audio,
             test_hubert_path="",
             result_path="./results/",
-            stage1_checkpoint_path="ckpt/stage1.ckpt",
+            stage1_checkpoint_path="ckpts/stage1.ckpt",
             stage2_checkpoint_path=model_mapping.get(
                 infer_type, "default_checkpoint.ckpt"
             ),
