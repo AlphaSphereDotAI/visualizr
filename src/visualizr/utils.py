@@ -180,7 +180,7 @@ def main(args):
             if not check_package_installed("transformers"):
                 print("Please install transformers module first.")
                 exit(0)
-            hubert_model_path = "ckpt/chinese-hubert-large"
+            hubert_model_path = "ckpts/chinese-hubert-large"
             if not path.exists(hubert_model_path):
                 print("Please download the hubert weight into the ckpts path first.")
                 exit(0)
