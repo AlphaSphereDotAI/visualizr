@@ -1,0 +1,12 @@
+**/__pycache__/
+**.dccache
+**.env
+.mypy_cache/
+.ruff_cache/
+.venv/
+logs/
+results/
+ckpts/
+Anitalker/
+src/visualizr/requirements.txt
+ckpt/

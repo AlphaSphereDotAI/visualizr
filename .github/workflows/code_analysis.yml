@@ -1,14 +1,20 @@
-name: Code Analysis
+name: Trunk Code Quality
 on:
   push:
-  workflow_dispatch:
-permissions:
-  contents: read
+  pull_request:
+permissions: read-all
+concurrency:
+  group: ${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
 jobs:
-  ruff:
+  trunk:
+    name: Trunk Code Quality
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
     steps:
-      - name: Checkout Actions Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
       - name: Install uv
         uses: astral-sh/setup-uv@v6
@@ -18,32 +24,9 @@ jobs:
           cache-dependency-glob: "uv.lock"
           activate-environment: true
       - name: Install the project
-        if: steps.uv.outputs.cache-hit != 'true'
         run: uv sync --frozen
-      - name: Run Ruff
-        run: uv run ruff check .
-  ty:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Actions Repository
-        uses: actions/checkout@v4
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
-        id: uv
+      - name: Trunk Code Quality
+        uses: trunk-io/trunk-action@v1
         with:
-          enable-cache: true
-          cache-dependency-glob: "uv.lock"
-          activate-environment: true
-      - name: Install the project
-        if: steps.uv.outputs.cache-hit != 'true'
-        run: uv sync --frozen
-      - name: Analysing the code with Ty
-        run: uv run ty check
-  dockerfile:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Actions Repository
-        uses: actions/checkout@v4
-      - uses: hadolint/hadolint-action@v3.1.0
-        with:
-          config: ./.github/hadolint.yml
+          check-mode: all
+          arguments: --github-annotate-new-only=false
