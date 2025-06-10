@@ -2,7 +2,7 @@
 // For more customization options, see https://containers.dev/implementors/json_reference
 {
   "name": "Default",
-  "image": "ubuntu:latest",
+  "image": "ghcr.io/astral-sh/uv:debian",
   "mounts": [
     {
       "source": "uv",
