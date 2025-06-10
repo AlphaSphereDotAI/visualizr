@@ -24,7 +24,7 @@ def app_block() -> Blocks:
         Markdown(value="# AniTalker")
         with Row():
             with Column():
-                uploaded_img = Image(type="filepath", label="Reference Image")
+                uploaded_img: Image = Image(type="filepath", label="Reference Image")
                 uploaded_audio = Audio(
                     type="filepath", label="Input Audio", show_download_button=True
                 )
