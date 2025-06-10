@@ -2,7 +2,7 @@
 // For more customization options, see https://containers.dev/implementors/json_reference
 {
   "name": "Default",
-  "image": "ghcr.io/astral-sh/uv:debian",
+  "image": "ubuntu:latest",
   "mounts": [
     {
       "source": "uv",
@@ -10,7 +10,8 @@
       "type": "volume"
     }
   ],
-  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y gcc build-essential && uv sync",
+  "onCreateCommand": "apt-get update && apt-get install -y gcc build-essential",
+  "postCreateCommand": "uv sync",
   "customizations": {
     // Configure JetBrains IDE-specific properties
     "jetbrains": {
