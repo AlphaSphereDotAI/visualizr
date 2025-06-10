@@ -186,9 +186,9 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
         # override the style if given
         style = style or res.style
 
-        assert (y is not None) == (
-            self.conf.num_classes is not None
-        ), "must specify y if and only if the model is class-conditional"
+        assert (y is not None) == (self.conf.num_classes is not None), (
+            "must specify y if and only if the model is class-conditional"
+        )
 
         if self.conf.num_classes is not None:
             raise NotImplementedError()

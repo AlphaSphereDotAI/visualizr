@@ -301,9 +301,9 @@ class BeatGANsUNetModel(nn.Module):
         :param y: an [N] Tensor of labels, if class-conditional.
         :return: an [N x C x ...] Tensor of outputs.
         """
-        assert (y is not None) == (
-            self.conf.num_classes is not None
-        ), "must specify y if and only if the model is class-conditional"
+        assert (y is not None) == (self.conf.num_classes is not None), (
+            "must specify y if and only if the model is class-conditional"
+        )
 
         # hs = []
         hs = [[] for _ in range(len(self.conf.channel_mult))]
