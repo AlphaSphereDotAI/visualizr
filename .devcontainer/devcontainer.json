@@ -10,8 +10,7 @@
       "type": "volume"
     }
   ],
-  "onCreateCommand": "apt-get update && apt-get install -y gcc build-essential",
-  "postCreateCommand": "uv sync",
+  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y gcc build-essential && uv sync",
   "customizations": {
     // Configure JetBrains IDE-specific properties
     "jetbrains": {
