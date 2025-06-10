@@ -14,6 +14,7 @@
     "torchvision>=0.21.0",
     "tqdm>=4.67.1",
     "transformers>=4.52.2",
+    "uv-build>=0.7.12",
   ]
   description="Video Generator part of the Chatacter Backend"
   name="visualizr"

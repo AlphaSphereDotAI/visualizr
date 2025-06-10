@@ -3,14 +3,14 @@ import shutil
 import uuid
 
 import cv2
-from numpy import dtype, float32, generic, ndarray, number
+from numpy import dtype, generic, ndarray
 
 
 def load_video_to_cv2(
     input_path: str,
 ) -> list[ndarray[tuple[float, float, float], dtype[generic]]]:
     video_stream = cv2.VideoCapture(filename=input_path)
-    fps: float = video_stream.get(propId=cv2.CAP_PROP_FPS)
+    video_stream.get(propId=cv2.CAP_PROP_FPS)
     full_frames: list[ndarray[tuple[float, float, float], dtype[generic]]] = []
     while 1:
         video_result: tuple[

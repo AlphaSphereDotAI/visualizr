@@ -78,5 +78,6 @@ jobs:
         id: create_release
         env:
           GH_TOKEN: ${{ github.token }}
-        # trunk-ignore(yamllint/line-length)
-        run: gh release create ${{ needs.details.outputs.tag_name }} dist/* --title ${{ needs.details.outputs.tag_name }} --generate-notes
+        run:
+          gh release create ${{ needs.details.outputs.tag_name }} dist/* --title
+          ${{ needs.details.outputs.tag_name }} --generate-notes

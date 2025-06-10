@@ -33,8 +33,12 @@ jobs:
       - name: Add to git credentials
         run: git config --global credential.helper store
       - name: Login to HuggingFace Hub
-        run: uv run huggingface-cli login --add-to-git-credential --token ${{ secrets.HF_TOKEN }}
+        run:
+          uv run huggingface-cli login --add-to-git-credential --token ${{
+          secrets.HF_TOKEN }}
       - name: Check if logged in
         run: uv run huggingface-cli whoami
       - name: Upload
-        run: uv run huggingface-cli upload AlphaSphereDotAI/Visualizr . . --repo-type space
+        run:
+          uv run huggingface-cli upload AlphaSphereDotAI/Visualizr . .
+          --repo-type space

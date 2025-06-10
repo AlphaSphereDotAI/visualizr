@@ -30,12 +30,12 @@ LOG_DIR: Path = BASE_DIR / "logs"
 CHECKPOINT_DIR: Path = BASE_DIR / "ckpts"
 AUDIO_FILE_PATH: Path = RESULTS_DIR / f"{CURRENT_DATE}.wav"
 LOG_FILE_PATH: Path = LOG_DIR / f"{CURRENT_DATE}.log"
+CUDA_AVAILABLE: bool = cuda.is_available()
 
 RESULTS_DIR.mkdir(exist_ok=True)
 LOG_DIR.mkdir(exist_ok=True)
 CHECKPOINT_DIR.mkdir(exist_ok=True)
 
-CUDA_AVAILABLE: bool = cuda.is_available()
 logger.add(
     sink=LOG_FILE_PATH,
     format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}",
@@ -46,19 +46,7 @@ logger.info(f"Current date: {CURRENT_DATE}")
 logger.info(f"Base directory: {BASE_DIR}")
 logger.info(f"Results directory: {RESULTS_DIR}")
 logger.info(f"Log directory: {LOG_DIR}")
-logger.info(f"Audio file path: {AUDIO_FILE_PATH}")
-logger.info(f"Log file path: {LOG_FILE_PATH}")
-logger.info(f"Checkpoint path: {CHECKPOINT_DIR}")
-
-default_values: dict[str, int | float] = {
-    "pose_yaw": 0.0,
-    "pose_pitch": 0.0,
-    "pose_roll": 0.0,
-    "face_location": 0.5,
-    "face_scale": 0.5,
-    "step_T": 50,
-    "seed": 0,
-}
+logger.info(f"Checkpoint directory: {CHECKPOINT_DIR}")
 
 model_mapping: dict[str, str] = {
     "mfcc_pose_only": f"{CHECKPOINT_DIR}/stage2_pose_only_mfcc.ckpt",

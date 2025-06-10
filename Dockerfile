@@ -1,35 +1,46 @@
-FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+FROM python:3.10 AS builder
 
-ENV UV_COMPILE_BYTECODE=1 \
-    UV_NO_CACHE=1 \
-    UV_SYSTEM_PYTHON=1 \
-    UV_FROZEN=1 \
-    PATH="/root/.local/bin:$PATH" \
-    GRADIO_SERVER_PORT=7860 \
-    GRADIO_SERVER_NAME=0.0.0.0
+SHELL ["/bin/bash", "-c"]
 
-RUN groupadd visualizr && \
-    useradd -g visualizr -s /bin/bash -d /app visualizr && \
-    mkdir -p /app/ckpts && \
-    uv tool install --quiet huggingface-hub[cli] && \
-    huggingface-cli download taocode/anitalker_ckpts --quiet --local-dir /app/ckpts && \
-    uv tool uninstall --quiet huggingface-hub
+ENV UV_LINK_MODE=copy \
+    UV_COMPILE_BYTECODE=1 \
+    UV_PYTHON_DOWNLOADS=0
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /app
 
-RUN --mount=type=bind,source=uv.lock,target=uv.lock \
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     --mount=type=bind,source=README.md,target=README.md \
-    --mount=type=bind,source=src,target=/app/src \
-    uv export --no-hashes --no-editable --no-dev --quiet -o pylock.toml && \
-    uv pip sync pylock.toml
+    uv sync --no-install-project --no-dev --locked --no-editable
 
-RUN chown -R visualizr:visualizr /app
+COPY . /app
 
-COPY --chown=visualizr:visualizr . /app
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --no-dev --locked --no-editable
 
-USER visualizr
+FROM python:3.10-slim AS production
+
+SHELL ["/bin/bash", "-c"]
+
+ENV GRADIO_SERVER_PORT=7860 \
+    GRADIO_SERVER_NAME=0.0.0.0
+
+RUN groupadd app && \
+    useradd -m -g app -s /bin/bash app && \
+    apt-get update -qq && \
+    apt-get install -qq -y --no-install-recommends espeak-ng ffmpeg && \
+    apt-get clean -qq && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /home/app
+
+COPY --from=builder --chown=app:app /app/.venv /app/.venv
+
+USER app
 
 EXPOSE ${GRADIO_SERVER_PORT}
 
-CMD ["python", "src/visualizr"]
+CMD ["/app/.venv/bin/vocalizr"]

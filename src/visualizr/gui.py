@@ -14,7 +14,7 @@ from gradio import (
     Video,
 )
 
-from visualizr import default_values
+from visualizr.settings import DefaultValues
 from visualizr.utils import generate_video
 
 
@@ -49,43 +49,43 @@ def app_block() -> Blocks:
             face_sr = Checkbox(
                 label="Enable Face Super-Resolution (512*512)", value=False
             )
-            seed = Number(label="Seed", value=default_values["seed"])
+            seed = Number(label="Seed", value=DefaultValues().seed)
             pose_yaw = Slider(
                 label="pose_yaw",
                 minimum=-1,
                 maximum=1,
-                value=default_values["pose_yaw"],
+                value=DefaultValues().pose_yaw,
             )
             pose_pitch = Slider(
                 label="pose_pitch",
                 minimum=-1,
                 maximum=1,
-                value=default_values["pose_pitch"],
+                value=DefaultValues().pose_pitch,
             )
             pose_roll = Slider(
                 label="pose_roll",
                 minimum=-1,
                 maximum=1,
-                value=default_values["pose_roll"],
+                value=DefaultValues().pose_roll,
             )
             face_location = Slider(
                 label="face_location",
                 minimum=0,
                 maximum=1,
-                value=default_values["face_location"],
+                value=DefaultValues().face_location,
             )
             face_scale = Slider(
                 label="face_scale",
                 minimum=0,
                 maximum=1,
-                value=default_values["face_scale"],
+                value=DefaultValues().face_scale,
             )
-            step_T = Slider(
+            step_t = Slider(
                 label="step_T",
                 minimum=1,
                 maximum=100,
                 step=1,
-                value=default_values["step_T"],
+                value=DefaultValues().step_T,
             )
 
         generate_button.click(
@@ -99,7 +99,7 @@ def app_block() -> Blocks:
                 pose_roll,
                 face_location,
                 face_scale,
-                step_T,
+                step_t,
                 face_sr,
                 seed,
             ],

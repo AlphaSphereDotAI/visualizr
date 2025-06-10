@@ -1,5 +1,3 @@
-from argparse import ArgumentParser, Namespace
-
 from gradio import Blocks
 
 from visualizr import DEBUG, SERVER_NAME, SERVER_PORT

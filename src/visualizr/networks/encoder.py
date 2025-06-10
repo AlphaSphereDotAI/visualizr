@@ -4,6 +4,8 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
+from visualizr import logger
+
 
 def fused_leaky_relu(input, bias, negative_slope=0.2, scale=2**0.5):
     return F.leaky_relu(input + bias, negative_slope) * scale
@@ -285,7 +287,7 @@ class EncoderApp(nn.Module):
         self.fusion_type = fusion_type
         assert self.fusion_type == "weighted_sum"
         if self.fusion_type == "weighted_sum":
-            print(f"HAL layer is enabled!")
+            logger.info("HAL layer is enabled!")
             self.adaptive_pool = nn.AdaptiveAvgPool2d((1, 1))
             self.fc1 = EqualLinear(64, 512)
             self.fc2 = EqualLinear(128, 512)

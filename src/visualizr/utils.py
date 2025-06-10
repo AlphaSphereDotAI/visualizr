@@ -1,6 +1,5 @@
 import argparse
 import shutil
-import sys
 import time
 from argparse import Namespace
 from importlib.util import find_spec
@@ -19,16 +18,12 @@ from moviepy.editor import (
 )
 from moviepy.video.compositing.CompositeVideoClip import CompositeVideoClip
 from moviepy.video.VideoClip import VideoClip
-from numpy import asarray, float32, transpose
-from numpy.typing import NDArray
 from PIL import Image
 from torch import Tensor
 from torchvision import transforms
 from tqdm import tqdm
-from transformers.models.hubert.modeling_hubert import HubertModel
 
 from visualizr import model_mapping
-from visualizr.config import TrainConfig
 from visualizr.experiment import LitModel
 from visualizr.LIA_Model import LIA_Model
 from visualizr.templates import ffhq256_autoenc

@@ -3,12 +3,9 @@ Various utilities for neural networks.
 """
 
 import math
-from enum import Enum
-from typing import Optional
 
 import torch as th
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.utils.checkpoint
 
 
