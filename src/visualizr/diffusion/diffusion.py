@@ -95,9 +95,7 @@ class SpacedDiffusionBeatGans(GaussianDiffusionBeatGans):
         conf.betas = np.array(new_betas)
         super().__init__(conf)
 
-    def p_mean_variance(
-        self, model: Model, *args, **kwargs
-    ):  # pylint: disable=signature-differs
+    def p_mean_variance(self, model: Model, *args, **kwargs):
         return super().p_mean_variance(self._wrap_model(model), *args, **kwargs)
 
     def training_losses(
