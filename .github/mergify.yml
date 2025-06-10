@@ -4,16 +4,14 @@ pull_request_rules:
       - merged
     actions:
       comment:
-        message:
-          Thank you for your contribution @{{author}}! Your pull request has
-          been merged.
+        message: Thank you for your contribution @{{author}}! Your pull request has been merged.
   - name: Comment if there is a conflict
     conditions:
       - conflict
     actions:
       comment:
         message: Hi @{{author}}, Your PR is in conflict and cannot be merged.
-  - name: Automatic update the pull requests
+  - name: Automatic update of the pull requests
     conditions:
       - base = main
     actions:
@@ -21,6 +19,7 @@ pull_request_rules:
   - name: Automatically queue valid Bot PRs
     conditions:
       - author != MH0386
+      - check-success = Check Dependency Compatibility
     actions:
       queue:
   - name: Add a queue label when PR is queued
@@ -32,9 +31,7 @@ pull_request_rules:
         toggle:
           - merge-queued
   - name: Notify when a PR is removed from the queue
-    description:
-      Notify the PR author when its pull request is removed from the merge
-      queue.
+    description: Notify the PR author when its pull request is removed from the merge queue.
     conditions:
       - queue-dequeue-reason != none
       - queue-dequeue-reason != pr-merged
@@ -54,10 +51,10 @@ queue_rules:
     queue_conditions:
       - and:
           - "check-success = DeepSource: Secrets"
-          - "check-success = DeepSource: Dart Analyze"
-          - check-success = CodeRabbit
+          - "check-success = DeepSource: Python"
           - check-success = CodeFactor
           - check-success = GitGuardian Security Checks
           - check-success = SonarCloud
           - check-success = Trunk Check
-          - check-success = Flutter Dependency Consistency
+          - check-success = Check Dependency Compatibility
+          - check-success = CodeRabbit
