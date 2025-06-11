@@ -72,8 +72,8 @@ def saved_image(img_tensor: Tensor, img_path: str) -> None:
 
 
 def main(args):
-    frames_result_saved_path = path.join(args.result_path, "frames")
-    makedirs(frames_result_saved_path, exist_ok=True)
+    FRAMES_RESULT_SAVED_PATH = path.join(args.result_path, "frames")
+    makedirs(FRAMES_RESULT_SAVED_PATH, exist_ok=True)
     test_image_name = path.splitext(path.basename(args.test_image_path))[0]
     audio_name = path.splitext(path.basename(args.test_audio_path))[0]
     predicted_video_256_path = path.join(
@@ -299,7 +299,7 @@ def main(args):
         ori_img_recon = ori_img_recon.clamp(-1, 1)
         wav_pred = (ori_img_recon.detach() + 1) / 2
         saved_image(
-            wav_pred, path.join(frames_result_saved_path, "%06d.png" % (pred_index))
+            wav_pred, path.join(FRAMES_RESULT_SAVED_PATH, "%06d.png" % (pred_index))
         )
     # ==============================================
 
@@ -307,10 +307,10 @@ def main(args):
     print(f"Renderer Model: {execution_time:.2f} Seconds")
 
     frames_to_video(
-        frames_result_saved_path, args.test_audio_path, predicted_video_256_path
+        FRAMES_RESULT_SAVED_PATH, args.test_audio_path, predicted_video_256_path
     )
 
-    shutil.rmtree(frames_result_saved_path)
+    shutil.rmtree(FRAMES_RESULT_SAVED_PATH)
 
     # Enhancer
     if args.face_sr and check_package_installed("gfpgan"):
