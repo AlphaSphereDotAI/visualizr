@@ -18,9 +18,11 @@ from moviepy.editor import (
 )
 from moviepy.video.compositing.CompositeVideoClip import CompositeVideoClip
 from moviepy.video.VideoClip import VideoClip
+from numpy import ndarray
 from PIL import Image
+from PIL.ImageFile import ImageFile
 from torch import Tensor
-from torchvision import transforms
+from torchvision.transforms import ToPILImage
 from tqdm import tqdm
 
 from visualizr import model_mapping
@@ -30,14 +32,11 @@ from visualizr.templates import ffhq256_autoenc
 
 
 def check_package_installed(package_name: str) -> bool:
-    return find_spec(name=package_name) is not None
+    return find_spec(package_name) is not None
 
 
 def frames_to_video(
-    input_path: str,
-    audio_path: str,
-    output_path: str,
-    fps: int = 25,
+    input_path: str, audio_path: str, output_path: str, fps: int = 25
 ) -> None:
     image_files: list[str] = [
         path.join(input_path, img) for img in sorted(listdir(path=input_path))
@@ -46,35 +45,29 @@ def frames_to_video(
     video: VideoClip | CompositeVideoClip = concatenate_videoclips(
         clips=clips, method="compose"
     )
-
-    audio = AudioFileClip(filename=audio_path)
-    final_video = video.set_audio(audio)
-    final_video.write_videofile(
-        output_path,
-        fps=fps,
-        codec="libx264",
-        audio_codec="aac",
-    )
+    audio: AudioFileClip = AudioFileClip(audio_path)
+    video.set_audio(audio)
+    video.write_videofile(output_path, fps, "libx264", "aac")
 
 
-def load_image(filename, size):
-    img = Image.open(filename).convert("RGB")
-    img = img.resize((size, size))
-    img = np.asarray(img)
-    img = np.transpose(img, (2, 0, 1))  # 3 x 256 x 256
-    return img / 255.0
+def load_image(filename: str, size: int) -> np.ndarray:
+    img: ImageFile = Image.open(filename).convert("RGB")
+    img_resized: ImageFile = img.resize((size, size))
+    img_np: ndarray = np.asarray(img_resized)
+    img_transposed: ndarray = np.transpose(img_np, (2, 0, 1))  # 3 x 256 x 256
+    return img_transposed / 255.0
 
 
-def img_preprocessing(img_path, size):
-    img = load_image(img_path, size)  # [0, 1]
-    img = torch.from_numpy(img).unsqueeze(0).float()  # [0, 1]
-    imgs_norm = (img - 0.5) * 2.0  # [-1, 1]
-    return imgs_norm
+def img_preprocessing(img_path: str, size: int) -> Tensor:
+    img_np: ndarray = load_image(img_path, size)  # [0, 1]
+    img: Tensor = torch.from_numpy(img_np).unsqueeze(0).float()  # [0, 1]
+    normalized_image: Tensor = (img - 0.5) * 2.0  # [-1, 1]
+    return normalized_image
 
 
-def saved_image(img_tensor, img_path):
-    toPIL = transforms.ToPILImage()
-    img = toPIL(img_tensor.detach().cpu().squeeze(0))
+def saved_image(img_tensor: Tensor, img_path: str) -> None:
+    pil_image_converter: ToPILImage = ToPILImage()
+    img = pil_image_converter(img_tensor.detach().cpu().squeeze(0))
     img.save(img_path)
 
 
@@ -126,25 +119,23 @@ def main(args):
         print("Type NOT Found!")
         exit(0)
 
-    if not path.exists(path=args.test_image_path):
+    if not path.exists(args.test_image_path):
         print(f"{args.test_image_path} does not exist!")
         exit(0)
 
-    if not path.exists(path=args.test_audio_path):
+    if not path.exists(args.test_audio_path):
         print(f"{args.test_audio_path} does not exist!")
         exit(0)
 
-    img_source = img_preprocessing(
-        img_path=args.test_image_path, size=args.image_size
-    ).to(device="cuda")
+    img_source = img_preprocessing(args.test_image_path, args.image_size).to("cuda")
     one_shot_lia_start, one_shot_lia_direction, feats = lia.get_start_direction_code(
-        x_start=img_source, x_target=img_source, x_face=img_source, x_aug=img_source
+        img_source, img_source, img_source, img_source
     )
 
     # ======Loading Stage 2 model=========
-    model = LitModel(conf=conf)
-    state = torch.load(f=args.stage2_checkpoint_path, map_location="cpu")
-    model.load_state_dict(state_dict=state, strict=True)
+    model = LitModel(conf)
+    state = torch.load(args.stage2_checkpoint_path, map_location="cpu")
+    model.load_state_dict(state, strict=True)
     model.ema_model.eval()
     model.ema_model.to("cuda")
     # =================================
@@ -165,17 +156,17 @@ def main(args):
             int(frame_end * 4),
         )  # The video frame is fixed to 25 hz and the audio is fixed to 100 hz
 
-        audio_driven: Tensor = (
+        audio_driven = (
             torch.Tensor(audio_driven_obj[audio_start:audio_end, :])
-            .unsqueeze(dim=0)
+            .unsqueeze(0)
             .float()
-            .to(device="cuda")
+            .to("cuda")
         )
 
     elif conf.infer_type.startswith("hubert"):
         # Hubert features
-        if not path.exists(path=args.test_hubert_path):
-            if not check_package_installed(package_name="transformers"):
+        if not path.exists(args.test_hubert_path):
+            if not check_package_installed("transformers"):
                 print("Please install transformers module first.")
                 exit(0)
             hubert_model_path = "ckpts/chinese-hubert-large"
@@ -191,11 +182,9 @@ def main(args):
             # load hubert model
             from transformers import HubertModel, Wav2Vec2FeatureExtractor
 
-            audio_model: HubertModel = HubertModel.from_pretrained(
-                pretrained_model_name_or_path=hubert_model_path
-            ).to("cuda")
+            audio_model = HubertModel.from_pretrained(hubert_model_path).to("cuda")
             feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained(
-                pretrained_model_name_or_path=hubert_model_path
+                hubert_model_path
             )
             audio_model.feature_extractor._freeze_parameters()
             audio_model.eval()
@@ -239,7 +228,7 @@ def main(args):
             torch.Tensor(audio_driven_obj[:, audio_start:audio_end, :])
             .unsqueeze(0)
             .float()
-            .to(device="cuda")
+            .to("cuda")
         )
     # ============================
 
@@ -278,9 +267,9 @@ def main(args):
     face_scae_signal = torch.zeros(1, frame_end, 1).to("cuda") + args.face_scale
     # ===========================================
 
-    start_time: float = time.time()
+    start_time = time.time()
 
-    # ======Diffusion Denosing Process=========
+    # ======Diffusion De-nosing Process=========
     generated_directions = model.render(
         one_shot_lia_start,
         one_shot_lia_direction,
@@ -310,50 +299,41 @@ def main(args):
         ori_img_recon = ori_img_recon.clamp(-1, 1)
         wav_pred = (ori_img_recon.detach() + 1) / 2
         saved_image(
-            img_tensor=wav_pred,
-            img_path=path.join(frames_result_saved_path, "%06d.png" % (pred_index)),
+            wav_pred, path.join(frames_result_saved_path, "%06d.png" % (pred_index))
         )
     # ==============================================
 
-    execution_time: float = time.time() - start_time
+    execution_time = time.time() - start_time
     print(f"Renderer Model: {execution_time:.2f} Seconds")
 
     frames_to_video(
-        input_path=frames_result_saved_path,
-        audio_path=args.test_audio_path,
-        output_path=predicted_video_256_path,
+        frames_result_saved_path, args.test_audio_path, predicted_video_256_path
     )
 
-    shutil.rmtree(path=frames_result_saved_path)
+    shutil.rmtree(frames_result_saved_path)
 
     # Enhancer
-    if args.face_sr and check_package_installed(package_name="gfpgan"):
+    if args.face_sr and check_package_installed("gfpgan"):
         from imageio import mimsave
 
         from visualizr.face_sr.face_enhancer import enhancer_list
 
         # Super-resolution
         mimsave(
-            uri=f"{predicted_video_512_path}.tmp.mp4",
-            ims=enhancer_list(
-                images=predicted_video_256_path,
-                method="gfpgan",
-                bg_upsampler=None,
-            ),
+            predicted_video_512_path + ".tmp.mp4",
+            enhancer_list(predicted_video_256_path, method="gfpgan", bg_upsampler=None),
             fps=25.0,
         )
 
         # Merge audio and video
-        video_clip = VideoFileClip(filename=f"{predicted_video_512_path}.tmp.mp4")
-        audio_clip = AudioFileClip(filename=predicted_video_256_path)
+        video_clip = VideoFileClip(predicted_video_512_path + ".tmp.mp4")
+        audio_clip = AudioFileClip(predicted_video_256_path)
         final_clip = video_clip.set_audio(audio_clip)
         final_clip.write_videofile(
-            predicted_video_512_path,
-            codec="libx264",
-            audio_codec="aac",
+            predicted_video_512_path, codec="libx264", audio_codec="aac"
         )
 
-        remove(path=f"{predicted_video_512_path}.tmp.mp4")
+        remove(predicted_video_512_path + ".tmp.mp4")
 
     if args.face_sr:
         return predicted_video_256_path, predicted_video_512_path
@@ -370,13 +350,13 @@ def generate_video(
     pose_roll: float,
     face_location: float,
     face_scale: float,
-    step_T: int,
+    step_t: int,
     face_sr: bool,
     seed: int,
 ):
     if not uploaded_img or not uploaded_audio:
         return None, Markdown(
-            value="Error: Input image or audio file is empty. Please check and upload both files."
+            "Error: Input image or audio file is empty. Please check and upload both files."
         )
 
     try:
@@ -388,8 +368,7 @@ def generate_video(
             result_path="./results/",
             stage1_checkpoint_path="ckpts/stage1.ckpt",
             stage2_checkpoint_path=model_mapping.get(
-                infer_type,
-                "default_checkpoint.ckpt",
+                infer_type, "default_checkpoint.ckpt"
             ),
             seed=seed,
             control_flag=True,
@@ -399,7 +378,7 @@ def generate_video(
             face_location=face_location,
             pose_driven_path="not_supported_in_this_mode",
             face_scale=face_scale,
-            step_T=step_T,
+            step_T=step_t,
             image_size=256,
             device="cuda",
             motion_dim=20,

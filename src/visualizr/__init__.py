@@ -1,21 +1,23 @@
 from datetime import datetime
 from os import getenv
 from pathlib import Path
-from warnings import filterwarnings
 
 from dotenv import load_dotenv
 from huggingface_hub import snapshot_download
 from loguru import logger
 from torch import cuda
 
-filterwarnings(
-    action="ignore",
-    message="dropout option adds dropout after all but last recurrent layer",
-)
-filterwarnings(
-    action="ignore",
-    message="`torch.nn.utils.weight_norm` is deprecated",
-)
+# from warnings import filterwarnings
+
+
+# filterwarnings(
+#     action="ignore",
+#     message="dropout option adds dropout after all but last recurrent layer",
+# )
+# filterwarnings(
+#     action="ignore",
+#     message="`torch.nn.utils.weight_norm` is deprecated",
+# )
 
 load_dotenv()
 
@@ -57,7 +59,5 @@ model_mapping: dict[str, str] = {
 }
 
 snapshot_download(
-    repo_id="taocode/anitalker_ckpts",
-    local_dir=CHECKPOINT_DIR,
-    repo_type="model",
+    repo_id="taocode/anitalker_ckpts", local_dir=CHECKPOINT_DIR, repo_type="model"
 )
