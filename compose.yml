@@ -1,0 +1,26 @@
+name: Visualizr
+services:
+  visualizr:
+    image: ghcr.io/alphaspheredotai/visualizr:latest
+    ports:
+      - "7860:7860"
+    volumes:
+      - visualizr_venv:/venv
+    restart: on-failure:3
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7860"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+      start_interval: 5s
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+volumes:
+  visualizr_venv:
+    name: Python Environment for Visualizr
