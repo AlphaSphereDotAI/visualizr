@@ -26,7 +26,7 @@ from torch import Tensor
 from torchvision.transforms import ToPILImage
 from tqdm import tqdm
 
-from visualizr import FRAMES_RESULT_SAVED_PATH, model_mapping
+from visualizr import FRAMES_RESULT_SAVED_PATH, RESULTS_DIR, model_mapping
 from visualizr.experiment import LitModel
 from visualizr.LIA_Model import LIA_Model
 from visualizr.templates import ffhq256_autoenc
@@ -81,7 +81,6 @@ def main(infer_type,
          image_path,
          test_audio_path,
          test_hubert_path="",
-         result_path="./results/",
          stage1_checkpoint_path="ckpts/stage1.ckpt",
          stage2_checkpoint_path=model_mapping.get(
                 infer_type, "default_checkpoint.ckpt"
@@ -92,7 +91,6 @@ def main(infer_type,
          pose_pitch,
          pose_roll,
          face_location,
-         pose_driven_path="not_supported_in_this_mode",
          face_scale,
          step_T,
          image_size=256,
@@ -100,15 +98,11 @@ def main(infer_type,
          motion_dim=20,
          decoder_layers=2,
          face_sr):
+    
     image_name: str = Path(image_path).stem
     audio_name: str = Path(test_audio_path).stem
-
-    predicted_video_256_path = path.join(
-        result_path, f"{image_name}-{audio_name}.mp4"
-    )
-    predicted_video_512_path = path.join(
-        result_path, f"{image_name}-{audio_name}_SR.mp4"
-    )
+    predicted_video_256_path: Path = RESULTS_DIR/ f"{image_name}-{audio_name}.mp4"
+    predicted_video_512_path: Path = RESULTS_DIR/ f"{image_name}-{audio_name}_SR.mp4"
 
     # ======Loading Stage 1 model=========
     lia: LIA_Model = load_stage1_model(motion_dim, stage1_checkpoint_path)
@@ -120,29 +114,30 @@ def main(infer_type,
     conf.infer_type = infer_type
     conf.motion_dim = motion_dim
 
-    if infer_type == "mfcc_full_control":
-        conf.face_location = True
-        conf.face_scale = True
-        conf.mfcc = True
-    elif infer_type == "mfcc_pose_only":
-        conf.face_location = False
-        conf.face_scale = False
-        conf.mfcc = True
-    elif infer_type == "hubert_pose_only":
-        conf.face_location = False
-        conf.face_scale = False
-        conf.mfcc = False
-    elif infer_type == "hubert_audio_only":
-        conf.face_location = False
-        conf.face_scale = False
-        conf.mfcc = False
-    elif infer_type == "hubert_full_control":
-        conf.face_location = True
-        conf.face_scale = True
-        conf.mfcc = False
-    else:
-        print("Type NOT Found!")
-        exit(0)
+    match infer_type:
+        case "mfcc_full_control":
+            conf.face_location = True
+            conf.face_scale = True
+            conf.mfcc = True
+        case "mfcc_pose_only":
+            conf.face_location = False
+            conf.face_scale = False
+            conf.mfcc = True
+        case "hubert_pose_only":
+            conf.face_location = False
+            conf.face_scale = False
+            conf.mfcc = False
+        case "hubert_audio_only":
+            conf.face_location = False
+            conf.face_scale = False
+            conf.mfcc = False
+        case "hubert_full_control":
+            conf.face_location = True
+            conf.face_scale = True
+            conf.mfcc = False
+        case _:
+            print("Type NOT Found!")
+            exit(0)
 
     if not path.exists(image_path):
         print(f"{image_path} does not exist!")
@@ -261,30 +256,10 @@ def main(infer_type,
     noisyT = torch.randn((1, frame_end, motion_dim)).to("cuda")
 
     # ======Inputs for Attribute Control=========
-    if path.exists(pose_driven_path):
-        pose_obj = np.load(pose_driven_path)
-
-        if len(pose_obj.shape) != 2:
-            print("please check your pose information. The shape must be like (T, 3).")
-            exit(0)
-        if pose_obj.shape[1] != 3:
-            print("please check your pose information. The shape must be like (T, 3).")
-            exit(0)
-
-        if pose_obj.shape[0] >= frame_end:
-            pose_obj = pose_obj[:frame_end, :]
-        else:
-            padding = np.tile(pose_obj[-1, :], (frame_end - pose_obj.shape[0], 1))
-            pose_obj = np.vstack((pose_obj, padding))
-
-        pose_signal = (
-            torch.Tensor(pose_obj).unsqueeze(0).to("cuda") / 90
-        )  # 90 is for normalization here
-    else:
-        yaw_signal = torch.zeros(1, frame_end, 1).to("cuda") + pose_yaw
-        pitch_signal = torch.zeros(1, frame_end, 1).to("cuda") + pose_pitch
-        roll_signal = torch.zeros(1, frame_end, 1).to("cuda") + pose_roll
-        pose_signal = torch.cat((yaw_signal, pitch_signal, roll_signal), dim=-1)
+    yaw_signal = torch.zeros(1, frame_end, 1).to("cuda") + pose_yaw
+    pitch_signal = torch.zeros(1, frame_end, 1).to("cuda") + pose_pitch
+    roll_signal = torch.zeros(1, frame_end, 1).to("cuda") + pose_roll
+    pose_signal = torch.cat((yaw_signal, pitch_signal, roll_signal), dim=-1)
 
     pose_signal = torch.clamp(pose_signal, -1, 1)
 
