@@ -35,6 +35,7 @@ LOG_FILE_PATH: Path = LOG_DIR / f"{CURRENT_DATE}.log"
 CUDA_AVAILABLE: bool = cuda.is_available()
 
 FRAMES_RESULT_SAVED_PATH: Path = RESULTS_DIR / "frames"
+STAGE_1_CHECKPOINT_PATH = CHECKPOINT_DIR / "stage1.ckpt"
 
 RESULTS_DIR.mkdir(exist_ok=True)
 LOG_DIR.mkdir(exist_ok=True)

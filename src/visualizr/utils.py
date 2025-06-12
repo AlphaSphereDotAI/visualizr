@@ -1,10 +1,9 @@
-import argparse
 import shutil
-import time
-from argparse import Namespace
 from importlib.util import find_spec
-from os import listdir, makedirs, path, remove
+from os import listdir, path, remove
 from pathlib import Path
+from time import time
+from typing import Any
 
 import librosa
 import numpy as np
@@ -19,14 +18,20 @@ from moviepy.editor import (
 )
 from moviepy.video.compositing.CompositeVideoClip import CompositeVideoClip
 from moviepy.video.VideoClip import VideoClip
-from numpy import ndarray
+from numpy import dtype, generic, ndarray
 from PIL import Image
 from PIL.ImageFile import ImageFile
 from torch import Tensor
 from torchvision.transforms import ToPILImage
 from tqdm import tqdm
 
-from visualizr import FRAMES_RESULT_SAVED_PATH, RESULTS_DIR, model_mapping
+from visualizr import (
+    FRAMES_RESULT_SAVED_PATH,
+    RESULTS_DIR,
+    STAGE_1_CHECKPOINT_PATH,
+    model_mapping,
+)
+from visualizr.config import TrainConfig
 from visualizr.experiment import LitModel
 from visualizr.LIA_Model import LIA_Model
 from visualizr.templates import ffhq256_autoenc
@@ -71,44 +76,52 @@ def saved_image(img_tensor: Tensor, img_path: str) -> None:
     img = pil_image_converter(img_tensor.detach().cpu().squeeze(0))
     img.save(img_path)
 
-def load_stage1_model(motion_dim: int, stage1_checkpoint_path: str) -> LIA_Model:
+
+def load_stage_1_model(motion_dim: int) -> LIA_Model:
     lia: LIA_Model = LIA_Model(motion_dim=motion_dim, fusion_type="weighted_sum")
-    lia.load_lightning_model(stage1_checkpoint_path)
+    lia.load_lightning_model(STAGE_1_CHECKPOINT_PATH)
     lia.to("cuda")
     return lia
 
-def main(infer_type,
-         image_path,
-         test_audio_path,
-         test_hubert_path="",
-         stage1_checkpoint_path="ckpts/stage1.ckpt",
-         stage2_checkpoint_path=model_mapping.get(
-                infer_type, "default_checkpoint.ckpt"
-            ),
-         seed,
-         control_flag=True,
-         pose_yaw: float,
-         pose_pitch,
-         pose_roll,
-         face_location,
-         face_scale,
-         step_T,
-         image_size=256,
-         device="cuda",
-         motion_dim=20,
-         decoder_layers=2,
-         face_sr):
-    
+
+def load_stage_2_model(conf: TrainConfig, stage2_checkpoint_path: str) -> LitModel:
+    model = LitModel(conf)
+    state = torch.load(stage2_checkpoint_path, map_location="cpu")
+    model.load_state_dict(state, strict=True)
+    model.ema_model.eval()
+    model.ema_model.to("cuda")
+    return model
+
+
+def main(
+    infer_type,
+    image_path,
+    test_audio_path,
+    face_sr,
+    pose_yaw: float,
+    pose_pitch,
+    pose_roll,
+    face_location,
+    face_scale,
+    step_T,
+    seed,
+    stage2_checkpoint_path,
+    test_hubert_path="",
+    control_flag=True,
+    image_size=256,
+    motion_dim=20,
+    decoder_layers=2,
+):
     image_name: str = Path(image_path).stem
     audio_name: str = Path(test_audio_path).stem
-    predicted_video_256_path: Path = RESULTS_DIR/ f"{image_name}-{audio_name}.mp4"
-    predicted_video_512_path: Path = RESULTS_DIR/ f"{image_name}-{audio_name}_SR.mp4"
+    predicted_video_256_path: Path = RESULTS_DIR / f"{image_name}-{audio_name}.mp4"
+    predicted_video_512_path: Path = RESULTS_DIR / f"{image_name}-{audio_name}_SR.mp4"
 
     # ======Loading Stage 1 model=========
-    lia: LIA_Model = load_stage1_model(motion_dim, stage1_checkpoint_path)
+    lia: LIA_Model = load_stage_1_model(motion_dim)
     # ============================
 
-    conf = ffhq256_autoenc()
+    conf: TrainConfig = ffhq256_autoenc()
     conf.seed = seed
     conf.decoder_layers = decoder_layers
     conf.infer_type = infer_type
@@ -142,22 +155,17 @@ def main(infer_type,
     if not path.exists(image_path):
         print(f"{image_path} does not exist!")
         exit(0)
-
     if not path.exists(test_audio_path):
         print(f"{test_audio_path} does not exist!")
         exit(0)
 
-    img_source = img_preprocessing(image_path, image_size).to("cuda")
+    img_source: Tensor = img_preprocessing(image_path, image_size).to("cuda")
     one_shot_lia_start, one_shot_lia_direction, feats = lia.get_start_direction_code(
         img_source, img_source, img_source, img_source
     )
 
     # ======Loading Stage 2 model=========
-    model = LitModel(conf)
-    state = torch.load(stage2_checkpoint_path, map_location="cpu")
-    model.load_state_dict(state, strict=True)
-    model.ema_model.eval()
-    model.ema_model.to("cuda")
+    model = load_stage_2_model(conf, stage2_checkpoint_path)
     # =================================
 
     # ======Audio Input=========
@@ -169,7 +177,7 @@ def main(infer_type,
         )
         d_mfcc_feat = python_speech_features.base.delta(input_values, 1)
         d_mfcc_feat2 = python_speech_features.base.delta(input_values, 2)
-        audio_driven_obj = np.hstack((input_values, d_mfcc_feat, d_mfcc_feat2))
+        audio_driven_obj: ndarray = np.hstack((input_values, d_mfcc_feat, d_mfcc_feat2))
         frame_start, frame_end = 0, int(audio_driven_obj.shape[0] / 4)
         audio_start, audio_end = (
             int(frame_start * 4),
@@ -197,7 +205,7 @@ def main(infer_type,
                 "You did not extract the audio features in advance, extracting online now, which will increase processing delay"
             )
 
-            start_time = time.time()
+            start_time = time()
 
             # load hubert model
             from transformers import HubertModel, Wav2Vec2FeatureExtractor
@@ -228,9 +236,9 @@ def main(infer_type,
                 ws_feat_obj = np.squeeze(ws_feat_obj, 1)
                 ws_feat_obj = np.pad(
                     ws_feat_obj, ((0, 0), (0, 1), (0, 0)), "edge"
-                )  # align the audio length with video frame
+                )  # align the audio length with the video frame
 
-            execution_time = time.time() - start_time
+            execution_time = time() - start_time
             print(f"Extraction Audio Feature: {execution_time:.2f} Seconds")
 
             audio_driven_obj = ws_feat_obj
@@ -242,7 +250,7 @@ def main(infer_type,
         audio_start, audio_end = (
             int(frame_start * 2),
             int(frame_end * 2),
-        )  # The video frame is fixed to 25 hz and the audio is fixed to 50 hz
+        )  # The video frame is fixed to 25 hz, and the audio is fixed to 50 hz
 
         audio_driven = (
             torch.Tensor(audio_driven_obj[:, audio_start:audio_end, :])
@@ -253,7 +261,7 @@ def main(infer_type,
     # ============================
 
     # Diffusion Noise
-    noisyT = torch.randn((1, frame_end, motion_dim)).to("cuda")
+    noisy_t = torch.randn((1, frame_end, motion_dim)).to("cuda")
 
     # ======Inputs for Attribute Control=========
     yaw_signal = torch.zeros(1, frame_end, 1).to("cuda") + pose_yaw
@@ -264,31 +272,29 @@ def main(infer_type,
     pose_signal = torch.clamp(pose_signal, -1, 1)
 
     face_location_signal = torch.zeros(1, frame_end, 1).to("cuda") + face_location
-    face_scae_signal = torch.zeros(1, frame_end, 1).to("cuda") + face_scale
+    face_scale_tensor = torch.zeros(1, frame_end, 1).to("cuda") + face_scale
     # ===========================================
-
-    start_time = time.time()
-
+    start_time = time()
     # ======Diffusion De-nosing Process=========
     generated_directions = model.render(
         one_shot_lia_start,
         one_shot_lia_direction,
         audio_driven,
         face_location_signal,
-        face_scae_signal,
+        face_scale_tensor,
         pose_signal,
-        noisyT,
+        noisy_t,
         step_T,
         control_flag=control_flag,
     )
     # =========================================
 
-    execution_time = time.time() - start_time
+    execution_time = time() - start_time
     print(f"Motion Diffusion Model: {execution_time:.2f} Seconds")
 
     generated_directions = generated_directions.detach().cpu().numpy()
 
-    start_time = time.time()
+    start_time = time()
     # ======Rendering images frame-by-frame=========
     for pred_index in tqdm(range(generated_directions.shape[1])):
         ori_img_recon = lia.render(
@@ -299,15 +305,17 @@ def main(infer_type,
         ori_img_recon = ori_img_recon.clamp(-1, 1)
         wav_pred = (ori_img_recon.detach() + 1) / 2
         saved_image(
-            wav_pred, path.join(FRAMES_RESULT_SAVED_PATH, "%06d.png" % (pred_index))
+            wav_pred, path.join(FRAMES_RESULT_SAVED_PATH, "%06d.png" % pred_index)
         )
     # ==============================================
 
-    execution_time = time.time() - start_time
+    execution_time = time() - start_time
     print(f"Renderer Model: {execution_time:.2f} Seconds")
 
     frames_to_video(
-        FRAMES_RESULT_SAVED_PATH, test_audio_path, predicted_video_256_path
+        FRAMES_RESULT_SAVED_PATH.as_posix(),
+        test_audio_path,
+        predicted_video_256_path.as_posix(),
     )
 
     shutil.rmtree(FRAMES_RESULT_SAVED_PATH)
@@ -358,15 +366,16 @@ def generate_video(
         return None, Markdown(
             "Error: Input image or audio file is empty. Please check and upload both files."
         )
-
+    stage2_checkpoint_path = model_mapping.get(infer_type, "default_checkpoint.ckpt")
+    # main(infer_type=infer_type, image_path=uploaded_img,
+    #      test_audio_path=uploaded_audio,
+    #      stage2_checkpoint_path=model_mapping.get(
+    #          infer_type, "default_checkpoint.ckpt"
+    #      ), seed=seed, pose_yaw=pose_yaw, pose_pitch=pose_pitch,
+    #      pose_roll=pose_roll, face_location=face_location,
+    #      face_scale=face_scale, step_T=step_t, face_sr=face_sr,)
     try:
-        output_256_video_path, output_512_video_path = main(infer_type=infer_type, image_path=uploaded_img,
-                                                            test_audio_path=uploaded_audio,
-                                                            stage2_checkpoint_path=model_mapping.get(
-                                                                infer_type, "default_checkpoint.ckpt"
-                                                            ), seed=seed, pose_yaw=pose_yaw, pose_pitch=pose_pitch,
-                                                            pose_roll=pose_roll, face_location=face_location,
-                                                            face_scale=face_scale, step_T=step_t, face_sr=face_sr,)
+        output_256_video_path, output_512_video_path = main()
 
         if not path.exists(path=output_256_video_path):
             return None, Markdown(
