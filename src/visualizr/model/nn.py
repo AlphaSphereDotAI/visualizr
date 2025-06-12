@@ -1,7 +1,3 @@
-"""
-Various utilities for neural networks.
-"""
-
 import math
 
 import torch as th
@@ -59,9 +55,9 @@ def update_ema(target_params, source_params, rate=0.99):
     Update target parameters to be closer to those of source parameters using
     an exponential moving average.
 
-    :param target_params: the target parameter sequence.
-    :param source_params: the source parameter sequence.
-    :param rate: the EMA rate (closer to 1 means slower).
+    :param target_params: The target parameter sequence.
+    :param source_params: The source parameter sequence.
+    :param rate: The EMA rate (closer to 1 means slower).
     """
     for targ, src in zip(target_params, source_params):
         targ.detach().mul_(rate).add_(src, alpha=1 - rate)
@@ -96,8 +92,8 @@ def normalization(channels):
     """
     Make a standard normalization layer.
 
-    :param channels: number of input channels.
-    :return: an nn.Module for normalization.
+    :param channels: Number of input channels.
+    :return: A nn.Module for normalization.
     """
     return GroupNorm32(min(32, channels), channels)
 
@@ -106,11 +102,11 @@ def timestep_embedding(timesteps, dim, max_period=10000):
     """
     Create sinusoidal timestep embeddings.
 
-    :param timesteps: a 1-D Tensor of N indices, one per batch element.
+    :param timesteps: A 1-D Tensor of N indices, one per batch element.
                       These may be fractional.
-    :param dim: the dimension of the output.
-    :param max_period: controls the minimum frequency of the embeddings.
-    :return: an [N x dim] Tensor of positional embeddings.
+    :param dim: The dimension of the output.
+    :param max_period: Controls the minimum frequency of the embeddings.
+    :return: An [N x dim] Tensor of positional embeddings.
     """
     half = dim // 2
     freqs = th.exp(

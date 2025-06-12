@@ -8,6 +8,7 @@
     "moviepy>=1.0.3",
     "python-speech-features>=0.6",
     "pytorch-lightning>=2.5.1.post0",
+    "realesrgan>=0.3.0",
     "torch>=2.6.0",
     "torchaudio>=2.6.0",
     "torchmetrics>=1.7.1",

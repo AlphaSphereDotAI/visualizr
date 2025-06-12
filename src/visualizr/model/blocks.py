@@ -1,15 +1,17 @@
 import math
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from enum import Enum
 from numbers import Number
+from typing import Optional
 
+import numpy as np
 import torch as th
 import torch.nn.functional as F
-from choices import *
-from config_base import BaseConfig
 from torch import nn
 
-from .nn import (
+from visualizr.config_base import BaseConfig
+from visualizr.model.nn import (
     avg_pool_nd,
     conv_nd,
     linear,
@@ -23,7 +25,7 @@ class ScaleAt(Enum):
     after_norm = "afternorm"
 
 
-class TimestepBlock(nn.Module):
+class TimestepBlock(nn.Module, ABC):
     """
     Any module where forward() takes timestep embeddings as a second argument.
     """
@@ -55,10 +57,13 @@ class ResBlockConfig(BaseConfig):
     channels: int
     emb_channels: int
     dropout: float
-    out_channels: int = None
+    out_channels: Optional[int]
+    lateral_channels: Optional[int]
+    # number of encoders' output channels
+    cond_emb_channels: Optional[int]
     # condition the resblock with time (and encoder's output)
     use_condition: bool = True
-    # whether to use 3x3 conv for skip path when the channels aren't matched
+    # whether to use 3x3 conv for a skip path when the channels aren't matched
     use_conv: bool = False
     # dimension of conv (always 2 = 2d)
     dims: int = 2
@@ -66,15 +71,12 @@ class ResBlockConfig(BaseConfig):
     use_checkpoint: bool = False
     up: bool = False
     down: bool = False
-    # whether to condition with both time & encoder's output
+    # whether to condition with both time and encoder's output
     two_cond: bool = False
-    # number of encoders' output channels
-    cond_emb_channels: int = None
     # suggest: False
     has_lateral: bool = False
-    lateral_channels: int = None
-    # whether to init the convolution with zero weights
-    # this is default from BeatGANs and seems to help learning
+    # if to init the convolution with zero weights,
+    # this is defaulted from BeatGANs and seems to help learning
     use_zero_module: bool = True
 
     def __post_init__(self):
@@ -89,7 +91,7 @@ class ResBlock(TimestepBlock):
     """
     A residual block that can optionally change the number of channels.
 
-    total layers:
+    Total layers:
         in_layers
         - norm
         - act
@@ -150,7 +152,7 @@ class ResBlock(TimestepBlock):
                 conf.dims, conf.out_channels, conf.out_channels, 3, padding=1
             )
             if conf.use_zero_module:
-                # zere out the weights
+                # zero out the weights,
                 # it seems to help training
                 conv = zero_module(conv)
 
@@ -173,7 +175,7 @@ class ResBlock(TimestepBlock):
         # SKIP LAYERS
         #############################
         if conf.out_channels == conf.channels:
-            # cannot be used with gatedconv, also gatedconv is alsways used as the first block
+            # cannot be used with gatedconv, also gatedconv is always used as the first block
             self.skip_connection = nn.Identity()
         else:
             if conf.use_conv:
@@ -230,7 +232,7 @@ class ResBlock(TimestepBlock):
             h = self.in_layers(x)
 
         if self.conf.use_condition:
-            # it's possible that the network may not receieve the time emb
+            # it's possible that the network may not receive the time emb
             # this happens with autoenc and setting the time_at
             if emb is not None:
                 emb_out = self.emb_layers(emb).type(h.dtype)
@@ -238,8 +240,8 @@ class ResBlock(TimestepBlock):
                 emb_out = None
 
             if self.conf.two_cond:
-                # it's possible that the network is two_cond
-                # but it doesn't get the second condition
+                # it's possible that the network is two_cond,
+                # but it doesn't get the second condition,
                 # in which case, we ignore the second condition
                 # and treat as if the network has one condition
                 if cond is None:
@@ -259,9 +261,7 @@ class ResBlock(TimestepBlock):
                 emb=emb_out,
                 cond=cond_out,
                 layers=self.out_layers,
-                scale_bias=1,
                 in_channels=self.conf.out_channels,
-                up_down_layer=None,
             )
 
         return self.skip_connection(x) + h
@@ -286,7 +286,6 @@ def apply_conditions(
     two_cond = emb is not None and cond is not None
 
     if emb is not None:
-        # adjusting shapes
         while len(emb.shape) < len(h.shape):
             emb = emb[..., None]
 
@@ -297,7 +296,7 @@ def apply_conditions(
         # time first
         scale_shifts = [emb, cond]
     else:
-        # "cond" is not used with single cond mode
+        # "cond" is not used with a single cond mode
         scale_shifts = [emb]
 
     # support scale, shift or shift only
@@ -321,17 +320,17 @@ def apply_conditions(
         # a list
         biases = scale_bias
 
-    # default, the scale & shift are applied after the group norm but BEFORE SiLU
+    # by default, the scale and shift are applied after the group norm but BEFORE SiLU
     pre_layers, post_layers = layers[0], layers[1:]
 
-    # spilt the post layer to be able to scale up or down before conv
-    # post layers will contain only the conv
+    # spilt the post-layer to be able to scale up or down before conv
+    # post-layers will contain only the conv
     mid_layers, post_layers = post_layers[:-2], post_layers[-2:]
 
     h = pre_layers(h)
     # scale and shift for each condition
     for i, (scale, shift) in enumerate(scale_shifts):
-        # if scale is None, it indicates that the condition is not provided
+        # if a scale is None, it indicates that the condition is not provided
         if scale is not None:
             h = h * (biases[i] + scale)
             if shift is not None:
@@ -349,9 +348,9 @@ class Upsample(nn.Module):
     """
     An upsampling layer with an optional convolution.
 
-    :param channels: channels in the inputs and outputs.
-    :param use_conv: a bool determining if a convolution is applied.
-    :param dims: determines if the signal is 1D, 2D, or 3D. If 3D, then
+    :param channels: Channels in the inputs and outputs.
+    :param use_conv: A bool determining if a convolution is applied.
+    :param dims: Determines if the signal is 1D, 2D, or 3D. If 3D, then
                  upsampling occurs in the inner-two dimensions.
     """
 
@@ -367,11 +366,9 @@ class Upsample(nn.Module):
     def forward(self, x):
         assert x.shape[1] == self.channels
         if self.dims == 3:
-            x = F.interpolate(
-                x, (x.shape[2], x.shape[3] * 2, x.shape[4] * 2), mode="nearest"
-            )
+            x = F.interpolate(x, (x.shape[2], x.shape[3] * 2, x.shape[4] * 2))
         else:
-            x = F.interpolate(x, scale_factor=2, mode="nearest")
+            x = F.interpolate(x, scale_factor=2)
         if self.use_conv:
             x = self.conv(x)
         return x
@@ -381,9 +378,9 @@ class Downsample(nn.Module):
     """
     A downsampling layer with an optional convolution.
 
-    :param channels: channels in the inputs and outputs.
-    :param use_conv: a bool determining if a convolution is applied.
-    :param dims: determines if the signal is 1D, 2D, or 3D. If 3D, then
+    :param channels: Channels in the inputs and outputs.
+    :param use_conv: A bool determining if a convolution is applied.
+    :param dims: Determines if the signal is 1D, 2D, or 3D. If 3D, then
                  downsampling occurs in the inner-two dimensions.
     """
 
@@ -410,9 +407,6 @@ class Downsample(nn.Module):
 class AttentionBlock(nn.Module):
     """
     An attention block that allows spatial positions to attend to each other.
-
-    Originally ported from here, but adapted to the N-d case.
-    https://github.com/hojonathanho/diffusion/blob/1e0dceb3b3495bbe19116a5e1b3596cd0706c543/diffusion_tf/models/unet.py#L66.
     """
 
     def __init__(
@@ -428,9 +422,9 @@ class AttentionBlock(nn.Module):
         if num_head_channels == -1:
             self.num_heads = num_heads
         else:
-            assert channels % num_head_channels == 0, (
-                f"q,k,v channels {channels} is not divisible by num_head_channels {num_head_channels}"
-            )
+            assert (
+                channels % num_head_channels == 0
+            ), f"q,k,v channels {channels} is not divisible by num_head_channels {num_head_channels}"
             self.num_heads = channels // num_head_channels
         self.use_checkpoint = use_checkpoint
         self.norm = normalization(channels)
@@ -464,12 +458,12 @@ def count_flops_attn(model, _x, y):
         macs, params = thop.profile(
             model,
             inputs=(inputs, timestamps),
-            custom_ops={QKVAttention: QKVAttention.count_flops},
+            custom_ops={QKVAttention: QKVAttention.count_flops}
         )
     """
     b, c, *spatial = y[0].shape
     num_spatial = int(np.prod(spatial))
-    # We perform two matmuls with the same number of ops.
+    # We perform two matmul with the same number of ops.
     # The first computes the weight matrix, the second computes
     # the combination of the value vectors.
     matmul_ops = 2 * b * (num_spatial**2) * c
@@ -478,7 +472,7 @@ def count_flops_attn(model, _x, y):
 
 class QKVAttentionLegacy(nn.Module):
     """
-    A module which performs QKV attention. Matches legacy QKVAttention + input/ouput heads shaping
+    A module which performs QKV attention. Matches legacy QKVAttention + input/output heads shaping
     """
 
     def __init__(self, n_heads):
@@ -489,7 +483,7 @@ class QKVAttentionLegacy(nn.Module):
         """
         Apply QKV attention.
 
-        :param qkv: an [N x (H * 3 * C) x T] tensor of Qs, Ks, and Vs.
+        :param qkv: An [N x (H * 3 * C) x T] tensor of Qs, Ks, and Vs.
         :return: an [N x (H * C) x T] tensor after attention.
         """
         bs, width, length = qkv.shape
@@ -499,7 +493,7 @@ class QKVAttentionLegacy(nn.Module):
         scale = 1 / math.sqrt(math.sqrt(ch))
         weight = th.einsum(
             "bct,bcs->bts", q * scale, k * scale
-        )  # More stable with f16 than dividing afterwards
+        )  # More stable with f16 than dividing afterward
         weight = th.softmax(weight.float(), dim=-1).type(weight.dtype)
         a = th.einsum("bts,bcs->bct", weight, v)
         return a.reshape(bs, -1, length)
@@ -522,7 +516,7 @@ class QKVAttention(nn.Module):
         """
         Apply QKV attention.
 
-        :param qkv: an [N x (3 * H * C) x T] tensor of Qs, Ks, and Vs.
+        :param qkv: An [N x (3 * H * C) x T] tensor of Qs, Ks, and Vs.
         :return: an [N x (H * C) x T] tensor after attention.
         """
         bs, width, length = qkv.shape
@@ -534,7 +528,7 @@ class QKVAttention(nn.Module):
             "bct,bcs->bts",
             (q * scale).view(bs * self.n_heads, ch, length),
             (k * scale).view(bs * self.n_heads, ch, length),
-        )  # More stable with f16 than dividing afterwards
+        )  # More stable with f16 than dividing afterward
         weight = th.softmax(weight.float(), dim=-1).type(weight.dtype)
         a = th.einsum("bts,bcs->bct", weight, v.reshape(bs * self.n_heads, ch, length))
         return a.reshape(bs, -1, length)
@@ -569,7 +563,7 @@ class AttentionPool2d(nn.Module):
         b, c, *_spatial = x.shape
         x = x.reshape(b, c, -1)  # NC(HW)
         x = th.cat([x.mean(dim=-1, keepdim=True), x], dim=-1)  # NC(HW+1)
-        x = x + self.positional_embedding[None, :, :].to(x.dtype)  # NC(HW+1)
+        x += self.positional_embedding[None, :, :].to(x.dtype)  # NC(HW+1)
         x = self.qkv_proj(x)
         x = self.attention(x)
         x = self.c_proj(x)

@@ -1,28 +1,28 @@
-"""
-This code started out as a PyTorch port of Ho et al's diffusion models:
-https://github.com/hojonathanho/diffusion/blob/1e0dceb3b3495bbe19116a5e1b3596cd0706c543/diffusion_tf/diffusion_utils_2.py
-
-Docstrings have been added, as well as DDIM sampling and a new collection of beta schedules.
-"""
-
 import math
 from dataclasses import dataclass
 from typing import NamedTuple, Tuple
 
 import numpy as np
 import torch as th
+from torch import Tensor
 from torch.cuda.amp import autocast
 
-from visualizr.choices import *
+from visualizr.choices import (
+    GenerativeType,
+    LossType,
+    ModelMeanType,
+    ModelType,
+    ModelVarType,
+)
 from visualizr.config_base import BaseConfig
-from visualizr.model import *
+from visualizr.model import Model
 from visualizr.model.nn import mean_flat
 
 
 @dataclass
 class GaussianDiffusionBeatGansConfig(BaseConfig):
     gen_type: GenerativeType
-    betas: Tuple[float]
+    betas: Tuple[float] | np.ndarray
     model_type: ModelType
     model_mean_type: ModelMeanType
     model_var_type: ModelVarType
@@ -35,22 +35,26 @@ class GaussianDiffusionBeatGansConfig(BaseConfig):
         return GaussianDiffusionBeatGans(self)
 
 
+# noinspection PyIncorrectDocstring
 class GaussianDiffusionBeatGans:
     """
     Utilities for training and sampling diffusion models.
 
-    Ported directly from here, and then adapted over time to further experimentation.
+    Ported directly from here and then adapted over time to further experimentation.
     https://github.com/hojonathanho/diffusion/blob/1e0dceb3b3495bbe19116a5e1b3596cd0706c543/diffusion_tf/diffusion_utils_2.py#L42
 
-    :param betas: a 1-D numpy array of betas for each diffusion timestep,
+    :param GaussianDiffusionBeatGansConfig conf:
+        `betas`: a 1-D numpy array of betas for each diffusion timestep,
                   starting at T and going to 1.
-    :param model_mean_type: a ModelMeanType determining what the model outputs.
-    :param model_var_type: a ModelVarType determining how variance is output.
-    :param loss_type: a LossType determining the loss function to use.
-    :param rescale_timesteps: if True, pass floating point timesteps into the
+        `model_mean_type`: a ModelMeanType determining what the model outputs.
+        `model_var_type`: a ModelVarType determining how variance is output.
+        `loss_type`: a LossType determining the loss function to use.
+        `rescale_timesteps`: if True, pass floating point timesteps into the
                               model so that they are always scaled like in the
                               original paper (0 to 1000).
     """
+
+    conf: GaussianDiffusionBeatGansConfig
 
     def __init__(self, conf: GaussianDiffusionBeatGansConfig):
         self.conf = conf
@@ -60,7 +64,7 @@ class GaussianDiffusionBeatGans:
         self.rescale_timesteps = conf.rescale_timesteps
 
         # Use float64 for accuracy.
-        betas = np.array(conf.betas, dtype=np.float64)
+        betas = np.array(conf.betas, np.float64)
         self.betas = betas
         assert len(betas.shape) == 1, "betas must be 1-D"
         assert (betas > 0).all() and (betas <= 1).all()
@@ -109,23 +113,17 @@ class GaussianDiffusionBeatGans:
         face_scale: th.Tensor,
         yaw_pitch_roll: th.Tensor,
         t: th.Tensor,
-        model_kwargs=None,
         noise: th.Tensor = None,
     ):
         """
         Compute training losses for a single timestep.
 
-        :param model: the model to evaluate loss on.
-        :param x_start: the [N x C x ...] tensor of inputs.
-        :param t: a batch of timestep indices.
-        :param model_kwargs: if not None, a dict of extra keyword arguments to
-            pass to the model. This can be used for conditioning.
-        :param noise: if specified, the specific Gaussian noise to try to remove.
-        :return: a dict with the key "loss" containing a tensor of shape [N].
+        :param model: The model to evaluate loss on.
+        :param t: A batch of timestep indices.
+        :param noise: If specified, the specific Gaussian noise to try to remove.
+        :return: A dict with the key "loss" containing a tensor of shape [N].
                  Some mean or variance settings may also have other keys.
         """
-        if model_kwargs is None:
-            model_kwargs = {}
         if noise is None:
             noise = th.randn_like(motion_target)
 
@@ -165,7 +163,6 @@ class GaussianDiffusionBeatGans:
             if self.loss_type == LossType.mse:
                 if self.model_mean_type == ModelMeanType.eps:
                     direction_loss = mean_flat((target - predicted_direction) ** 2)
-                    # import pdb;pdb.set_trace()
                     location_loss = mean_flat(
                         (face_location.unsqueeze(-1) - predicted_location) ** 2
                     )
@@ -185,7 +182,7 @@ class GaussianDiffusionBeatGans:
                 raise NotImplementedError()
 
             if "vb" in terms:
-                # if learning the variance also use the vlb loss
+                # if learning the variance, also use the vlb loss
                 terms["loss"] = terms["mse"] + terms["vb"]
             else:
                 terms["loss"] = terms["mse"]
@@ -330,8 +327,10 @@ class GaussianDiffusionBeatGans:
         yaw_pitch_roll = model_kwargs["yaw_pitch_roll"]
         motion_direction_start = model_kwargs["motion_direction_start"]
         control_flag = model_kwargs["control_flag"]
+        model_log_variance = None
+        model_variance = None
 
-        B, C = x.shape[:2]
+        B, _ = x.shape[:2]
         assert t.shape == (B,)
         with autocast(self.conf.fp16):
             model_forward, _, _, _ = model.forward(
@@ -607,7 +606,6 @@ class GaussianDiffusionBeatGans:
             indices = tqdm(indices)
 
         for i in indices:
-            # t = th.tensor([i] * shape[0], device=device)
             t = th.tensor([i] * len(img), device=device)
             with th.no_grad():
                 out = self.p_sample(
@@ -686,14 +684,11 @@ class GaussianDiffusionBeatGans:
         Sample x_{t+1} from the model using DDIM reverse ODE.
         NOTE: never used ?
         """
-        assert eta == 0.0, "Reverse ODE only for deterministic path"
+        assert np.isclose(
+            eta, 0.0, 1e-09, 1e-09
+        ), "Reverse ODE only for deterministic path"
         out = self.p_mean_variance(
-            model,
-            x,
-            t,
-            clip_denoised=clip_denoised,
-            denoised_fn=denoised_fn,
-            model_kwargs=model_kwargs,
+            model, x, t, clip_denoised, denoised_fn, model_kwargs
         )
         # Usually our model outputs epsilon, but we re-derive it
         # in case we used x_start or x_prev prediction.
@@ -870,12 +865,12 @@ class GaussianDiffusionBeatGans:
         out = self.p_mean_variance(
             model, x_t, t, clip_denoised=clip_denoised, model_kwargs=model_kwargs
         )
-        kl = normal_kl(
+        kl: float | Tensor = normal_kl(
             true_mean, true_log_variance_clipped, out["mean"], out["log_variance"]
         )
         kl = mean_flat(kl) / np.log(2.0)
 
-        decoder_nll = -discretized_gaussian_log_likelihood(
+        decoder_nll: Tensor = -discretized_gaussian_log_likelihood(
             x_start, means=out["mean"], log_scales=0.5 * out["log_variance"]
         )
         assert decoder_nll.shape == x_start.shape

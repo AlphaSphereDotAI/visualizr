@@ -32,6 +32,7 @@ from visualizr import (
     RESULTS_DIR,
     STAGE_1_CHECKPOINT_PATH,
     TMP_MP4,
+    logger,
     model_mapping,
 )
 from visualizr.config import TrainConfig
@@ -56,7 +57,7 @@ def frames_to_video(
     )
     audio: AudioFileClip = AudioFileClip(audio_path)
     video.set_audio(audio)
-    video.write_videofile(output_path, fps, "libx264", "aac")
+    video.write_videofile(output_path, fps, "libx264", audio_codec="aac")
 
 
 def load_image(filename: str, size: int) -> np.ndarray:
@@ -81,6 +82,7 @@ def saved_image(img_tensor: Tensor, img_path: str) -> None:
 
 
 def load_stage_1_model() -> LIA_Model:
+    logger.info("Loading stage 1 model... ")
     lia: LIA_Model = LIA_Model(motion_dim=MOTION_DIM, fusion_type="weighted_sum")
     lia.load_lightning_model(STAGE_1_CHECKPOINT_PATH)
     lia.to("cuda")
@@ -88,6 +90,7 @@ def load_stage_1_model() -> LIA_Model:
 
 
 def load_stage_2_model(conf: TrainConfig, stage2_checkpoint_path: str) -> LitModel:
+    logger.info("Loading stage 2 model... ")
     model = LitModel(conf)
     state = torch.load(stage2_checkpoint_path, map_location="cpu")
     model.load_state_dict(state)
@@ -106,12 +109,13 @@ def init_conf(
     ],
     seed: int,
 ) -> TrainConfig:
+    logger.info("Initializing configuration... ")
     conf: TrainConfig = ffhq256_autoenc()
     conf.seed = seed
     conf.decoder_layers = 2
     conf.infer_type = infer_type
     conf.motion_dim = MOTION_DIM
-
+    logger.info(f"infer_type: {infer_type}")
     match infer_type:
         case "mfcc_full_control":
             conf.face_location = True
@@ -322,9 +326,9 @@ def main(
     print(f"Renderer Model: {execution_time:.2f} Seconds")
 
     frames_to_video(
-        FRAMES_RESULT_SAVED_PATH.as_posix(),
+        str(FRAMES_RESULT_SAVED_PATH),
         test_audio_path,
-        predicted_video_256_path.as_posix(),
+        str(predicted_video_256_path),
     )
 
     shutil.rmtree(FRAMES_RESULT_SAVED_PATH)
@@ -381,44 +385,44 @@ def generate_video(
         return None, Markdown(
             "Error: Input image or audio file is empty. Please check and upload both files."
         )
-    try:
-        output_256_video_path, output_512_video_path = main(
+    # try:
+    output_256_video_path, output_512_video_path = main(
+        infer_type,
+        uploaded_img,
+        uploaded_audio,
+        face_sr,
+        pose_yaw,
+        pose_pitch,
+        pose_roll,
+        face_location,
+        face_scale,
+        step_t,
+        seed,
+        model_mapping.get(
             infer_type,
-            uploaded_img,
-            uploaded_audio,
-            face_sr,
-            pose_yaw,
-            pose_pitch,
-            pose_roll,
-            face_location,
-            face_scale,
-            step_t,
-            seed,
-            model_mapping.get(
-                infer_type,
-                "default_checkpoint.ckpt",
-            ),
-        )
+            "default_checkpoint.ckpt",
+        ),
+    )
 
-        if not path.exists(path=output_256_video_path):
-            return None, Markdown(
-                value="Error: Video generation failed. Please check your inputs and try again."
-            )
-        if output_256_video_path == output_512_video_path:
-            return (
-                Video(value=output_256_video_path),
-                None,
-                Markdown(value="Video (256*256 only) generated successfully!"),
-            )
+    if not path.exists(path=output_256_video_path):
+        return None, Markdown(
+            value="Error: Video generation failed. Please check your inputs and try again."
+        )
+    if output_256_video_path == output_512_video_path:
         return (
             Video(value=output_256_video_path),
-            Video(value=output_512_video_path),
-            Markdown(value="Video generated successfully!"),
+            None,
+            Markdown(value="Video (256*256 only) generated successfully!"),
         )
+    return (
+        Video(value=output_256_video_path),
+        Video(value=output_512_video_path),
+        Markdown(value="Video generated successfully!"),
+    )
 
-    except Exception as e:
-        return (
-            None,
-            None,
-            Markdown(value=f"Error: An unexpected error occurred - {str(e)}"),
-        )
+    # except Exception as e:
+    #     return (
+    #         None,
+    #         None,
+    #         Markdown(value=f"Error: An unexpected error occurred - {str(e)}")
+    #     )

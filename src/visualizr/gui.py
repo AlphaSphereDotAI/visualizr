@@ -35,20 +35,19 @@ def app_block() -> Blocks:
 
         generate_button = Button(value="Generate Video")
 
-        with Accordion(label="Configuration", open=True):
+        with Accordion(label="Configuration"):
             infer_type = Dropdown(
                 label="Inference Type",
                 choices=[
-                    "mfcc_pose_only",
                     "mfcc_full_control",
-                    "hubert_audio_only",
+                    "mfcc_pose_only",
                     "hubert_pose_only",
+                    "hubert_audio_only",
+                    "hubert_full_control",
                 ],
                 value="hubert_audio_only",
             )
-            face_sr = Checkbox(
-                label="Enable Face Super-Resolution (512*512)", value=False
-            )
+            face_sr = Checkbox(label="Enable Face Super-Resolution (512*512)")
             seed = Number(label="Seed", value=DefaultValues().seed)
             pose_yaw = Slider(
                 label="pose_yaw",
@@ -69,23 +68,13 @@ def app_block() -> Blocks:
                 value=DefaultValues().pose_roll,
             )
             face_location = Slider(
-                label="face_location",
-                minimum=0,
-                maximum=1,
-                value=DefaultValues().face_location,
+                label="face_location", maximum=1, value=DefaultValues().face_location
             )
             face_scale = Slider(
-                label="face_scale",
-                minimum=0,
-                maximum=1,
-                value=DefaultValues().face_scale,
+                label="face_scale", maximum=1, value=DefaultValues().face_scale
             )
             step_t = Slider(
-                label="step_T",
-                minimum=1,
-                maximum=100,
-                step=1,
-                value=DefaultValues().step_T,
+                label="step_T", minimum=1, step=1, value=DefaultValues().step_T
             )
 
         generate_button.click(

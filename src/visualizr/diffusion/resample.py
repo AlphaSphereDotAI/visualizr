@@ -8,8 +8,8 @@ def create_named_schedule_sampler(name, diffusion):
     """
     Create a ScheduleSampler from a library of pre-defined samplers.
 
-    :param name: the name of the sampler.
-    :param diffusion: the diffusion object to sample for.
+    :param name: The name of the sampler.
+    :param diffusion: The diffusion object to sample for.
     """
     if name == "uniform":
         return UniformSampler(diffusion)
@@ -20,12 +20,12 @@ def create_named_schedule_sampler(name, diffusion):
 class ScheduleSampler(ABC):
     """
     A distribution over timesteps in the diffusion process, intended to reduce
-    variance of the objective.
+    variance of the goal.
 
     By default, samplers perform unbiased importance sampling, in which the
     objective's mean is unchanged.
     However, subclasses may override sample() to change how the resampled
-    terms are reweighted, allowing for actual changes in the objective.
+    terms are reweighted, allowing for actual changes in the goal.
     """
 
     @abstractmethod
@@ -33,16 +33,16 @@ class ScheduleSampler(ABC):
         """
         Get a numpy array of weights, one per diffusion step.
 
-        The weights needn't be normalized, but must be positive.
+        The weights needn't be normalized but must be positive.
         """
 
     def sample(self, batch_size, device):
         """
         Importance-sample timesteps for a batch.
 
-        :param batch_size: the number of timesteps.
-        :param device: the torch device to save to.
-        :return: a tuple (timesteps, weights):
+        :param batch_size: The number of timesteps.
+        :param device: The torch device to save to.
+        :return: A tuple (timesteps, weights):
                  - timesteps: a tensor of timestep indices.
                  - weights: a tensor of weights to scale the resulting losses.
         """

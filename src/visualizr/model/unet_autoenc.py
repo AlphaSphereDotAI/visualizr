@@ -1,21 +1,27 @@
-import torch
-from choices import *
-from torch import Tensor
+from dataclasses import dataclass
+from typing import NamedTuple, Optional
 
-from .latentnet import *
-from .unet import *
+import torch
+from torch import Tensor, nn
+from torch.nn import Linear, Sequential, SiLU
+
+from visualizr.model import BeatGANsUNetConfig, BeatGANsUNetModel
+from visualizr.model.blocks import ResBlock
+from visualizr.model.latentnet import MLPSkipNetConfig
+from visualizr.model.nn import timestep_embedding
+from visualizr.model.unet import BeatGANsEncoderConfig
 
 
 @dataclass
 class BeatGANsAutoencConfig(BeatGANsUNetConfig):
     # number of style channels
     enc_out_channels: int = 512
-    enc_attn_resolutions: Tuple[int] = None
+    enc_attn_resolutions: Optional[tuple[int]] = None
     enc_pool: str = "depthconv"
     enc_num_res_block: int = 2
-    enc_channel_mult: Tuple[int] = None
+    enc_channel_mult: Optional[tuple[int]] = None
     enc_grad_checkpoint: bool = False
-    latent_net_conf: MLPSkipNetConfig = None
+    latent_net_conf: Optional[MLPSkipNetConfig] = None
 
     def make_model(self):
         return BeatGANsAutoencModel(self)
@@ -75,9 +81,9 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
         assert self.conf.is_stochastic
         return torch.randn(n, self.conf.enc_out_channels, device=device)
 
-    def noise_to_cond(self, noise: Tensor):
-        raise NotImplementedError()
-        assert self.conf.noise_net_conf is not None
+    def noise_to_cond(self, noise: Tensor) -> Optional[Tensor]:
+        if not self.conf.noise_net_conf:
+            return None
         return self.noise_net.forward(noise)
 
     def encode(self, x):
@@ -186,14 +192,12 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
         # override the style if given
         style = style or res.style
 
-        assert (y is not None) == (self.conf.num_classes is not None), (
-            "must specify y if and only if the model is class-conditional"
-        )
+        assert (y is not None) == (
+            self.conf.num_classes is not None
+        ), "must specify y if and only if the model is class-conditional"
 
         if self.conf.num_classes is not None:
             raise NotImplementedError()
-            # assert y.shape == (x.shape[0], )
-            # emb = emb + self.label_emb(y)
 
         # where in the model to supply time conditions
         enc_time_emb = emb
@@ -204,7 +208,6 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
         mid_cond_emb = cond_emb
         dec_cond_emb = cond_emb
 
-        # hs = []
         hs = [[] for _ in range(len(self.conf.channel_mult))]
 
         if x is not None:
@@ -213,7 +216,7 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
             # input blocks
             k = 0
             for i in range(len(self.input_num_blocks)):
-                for j in range(self.input_num_blocks[i]):
+                for _ in range(self.input_num_blocks[i]):
                     h = self.input_blocks[k](h, emb=enc_time_emb, cond=enc_cond_emb)
 
                     # print(i, j, h.shape)
@@ -225,22 +228,20 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
             h = self.middle_block(h, emb=mid_time_emb, cond=mid_cond_emb)
         else:
             # no lateral connections
-            # happens when training only the autonecoder
+            # happen when training only the autoencoder
             h = None
             hs = [[] for _ in range(len(self.conf.channel_mult))]
 
         # output blocks
         k = 0
         for i in range(len(self.output_num_blocks)):
-            for j in range(self.output_num_blocks[i]):
+            for _ in range(self.output_num_blocks[i]):
                 # take the lateral connection from the same layer (in reserve)
                 # until there is no more, use None
                 try:
                     lateral = hs[-i - 1].pop()
-                    # print(i, j, lateral.shape)
                 except IndexError:
                     lateral = None
-                    # print(i, j, lateral)
 
                 h = self.output_blocks[k](
                     h, emb=dec_time_emb, cond=dec_cond_emb, lateral=lateral
@@ -269,10 +270,10 @@ class TimeStyleSeperateEmbed(nn.Module):
     # embed only style
     def __init__(self, time_channels, time_out_channels):
         super().__init__()
-        self.time_embed = nn.Sequential(
-            linear(time_channels, time_out_channels),
-            nn.SiLU(),
-            linear(time_out_channels, time_out_channels),
+        self.time_embed = Sequential(
+            Linear(time_channels, time_out_channels),
+            SiLU(),
+            Linear(time_out_channels, time_out_channels),
         )
         self.style = nn.Identity()
 

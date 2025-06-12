@@ -6,17 +6,13 @@ import torch
 from torch import nn
 from torch.nn import init
 
-from visualizr.choices import *
+from visualizr.choices import Activation
 from visualizr.config_base import BaseConfig
-
-from .blocks import *
-from .nn import timestep_embedding
-from .unet import *
+from visualizr.model.nn import timestep_embedding
 
 
 class LatentNetType(Enum):
     none = "none"
-    # injecting inputs into the hidden layers
     skip = "skip"
 
 

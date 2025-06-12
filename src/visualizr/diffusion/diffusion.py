@@ -1,6 +1,14 @@
 from dataclasses import dataclass
+from typing import Any, Optional
 
-from .base import *
+import numpy as np
+from torch import tensor
+
+from visualizr.diffusion.base import (
+    GaussianDiffusionBeatGans,
+    GaussianDiffusionBeatGansConfig,
+)
+from visualizr.model import Model
 
 
 def space_timesteps(num_timesteps, section_counts):
@@ -61,7 +69,12 @@ def space_timesteps(num_timesteps, section_counts):
 
 @dataclass
 class SpacedDiffusionBeatGansConfig(GaussianDiffusionBeatGansConfig):
-    use_timesteps: Tuple[int] = None
+    """
+    :param use_timesteps: a collection (sequence or set) of timesteps from the
+                          original diffusion process to retain.
+    """
+
+    use_timesteps: Optional[tuple[int]] = None
 
     def make_sampler(self):
         return SpacedDiffusionBeatGans(self)
@@ -70,11 +83,11 @@ class SpacedDiffusionBeatGansConfig(GaussianDiffusionBeatGansConfig):
 class SpacedDiffusionBeatGans(GaussianDiffusionBeatGans):
     """
     A diffusion process which can skip steps in a base diffusion process.
-
-    :param use_timesteps: a collection (sequence or set) of timesteps from the
-                          original diffusion process to retain.
-    :param kwargs: the kwargs to create the base diffusion process.
     """
+
+    original_num_steps: int
+    timestep_map: list[Any]
+    use_timesteps: set[int]
 
     def __init__(self, conf: SpacedDiffusionBeatGansConfig):
         self.conf = conf
@@ -98,7 +111,9 @@ class SpacedDiffusionBeatGans(GaussianDiffusionBeatGans):
     def p_mean_variance(self, model: Model, *args, **kwargs):
         return super().p_mean_variance(self._wrap_model(model), *args, **kwargs)
 
-    def training_losses(self, model: Model, *args, **kwargs):  # pylint: disable=signature-differs
+    def training_losses(
+        self, model: Model, *args, **kwargs
+    ):  # pylint: disable=signature-differs
         return super().training_losses(self._wrap_model(model), *args, **kwargs)
 
     def condition_mean(self, cond_fn, *args, **kwargs):
@@ -145,9 +160,8 @@ class _WrappedModel:
         """
         Args:
             t: t's with differrent ranges (can be << T due to smaller eval T) need to be converted to the original t's
-            t_cond: the same as t but can be of different values
         """
-        map_tensor = th.tensor(self.timestep_map, device=t.device, dtype=t.dtype)
+        map_tensor = tensor(self.timestep_map, device=t.device, dtype=t.dtype)
 
         def do(t):
             new_ts = map_tensor[t]

@@ -1,16 +1,10 @@
-# Copyright (C) 2021. Huawei Technologies Co., Ltd. All rights reserved.
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the MIT License.
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# MIT License for more details.
-
 import math
 
 import torch
 from einops import rearrange
-from model.base import BaseModule
+from torch import Tensor
+
+from visualizr.model.base import BaseModule
 
 
 class Mish(BaseModule):
@@ -89,7 +83,7 @@ class LinearAttention(BaseModule):
         self.to_out = torch.nn.Conv2d(hidden_dim, dim, 1)
 
     def forward(self, x):
-        b, c, h, w = x.shape
+        _, _, h, w = x.shape
         qkv = self.to_qkv(x)
         q, k, v = rearrange(
             qkv, "b (qkv heads c) h w -> qkv b heads c (h w)", heads=self.heads, qkv=3
@@ -118,8 +112,8 @@ class SinusoidalPosEmb(BaseModule):
         super(SinusoidalPosEmb, self).__init__()
         self.dim = dim
 
-    def forward(self, x, scale=1000):
-        device = x.device
+    def forward(self, x: Tensor, scale: int = 1000):
+        device: torch.device = x.device
         half_dim = self.dim // 2
         emb = math.log(10000) / (half_dim - 1)
         emb = torch.exp(torch.arange(half_dim, device=device).float() * -emb)
@@ -197,6 +191,7 @@ class GradLogPEstimator2d(BaseModule):
         self.final_conv = torch.nn.Conv2d(dim, 1, 1)
 
     def forward(self, x, mask, mu, t, spk=None):
+        s = None
         if not isinstance(spk, type(None)):
             s = self.spk_mlp(spk)
 
@@ -241,7 +236,9 @@ class GradLogPEstimator2d(BaseModule):
         return (output * mask).squeeze(1)
 
 
-def get_noise(t, beta_init, beta_term, cumulative=False):
+def get_noise(
+    t: torch.Tensor, beta_init: float, beta_term: float, cumulative: bool = False
+) -> torch.Tensor:
     if cumulative:
         noise = beta_init * t + 0.5 * (beta_term - beta_init) * (t**2)
     else:
@@ -280,7 +277,7 @@ class Diffusion(BaseModule):
             1.0 - torch.exp(-0.5 * cum_noise)
         )
         variance = 1.0 - torch.exp(-cum_noise)
-        z = torch.randn(x0.shape, dtype=x0.dtype, device=x0.device, requires_grad=False)
+        z = torch.randn(x0.shape, dtype=x0.dtype, device=x0.device)
         xt = mean + z * torch.sqrt(variance)
         return xt * mask, z * mask
 
@@ -293,14 +290,12 @@ class Diffusion(BaseModule):
                 z.shape[0], dtype=z.dtype, device=z.device
             )
             time = t.unsqueeze(-1).unsqueeze(-1)
-            noise_t = get_noise(time, self.beta_min, self.beta_max, cumulative=False)
+            noise_t = get_noise(time, self.beta_min, self.beta_max)
             if stoc:  # adds stochastic term
                 dxt_det = 0.5 * (mu - xt) - self.estimator(xt, mask, mu, t, spk)
                 dxt_det = dxt_det * noise_t * h
-                dxt_stoc = torch.randn(
-                    z.shape, dtype=z.dtype, device=z.device, requires_grad=False
-                )
-                dxt_stoc = dxt_stoc * torch.sqrt(noise_t * h)
+                dxt_stoc = torch.randn(z.shape, dtype=z.dtype, device=z.device)
+                dxt_stoc *= torch.sqrt(noise_t * h)
                 dxt = dxt_det + dxt_stoc
             else:
                 dxt = 0.5 * (mu - xt - self.estimator(xt, mask, mu, t, spk))
@@ -322,8 +317,6 @@ class Diffusion(BaseModule):
         return loss, xt
 
     def compute_loss(self, x0, mask, mu, spk=None, offset=1e-5):
-        t = torch.rand(
-            x0.shape[0], dtype=x0.dtype, device=x0.device, requires_grad=False
-        )
+        t = torch.rand(x0.shape[0], dtype=x0.dtype, device=x0.device)
         t = torch.clamp(t, offset, 1.0 - offset)
         return self.loss_t(x0, mask, mu, t, spk)

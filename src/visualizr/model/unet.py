@@ -1,14 +1,19 @@
 from dataclasses import dataclass
-from typing import NamedTuple, Tuple
+from typing import Any, NamedTuple, Tuple
 
 import torch as th
 import torch.nn.functional as F
-from choices import *
-from config_base import BaseConfig
 from torch import nn
 
-from .blocks import *
-from .nn import (
+from visualizr.config_base import BaseConfig
+from visualizr.model.blocks import (
+    AttentionBlock,
+    Downsample,
+    ResBlockConfig,
+    TimestepEmbedSequential,
+    Upsample,
+)
+from visualizr.model.nn import (
     conv_nd,
     linear,
     normalization,
@@ -19,21 +24,28 @@ from .nn import (
 
 @dataclass
 class BeatGANsUNetConfig(BaseConfig):
+    # you can also set the number of res_blocks specifically for the input blocks
+    # default: None = above
+    num_input_res_blocks: int
+    resnet_cond_channels: int
+    # don't use this, legacy from BeatGANs
+    num_classes: int
+    input_channel_mult: Tuple[int] = None
+    # number of time embed channels
+    time_embed_channels: int = None
     image_size: int = 64
     in_channels: int = 3
-    # base channels, will be multiplied
+    # base channels will be multiplied
     model_channels: int = 64
     # output of the unet
     # suggest: 3
-    # you only need 6 if you also model the variance of the noise prediction (usually we use an analytical variance hence 3)
+    # you only need 6 if you also model the variance of the noise prediction
+    # (usually we use an analytical variance hence 3)
     out_channels: int = 3
     # how many repeating resblocks per resolution
     # the decoding side would have "one more" resblock
     # default: 2
     num_res_blocks: int = 2
-    # you can also set the number of resblocks specifically for the input blocks
-    # default: None = above
-    num_input_res_blocks: int = None
     # number of time embed channels and style channels
     embed_channels: int = 512
     # at what resolutions you want to do self-attention of the feature maps
@@ -41,17 +53,12 @@ class BeatGANsUNetConfig(BaseConfig):
     # default: [16]
     # beatgans: [32, 16, 8]
     attention_resolutions: Tuple[int] = (16,)
-    # number of time embed channels
-    time_embed_channels: int = None
     # dropout applies to the resblocks (on feature maps)
     dropout: float = 0.1
     channel_mult: Tuple[int] = (1, 2, 4, 8)
-    input_channel_mult: Tuple[int] = None
     conv_resample: bool = True
     # always 2 = 2d conv
     dims: int = 2
-    # don't use this, legacy from BeatGANs
-    num_classes: int = None
     use_checkpoint: bool = False
     # number of attention heads
     num_heads: int = 1
@@ -65,7 +72,6 @@ class BeatGANsUNetConfig(BaseConfig):
     # never tried
     use_new_attention_order: bool = False
     resnet_two_cond: bool = False
-    resnet_cond_channels: int = None
     # init the decoding conv layers with zero weights, this speeds up training
     # default: True (BeattGANs)
     resnet_use_zero_module: bool = True
@@ -115,7 +121,6 @@ class BeatGANsUNetModel(nn.Module):
 
         self._feature_size = ch
 
-        # input_block_chans = [ch]
         input_block_chans = [[] for _ in range(len(conf.channel_mult))]
         input_block_chans[0].append(ch)
 
@@ -124,7 +129,7 @@ class BeatGANsUNetModel(nn.Module):
         self.input_num_blocks[0] = 1
         self.output_num_blocks = [0 for _ in range(len(conf.channel_mult))]
 
-        ds = 1
+        ds: int = 1
         resolution = conf.image_size
         for level, mult in enumerate(conf.input_channel_mult or conf.channel_mult):
             for _ in range(conf.num_input_res_blocks or conf.num_res_blocks):
@@ -214,13 +219,11 @@ class BeatGANsUNetModel(nn.Module):
         self.output_blocks = nn.ModuleList([])
         for level, mult in list(enumerate(conf.channel_mult))[::-1]:
             for i in range(conf.num_res_blocks + 1):
-                # print(input_block_chans)
-                # ich = input_block_chans.pop()
                 try:
                     ich = input_block_chans[level].pop()
                 except IndexError:
                     # this happens only when num_res_block > num_enc_res_block
-                    # we will not have enough lateral (skip) connecions for all decoder blocks
+                    # we will not have enough lateral (skip) connections for all decoder blocks
                     ich = 0
                 # print('pop:', ich)
                 layers = [
@@ -234,7 +237,6 @@ class BeatGANsUNetModel(nn.Module):
                         use_checkpoint=conf.use_checkpoint,
                         # lateral channels are described here when gated
                         has_lateral=True if ich > 0 else False,
-                        lateral_channels=None,
                         **kwargs,
                     ).make_model()
                 ]
@@ -263,7 +265,7 @@ class BeatGANsUNetModel(nn.Module):
                             up=True,
                             **kwargs,
                         ).make_model()
-                        if (conf.resblock_updown)
+                        if conf.resblock_updown
                         else Upsample(
                             ch, conf.conv_resample, dims=conf.dims, out_channels=out_ch
                         )
@@ -272,10 +274,6 @@ class BeatGANsUNetModel(nn.Module):
                 self.output_blocks.append(TimestepEmbedSequential(*layers))
                 self.output_num_blocks[level] += 1
                 self._feature_size += ch
-
-        # print(input_block_chans)
-        # print('inputs:', self.input_num_blocks)
-        # print('outputs:', self.output_num_blocks)
 
         if conf.resnet_use_zero_module:
             self.out = nn.Sequential(
@@ -296,31 +294,27 @@ class BeatGANsUNetModel(nn.Module):
         """
         Apply the model to an input batch.
 
-        :param x: an [N x C x ...] Tensor of inputs.
-        :param timesteps: a 1-D batch of timesteps.
-        :param y: an [N] Tensor of labels, if class-conditional.
-        :return: an [N x C x ...] Tensor of outputs.
+        :param x: An [N x C x ...] Tensor of inputs.
+        :param timesteps: A 1-D batch of timesteps.
+        :param y: An [N] Tensor of labels, if class-conditional.
+        :return: An [N x C x ...] Tensor of outputs.
         """
-        assert (y is not None) == (self.conf.num_classes is not None), (
-            "must specify y if and only if the model is class-conditional"
-        )
+        assert (y is not None) == (
+            self.conf.num_classes is not None
+        ), "must specify y if and only if the model is class-conditional"
 
-        # hs = []
         hs = [[] for _ in range(len(self.conf.channel_mult))]
         emb = self.time_embed(timestep_embedding(t, self.time_emb_channels))
 
         if self.conf.num_classes is not None:
             raise NotImplementedError()
-            # assert y.shape == (x.shape[0], )
-            # emb = emb + self.label_emb(y)
 
-        # new code supports input_num_blocks != output_num_blocks
+        # the new code supports input_num_blocks != output_num_blocks
         h = x.type(self.dtype)
         k = 0
         for i in range(len(self.input_num_blocks)):
-            for j in range(self.input_num_blocks[i]):
+            for _ in range(self.input_num_blocks[i]):
                 h = self.input_blocks[k](h, emb=emb)
-                # print(i, j, h.shape)
                 hs[i].append(h)
                 k += 1
         assert k == len(self.input_blocks)
@@ -328,15 +322,12 @@ class BeatGANsUNetModel(nn.Module):
         h = self.middle_block(h, emb=emb)
         k = 0
         for i in range(len(self.output_num_blocks)):
-            for j in range(self.output_num_blocks[i]):
-                # take the lateral connection from the same layer (in reserve)
-                # until there is no more, use None
+            for _ in range(self.output_num_blocks[i]):
+                # take the lateral connection from the same layer (in reserve) until there is no more, use None
                 try:
                     lateral = hs[-i - 1].pop()
-                    # print(i, j, lateral.shape)
                 except IndexError:
                     lateral = None
-                    # print(i, j, lateral)
                 h = self.output_blocks[k](h, emb=emb, lateral=lateral)
                 k += 1
 
@@ -419,6 +410,8 @@ class BeatGANsEncoderModel(nn.Module):
                         dims=conf.dims,
                         use_condition=conf.use_time_condition,
                         use_checkpoint=conf.use_checkpoint,
+                        lateral_channels=None,
+                        cond_emb_channels=None,
                     ).make_model()
                 ]
                 ch = int(mult * conf.model_channels)
@@ -449,8 +442,10 @@ class BeatGANsEncoderModel(nn.Module):
                             use_condition=conf.use_time_condition,
                             use_checkpoint=conf.use_checkpoint,
                             down=True,
+                            lateral_channels=None,
+                            cond_emb_channels=None,
                         ).make_model()
-                        if (conf.resblock_updown)
+                        if conf.resblock_updown
                         else Downsample(
                             ch, conf.conv_resample, dims=conf.dims, out_channels=out_ch
                         )
@@ -469,6 +464,9 @@ class BeatGANsEncoderModel(nn.Module):
                 dims=conf.dims,
                 use_condition=conf.use_time_condition,
                 use_checkpoint=conf.use_checkpoint,
+                lateral_channels=None,
+                cond_emb_channels=None,
+                out_channels=None,
             ).make_model(),
             AttentionBlock(
                 ch,
@@ -484,6 +482,9 @@ class BeatGANsEncoderModel(nn.Module):
                 dims=conf.dims,
                 use_condition=conf.use_time_condition,
                 use_checkpoint=conf.use_checkpoint,
+                lateral_channels=None,
+                cond_emb_channels=None,
+                out_channels=None,
             ).make_model(),
         )
         self._feature_size += ch
@@ -502,16 +503,15 @@ class BeatGANsEncoderModel(nn.Module):
         """
         Apply the model to an input batch.
 
-        :param x: an [N x C x ...] Tensor of inputs.
-        :param timesteps: a 1-D batch of timesteps.
-        :return: an [N x K] Tensor of outputs.
+        :param x: An [N x C x ...] Tensor of inputs.
+        :return: An [N x K] Tensor of outputs.
         """
         if self.conf.use_time_condition:
             emb = self.time_embed(timestep_embedding(t, self.model_channels))
         else:
             emb = None
 
-        results = []
+        results: list[Any] = []
         h = x.type(self.dtype)
         for module in self.input_blocks:
             h = module(h, emb=emb)
@@ -534,7 +534,7 @@ class BeatGANsEncoderModel(nn.Module):
 
     def forward_flatten(self, x):
         """
-        transform the last 2d feature into a flatten vector
+        transform the last 2d feature into a flattened vector
         """
         h = self.out(x)
         return h
@@ -547,8 +547,12 @@ class SuperResModel(BeatGANsUNetModel):
     Expects an extra kwarg `low_res` to condition on a low-resolution image.
     """
 
-    def __init__(self, image_size, in_channels, *args, **kwargs):
-        super().__init__(image_size, in_channels * 2, *args, **kwargs)
+    conf: BeatGANsUNetConfig
+
+    def __init__(self, image_size, in_channels):
+        self.conf.image_size = image_size
+        self.conf.in_channels = in_channels * 2
+        super().__init__(self.conf)
 
     def forward(self, x, timesteps, low_res=None, **kwargs):
         _, _, new_height, new_width = x.shape

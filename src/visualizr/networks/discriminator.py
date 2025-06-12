@@ -2,6 +2,7 @@ import math
 
 import torch
 from torch import nn
+from torch.nn import Sequential
 from torch.nn import functional as F
 
 
@@ -41,7 +42,6 @@ def upfirdn2d_native(
         max(-pad_x0, 0) : out.shape[3] - max(-pad_x1, 0),
     ]
 
-    # out = out.permute(0, 3, 1, 2)
     out = out.reshape(
         [-1, 1, in_h * up_y + pad_y0 + pad_y1, in_w * up_x + pad_x0 + pad_x1]
     )
@@ -53,7 +53,6 @@ def upfirdn2d_native(
         in_h * up_y + pad_y0 + pad_y1 - kernel_h + 1,
         in_w * up_x + pad_x0 + pad_x1 - kernel_w + 1,
     )
-    # out = out.permute(0, 2, 3, 1)
 
     return out[:, :, ::down_y, ::down_x]
 
@@ -179,10 +178,12 @@ class ConvLayer(nn.Sequential):
         out_channel,
         kernel_size,
         downsample=False,
-        blur_kernel=[1, 3, 3, 1],
+        blur_kernel=None,
         bias=True,
         activate=True,
     ):
+        if blur_kernel is None:
+            blur_kernel = [1, 3, 3, 1]
         layers = []
 
         if downsample:
@@ -221,9 +222,14 @@ class ConvLayer(nn.Sequential):
 
 
 class ResBlock(nn.Module):
-    def __init__(self, in_channel, out_channel, blur_kernel=[1, 3, 3, 1]):
+    blur_kernel: list[int]
+
+    def __init__(self, in_channel, out_channel, blur_kernel=None):
+        if blur_kernel is None:
+            blur_kernel = [1, 3, 3, 1]
         super().__init__()
 
+        self.blur_kernel = blur_kernel
         self.conv1 = ConvLayer(in_channel, in_channel, 3)
         self.conv2 = ConvLayer(in_channel, out_channel, 3, downsample=True)
 
@@ -242,9 +248,13 @@ class ResBlock(nn.Module):
 
 
 class Discriminator(nn.Module):
-    def __init__(self, size, channel_multiplier=1, blur_kernel=[1, 3, 3, 1]):
+    convs: Sequential
+
+    def __init__(self, size, channel_multiplier=1, blur_kernel=None):
         super().__init__()
 
+        if blur_kernel is None:
+            blur_kernel = [1, 3, 3, 1]
         self.size = size
 
         channels = {
@@ -259,9 +269,9 @@ class Discriminator(nn.Module):
             1024: 16 * channel_multiplier,
         }
 
-        convs = [ConvLayer(3, channels[size], 1)]
+        convs: list[ConvLayer | ResBlock] = [ConvLayer(3, channels[size], 1)]
         log_size = int(math.log(size, 2))
-        in_channel = channels[size]
+        in_channel: int = channels[size]
 
         for i in range(log_size, 2, -1):
             out_channel = channels[2 ** (i - 1)]

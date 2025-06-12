@@ -1,8 +1,11 @@
 import torch
 import torch.nn.functional as F
+from espnet.nets.pytorch_backend.conformer.encoder import Encoder
 from espnet.nets.pytorch_backend.conformer.encoder import Encoder as ConformerEncoder
-from model.base import BaseModule
 from torch import nn
+from torch.nn import Conv1d, Linear, Parameter, Sequential
+
+from visualizr.model.base import BaseModule
 
 
 class LSTM(nn.Module):
@@ -22,9 +25,26 @@ class LSTM(nn.Module):
 
 
 class DiffusionPredictor(BaseModule):
+    out_proj: Linear
+    encoder_direction_code: Linear
+    t_encoder: Sequential
+    noisy_encoder: Sequential
+    init_code_proj: Sequential
+    face_scale_encoder: LSTM
+    face_scale_predictor: LSTM
+    location_encoder: LSTM
+    location_predictor: LSTM
+    pose_encoder: LSTM
+    pose_predictor: LSTM
+    coarse_decoder: Encoder
+    speech_encoder: Encoder
+    down_sample1: Conv1d
+    down_sample2: Conv1d
+    weights: Parameter
+
     def __init__(self, conf):
         super(DiffusionPredictor, self).__init__()
-
+        self.conf = None
         self.infer_type = conf.infer_type
 
         self.initialize_layers(conf)
@@ -42,8 +62,6 @@ class DiffusionPredictor(BaseModule):
             positional_dropout_rate=0.2,
             attention_dropout_rate=0.2,
             normalize_before=False,
-            concat_after=False,
-            positionwise_layer_type="linear",
             positionwise_conv_kernel_size=3,
             macaron_style=True,
             pos_enc_layer_type="rel_pos",
@@ -61,7 +79,7 @@ class DiffusionPredictor(BaseModule):
         speech_dim=512,
         decoder_dim=1024,
         motion_start_dim=512,
-        HAL_layers=25,
+        hal_layers=25,
     ):
         self.conf = conf
         # Speech downsampling
@@ -79,14 +97,14 @@ class DiffusionPredictor(BaseModule):
                 hubert_dim, speech_dim, kernel_size=3, stride=2, padding=1
             )
 
-            self.weights = nn.Parameter(torch.zeros(HAL_layers))
+            self.weights = nn.Parameter(torch.zeros(hal_layers))
             self.speech_encoder = self.create_conformer_encoder(
                 speech_dim, speech_layers
             )
         else:
             print("infer_type not supported")
 
-        # Encoders & Deocoders
+        # Encoders & Decoders
         self.coarse_decoder = self.create_conformer_encoder(
             decoder_dim, conf.decoder_layers
         )
@@ -122,6 +140,7 @@ class DiffusionPredictor(BaseModule):
         t_emb,
         control_flag=False,
     ):
+        x = None
         if self.infer_type.startswith("mfcc"):
             x = self.mfcc_speech_downsample(seq_input_vector)
         elif self.infer_type.startswith("hubert"):
@@ -145,7 +164,8 @@ class DiffusionPredictor(BaseModule):
             )
         concatenated_features = self.combine_features(
             x, initial_code, direction_code, noisy_x, t_emb
-        )  # initial_code and direction_code serve as a motion guide extracted from the reference image. This aims to tell the model what the starting motion should be.
+        )  # initial_code and direction_code serve as a motion guide extracted from the reference image.
+        # This aims to tell the model what the starting motion should be.
         outputs = self.decode_features(concatenated_features)
         return outputs, predicted_location, predicted_scale, predicted_pose
 

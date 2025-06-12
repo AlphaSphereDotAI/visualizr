@@ -1,23 +1,35 @@
 from dataclasses import dataclass
 from multiprocessing import get_context
-from typing import Literal, Tuple
+from os import path
+from typing import Literal, Optional, Tuple
 
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 
-from visualizr.choices import *
+from visualizr.choices import (
+    Activation,
+    GenerativeType,
+    LossType,
+    ManipulateLossType,
+    ManipulateMode,
+    ModelMeanType,
+    ModelName,
+    ModelType,
+    ModelVarType,
+    OptimizerType,
+    TrainMode,
+)
 from visualizr.config_base import BaseConfig
 from visualizr.dataset import LatentDataLoader
-from visualizr.dataset_util import *
-from visualizr.diffusion import *
+from visualizr.dataset_util import distributed
 from visualizr.diffusion.base import (
     get_named_beta_schedule,
 )
-from visualizr.diffusion.diffusion import space_timesteps
+from visualizr.diffusion.diffusion import SpacedDiffusionBeatGansConfig, space_timesteps
 from visualizr.diffusion.resample import UniformSampler
-from visualizr.model import BeatGANsAutoencConfig, ModelConfig
-from visualizr.model.latentnet import *
-from visualizr.model.unet import ScaleAt
+from visualizr.model import BeatGANsAutoencConfig, BeatGANsUNetConfig, ModelConfig
+from visualizr.model.blocks import ScaleAt
+from visualizr.model.latentnet import LatentNetType, MLPSkipNetConfig
 
 
 @dataclass
@@ -36,7 +48,7 @@ class TrainConfig(BaseConfig):
         "hubert_pose_only",
         "hubert_audio_only",
         "hubert_full_control",
-    ]
+    ] = "hubert_audio_only"
     train_mode: TrainMode = TrainMode.diffusion
     train_cond0_prob: float = 0
     train_pred_xstart_detach: bool = True
@@ -88,7 +100,7 @@ class TrainConfig(BaseConfig):
     model_type: ModelType = None
     net_attn: Tuple[int] = None
     net_beatgans_attn_head: int = 1
-    # not necessarily the same as the the number of style channels
+    # not necessarily the same as the number of style channels
     net_beatgans_embed_channels: int = 512
     net_resblock_updown: bool = True
     net_enc_use_time: bool = False
@@ -122,8 +134,8 @@ class TrainConfig(BaseConfig):
     net_latent_time_last_act: bool = False
     net_num_res_blocks: int = 2
     # number of resblocks for the UNET
-    net_num_input_res_blocks: int = None
-    net_enc_num_cls: int = None
+    net_num_input_res_blocks: Optional[int] = None
+    net_enc_num_cls: Optional[int] = None
     num_workers: int = 4
     parallel: bool = False
     postfix: str = ""
@@ -136,15 +148,15 @@ class TrainConfig(BaseConfig):
     T: int = 1_000
     total_samples: int = 10_000_000
     warmup: int = 0
-    pretrain: PretrainConfig
-    continue_from: PretrainConfig
-    eval_programs: Tuple[str]
+    pretrain: Optional[PretrainConfig] = None
+    continue_from: Optional[PretrainConfig] = None
+    eval_programs: Optional[Tuple[str]] = None
     # if present, load the checkpoint from this path instead
-    eval_path: str
+    eval_path: Optional[str] = None
     base_dir: str = "checkpoints"
     use_cache_dataset: bool = False
-    data_cache_dir: str = os.path.expanduser("~/cache")
-    work_cache_dir: str = os.path.expanduser("~/mycache")
+    data_cache_dir: str = path.expanduser("~/cache")
+    work_cache_dir: str = path.expanduser("~/mycache")
     # to be overridden
     name: str = ""
 
@@ -327,7 +339,6 @@ class TrainConfig(BaseConfig):
         elif self.model_name in [
             ModelName.beatgans_autoenc,
         ]:
-            cls = BeatGANsAutoencConfig
             # supports both autoenc and vaeddpm
             if self.model_name == ModelName.beatgans_autoenc:
                 self.model_type = ModelType.autoencoder
@@ -354,7 +365,7 @@ class TrainConfig(BaseConfig):
             else:
                 raise NotImplementedError()
 
-            self.model_conf = cls(
+            self.model_conf = BeatGANsAutoencConfig(
                 attention_resolutions=self.net_attn,
                 channel_mult=self.net_ch_mult,
                 conv_resample=True,

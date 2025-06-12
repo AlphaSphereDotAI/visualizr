@@ -2821,6 +2821,28 @@ wheels = [
 ]
 
 [[package]]
+name = "realesrgan"
+version = "0.3.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "basicsr" },
+    { name = "facexlib" },
+    { name = "gfpgan" },
+    { name = "numpy" },
+    { name = "opencv-python" },
+    { name = "pillow" },
+    { name = "torch", version = "2.6.0+cu124", source = { registry = "https://download.pytorch.org/whl/cu124" }, marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+    { name = "torch", version = "2.7.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'linux' and sys_platform != 'win32'" },
+    { name = "torchvision", version = "0.21.0+cu124", source = { registry = "https://download.pytorch.org/whl/cu124" }, marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+    { name = "torchvision", version = "0.22.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'linux' and sys_platform != 'win32'" },
+    { name = "tqdm" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/75/40/4af728ed9c48ac65634976535f36afd421de39315920e5f740049a6524a6/realesrgan-0.3.0.tar.gz", hash = "sha256:0d36da96ab9f447071606e91f502ccdfb08f80cc82ee4f8caf720c7745ccec7e", size = 3020534, upload-time = "2022-09-20T11:49:56.695Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b2/3e/e2f79917a04991b9237df264f7abab2b58cf94748e7acfb6677b55232ca1/realesrgan-0.3.0-py3-none-any.whl", hash = "sha256:59336c16c30dd5130eff350dd27424acb9b7281d18a6810130e265606c9a6088", size = 26012, upload-time = "2022-09-20T11:49:54.915Z" },
+]
+
+[[package]]
 name = "regex"
 version = "2024.11.6"
 source = { registry = "https://pypi.org/simple" }
@@ -3840,6 +3862,7 @@ dependencies = [
     { name = "moviepy" },
     { name = "python-speech-features" },
     { name = "pytorch-lightning" },
+    { name = "realesrgan" },
     { name = "torch", version = "2.6.0+cu124", source = { registry = "https://download.pytorch.org/whl/cu124" }, marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
     { name = "torch", version = "2.7.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'linux' and sys_platform != 'win32'" },
     { name = "torchaudio", version = "2.6.0+cu124", source = { registry = "https://download.pytorch.org/whl/cu124" }, marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
@@ -3871,6 +3894,7 @@ requires-dist = [
     { name = "moviepy", specifier = ">=1.0.3" },
     { name = "python-speech-features", specifier = ">=0.6" },
     { name = "pytorch-lightning", specifier = ">=2.5.1.post0" },
+    { name = "realesrgan", specifier = ">=0.3.0" },
     { name = "torch", marker = "sys_platform != 'linux' and sys_platform != 'win32'", specifier = ">=2.6.0" },
     { name = "torch", marker = "sys_platform == 'linux' or sys_platform == 'win32'", specifier = ">=2.6.0", index = "https://download.pytorch.org/whl/cu124" },
     { name = "torchaudio", marker = "sys_platform != 'linux' and sys_platform != 'win32'", specifier = ">=2.6.0" },
