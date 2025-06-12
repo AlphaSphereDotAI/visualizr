@@ -1,5 +1,5 @@
 from datetime import datetime
-from os import getenv
+from os import getenv, path
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -34,9 +34,12 @@ AUDIO_FILE_PATH: Path = RESULTS_DIR / f"{CURRENT_DATE}.wav"
 LOG_FILE_PATH: Path = LOG_DIR / f"{CURRENT_DATE}.log"
 CUDA_AVAILABLE: bool = cuda.is_available()
 
+FRAMES_RESULT_SAVED_PATH: Path = RESULTS_DIR / "frames"
+
 RESULTS_DIR.mkdir(exist_ok=True)
 LOG_DIR.mkdir(exist_ok=True)
 CHECKPOINT_DIR.mkdir(exist_ok=True)
+FRAMES_RESULT_SAVED_PATH.mkdir(exist_ok=True)
 
 logger.add(
     sink=LOG_FILE_PATH,

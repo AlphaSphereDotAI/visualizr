@@ -4,6 +4,7 @@ import time
 from argparse import Namespace
 from importlib.util import find_spec
 from os import listdir, makedirs, path, remove
+from pathlib import Path
 
 import librosa
 import numpy as np
@@ -25,7 +26,7 @@ from torch import Tensor
 from torchvision.transforms import ToPILImage
 from tqdm import tqdm
 
-from visualizr import model_mapping
+from visualizr import FRAMES_RESULT_SAVED_PATH, model_mapping
 from visualizr.experiment import LitModel
 from visualizr.LIA_Model import LIA_Model
 from visualizr.templates import ffhq256_autoenc
@@ -70,48 +71,72 @@ def saved_image(img_tensor: Tensor, img_path: str) -> None:
     img = pil_image_converter(img_tensor.detach().cpu().squeeze(0))
     img.save(img_path)
 
+def load_stage1_model(motion_dim: int, stage1_checkpoint_path: str) -> LIA_Model:
+    lia: LIA_Model = LIA_Model(motion_dim=motion_dim, fusion_type="weighted_sum")
+    lia.load_lightning_model(stage1_checkpoint_path)
+    lia.to("cuda")
+    return lia
 
-def main(args):
-    FRAMES_RESULT_SAVED_PATH = path.join(args.result_path, "frames")
-    makedirs(FRAMES_RESULT_SAVED_PATH, exist_ok=True)
-    test_image_name = path.splitext(path.basename(args.test_image_path))[0]
-    audio_name = path.splitext(path.basename(args.test_audio_path))[0]
+def main(infer_type,
+         image_path,
+         test_audio_path,
+         test_hubert_path="",
+         result_path="./results/",
+         stage1_checkpoint_path="ckpts/stage1.ckpt",
+         stage2_checkpoint_path=model_mapping.get(
+                infer_type, "default_checkpoint.ckpt"
+            ),
+         seed,
+         control_flag=True,
+         pose_yaw: float,
+         pose_pitch,
+         pose_roll,
+         face_location,
+         pose_driven_path="not_supported_in_this_mode",
+         face_scale,
+         step_T,
+         image_size=256,
+         device="cuda",
+         motion_dim=20,
+         decoder_layers=2,
+         face_sr):
+    image_name: str = Path(image_path).stem
+    audio_name: str = Path(test_audio_path).stem
+
     predicted_video_256_path = path.join(
-        args.result_path, f"{test_image_name}-{audio_name}.mp4"
+        result_path, f"{image_name}-{audio_name}.mp4"
     )
     predicted_video_512_path = path.join(
-        args.result_path, f"{test_image_name}-{audio_name}_SR.mp4"
+        result_path, f"{image_name}-{audio_name}_SR.mp4"
     )
 
     # ======Loading Stage 1 model=========
-    lia = LIA_Model(motion_dim=args.motion_dim, fusion_type="weighted_sum")
-    lia.load_lightning_model(args.stage1_checkpoint_path)
-    lia.to("cuda")
+    lia: LIA_Model = load_stage1_model(motion_dim, stage1_checkpoint_path)
     # ============================
 
     conf = ffhq256_autoenc()
-    conf.seed = args.seed
-    conf.decoder_layers = args.decoder_layers
-    conf.infer_type = args.infer_type
-    conf.motion_dim = args.motion_dim
+    conf.seed = seed
+    conf.decoder_layers = decoder_layers
+    conf.infer_type = infer_type
+    conf.motion_dim = motion_dim
 
-    if args.infer_type == "mfcc_full_control":
+    if infer_type == "mfcc_full_control":
         conf.face_location = True
         conf.face_scale = True
         conf.mfcc = True
-    elif args.infer_type == "mfcc_pose_only":
+    elif infer_type == "mfcc_pose_only":
         conf.face_location = False
         conf.face_scale = False
         conf.mfcc = True
-    elif args.infer_type == "hubert_pose_only":
+    elif infer_type == "hubert_pose_only":
         conf.face_location = False
         conf.face_scale = False
         conf.mfcc = False
-    elif args.infer_type == "hubert_audio_only":
+    elif infer_type == "hubert_audio_only":
         conf.face_location = False
         conf.face_scale = False
         conf.mfcc = False
-    elif args.infer_type == "hubert_full_control":
+    elif infer_type == "hubert_full_control":
         conf.face_location = True
         conf.face_scale = True
         conf.mfcc = False
@@ -119,22 +144,22 @@ def main(args):
         print("Type NOT Found!")
         exit(0)
 
-    if not path.exists(args.test_image_path):
-        print(f"{args.test_image_path} does not exist!")
+    if not path.exists(image_path):
+        print(f"{image_path} does not exist!")
         exit(0)
 
-    if not path.exists(args.test_audio_path):
-        print(f"{args.test_audio_path} does not exist!")
+    if not path.exists(test_audio_path):
+        print(f"{test_audio_path} does not exist!")
         exit(0)
 
-    img_source = img_preprocessing(args.test_image_path, args.image_size).to("cuda")
+    img_source = img_preprocessing(image_path, image_size).to("cuda")
     one_shot_lia_start, one_shot_lia_direction, feats = lia.get_start_direction_code(
         img_source, img_source, img_source, img_source
     )
 
     # ======Loading Stage 2 model=========
     model = LitModel(conf)
-    state = torch.load(args.stage2_checkpoint_path, map_location="cpu")
+    state = torch.load(stage2_checkpoint_path, map_location="cpu")
     model.load_state_dict(state, strict=True)
     model.ema_model.eval()
     model.ema_model.to("cuda")
@@ -143,7 +168,7 @@ def main(args):
     # ======Audio Input=========
     if conf.infer_type.startswith("mfcc"):
         # MFCC features
-        wav, sr = librosa.load(args.test_audio_path, sr=16000)
+        wav, sr = librosa.load(test_audio_path, sr=16000)
         input_values = python_speech_features.mfcc(
             signal=wav, samplerate=sr, numcep=13, winlen=0.025, winstep=0.01
         )
@@ -165,7 +190,7 @@ def main(args):
 
     elif conf.infer_type.startswith("hubert"):
         # Hubert features
-        if not path.exists(args.test_hubert_path):
+        if not path.exists(test_hubert_path):
             if not check_package_installed("transformers"):
                 print("Please install transformers module first.")
                 exit(0)
@@ -190,7 +215,7 @@ def main(args):
             audio_model.eval()
 
             # hubert model forward pass
-            audio, sr = librosa.load(args.test_audio_path, sr=16000)
+            audio, sr = librosa.load(test_audio_path, sr=16000)
             input_values = feature_extractor(
                 audio,
                 sampling_rate=16000,
@@ -215,8 +240,8 @@ def main(args):
 
             audio_driven_obj = ws_feat_obj
         else:
-            print(f"Using audio feature from path: {args.test_hubert_path}")
-            audio_driven_obj = np.load(args.test_hubert_path)
+            print(f"Using audio feature from path: {test_hubert_path}")
+            audio_driven_obj = np.load(test_hubert_path)
 
         frame_start, frame_end = 0, int(audio_driven_obj.shape[1] / 2)
         audio_start, audio_end = (
@@ -233,11 +258,11 @@ def main(args):
     # ============================
 
     # Diffusion Noise
-    noisyT = torch.randn((1, frame_end, args.motion_dim)).to("cuda")
+    noisyT = torch.randn((1, frame_end, motion_dim)).to("cuda")
 
     # ======Inputs for Attribute Control=========
-    if path.exists(args.pose_driven_path):
-        pose_obj = np.load(args.pose_driven_path)
+    if path.exists(pose_driven_path):
+        pose_obj = np.load(pose_driven_path)
 
         if len(pose_obj.shape) != 2:
             print("please check your pose information. The shape must be like (T, 3).")
@@ -256,15 +281,15 @@ def main(args):
             torch.Tensor(pose_obj).unsqueeze(0).to("cuda") / 90
         )  # 90 is for normalization here
     else:
-        yaw_signal = torch.zeros(1, frame_end, 1).to("cuda") + args.pose_yaw
-        pitch_signal = torch.zeros(1, frame_end, 1).to("cuda") + args.pose_pitch
-        roll_signal = torch.zeros(1, frame_end, 1).to("cuda") + args.pose_roll
+        yaw_signal = torch.zeros(1, frame_end, 1).to("cuda") + pose_yaw
+        pitch_signal = torch.zeros(1, frame_end, 1).to("cuda") + pose_pitch
+        roll_signal = torch.zeros(1, frame_end, 1).to("cuda") + pose_roll
         pose_signal = torch.cat((yaw_signal, pitch_signal, roll_signal), dim=-1)
 
     pose_signal = torch.clamp(pose_signal, -1, 1)
 
-    face_location_signal = torch.zeros(1, frame_end, 1).to("cuda") + args.face_location
-    face_scae_signal = torch.zeros(1, frame_end, 1).to("cuda") + args.face_scale
+    face_location_signal = torch.zeros(1, frame_end, 1).to("cuda") + face_location
+    face_scae_signal = torch.zeros(1, frame_end, 1).to("cuda") + face_scale
     # ===========================================
 
     start_time = time.time()
@@ -278,8 +303,8 @@ def main(args):
         face_scae_signal,
         pose_signal,
         noisyT,
-        args.step_T,
-        control_flag=args.control_flag,
+        step_T,
+        control_flag=control_flag,
     )
     # =========================================
 
@@ -307,13 +332,13 @@ def main(args):
     print(f"Renderer Model: {execution_time:.2f} Seconds")
 
     frames_to_video(
-        FRAMES_RESULT_SAVED_PATH, args.test_audio_path, predicted_video_256_path
+        FRAMES_RESULT_SAVED_PATH, test_audio_path, predicted_video_256_path
     )
 
     shutil.rmtree(FRAMES_RESULT_SAVED_PATH)
 
     # Enhancer
-    if args.face_sr and check_package_installed("gfpgan"):
+    if face_sr and check_package_installed("gfpgan"):
         from imageio import mimsave
 
         from visualizr.face_sr.face_enhancer import enhancer_list
@@ -335,7 +360,7 @@ def main(args):
 
         remove(predicted_video_512_path + ".tmp.mp4")
 
-    if args.face_sr:
+    if face_sr:
         return predicted_video_256_path, predicted_video_512_path
     else:
         return predicted_video_256_path, predicted_video_256_path
@@ -360,33 +385,13 @@ def generate_video(
         )
 
     try:
-        args: Namespace = argparse.Namespace(
-            infer_type=infer_type,
-            test_image_path=uploaded_img,
-            test_audio_path=uploaded_audio,
-            test_hubert_path="",
-            result_path="./results/",
-            stage1_checkpoint_path="ckpts/stage1.ckpt",
-            stage2_checkpoint_path=model_mapping.get(
-                infer_type, "default_checkpoint.ckpt"
-            ),
-            seed=seed,
-            control_flag=True,
-            pose_yaw=pose_yaw,
-            pose_pitch=pose_pitch,
-            pose_roll=pose_roll,
-            face_location=face_location,
-            pose_driven_path="not_supported_in_this_mode",
-            face_scale=face_scale,
-            step_T=step_t,
-            image_size=256,
-            device="cuda",
-            motion_dim=20,
-            decoder_layers=2,
-            face_sr=face_sr,
-        )
-
-        output_256_video_path, output_512_video_path = main(args=args)
+        output_256_video_path, output_512_video_path = main(infer_type=infer_type, image_path=uploaded_img,
+                                                            test_audio_path=uploaded_audio,
+                                                            stage2_checkpoint_path=model_mapping.get(
+                                                                infer_type, "default_checkpoint.ckpt"
+                                                            ), seed=seed, pose_yaw=pose_yaw, pose_pitch=pose_pitch,
+                                                            pose_roll=pose_roll, face_location=face_location,
+                                                            face_scale=face_scale, step_T=step_t, face_sr=face_sr,)
 
         if not path.exists(path=output_256_video_path):
             return None, Markdown(
