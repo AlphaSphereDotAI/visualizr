@@ -42,8 +42,6 @@ LOG_DIR.mkdir(exist_ok=True)
 CHECKPOINT_DIR.mkdir(exist_ok=True)
 FRAMES_RESULT_SAVED_PATH.mkdir(exist_ok=True)
 
-TEST_HUBERT_PATH: str = ""
-CONTROL_FLAG: bool = True
 IMAGE_SIZE: int = 256
 MOTION_DIM: int = 20
 DECODER_LAYERS: int = 2

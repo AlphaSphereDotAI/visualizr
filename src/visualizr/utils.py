@@ -24,6 +24,7 @@ from PIL.ImageFile import ImageFile
 from torch import Tensor
 from torchvision.transforms import ToPILImage
 from tqdm import tqdm
+from transformers import HubertModel, Wav2Vec2FeatureExtractor
 
 from visualizr import (
     DECODER_LAYERS,
@@ -192,58 +193,49 @@ def main(
 
     elif conf.infer_type.startswith("hubert"):
         # Hubert features
-        if not path.exists(test_hubert_path):
-            if not check_package_installed("transformers"):
-                print("Please install transformers module first.")
-                exit(0)
-            hubert_model_path = "ckpts/chinese-hubert-large"
-            if not path.exists(hubert_model_path):
-                print("Please download the hubert weight into the ckpts path first.")
-                exit(0)
-            print(
-                "You did not extract the audio features in advance, extracting online now, which will increase processing delay"
-            )
+        if not check_package_installed("transformers"):
+            print("Please install transformers module first.")
+            exit(0)
+        hubert_model_path = "ckpts/chinese-hubert-large"
+        if not path.exists(hubert_model_path):
+            print("Please download the hubert weight into the ckpts path first.")
+            exit(0)
+        print(
+            "You did not extract the audio features in advance, extracting online now, which will increase processing delay"
+        )
 
-            start_time = time()
+        start_time = time()
 
-            # load hubert model
-            from transformers import HubertModel, Wav2Vec2FeatureExtractor
+        audio_model = HubertModel.from_pretrained(hubert_model_path).to("cuda")
+        feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained(hubert_model_path)
+        audio_model.feature_extractor._freeze_parameters()
+        audio_model.eval()
 
-            audio_model = HubertModel.from_pretrained(hubert_model_path).to("cuda")
-            feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained(
-                hubert_model_path
-            )
-            audio_model.feature_extractor._freeze_parameters()
-            audio_model.eval()
+        # hubert model forward pass
+        audio, sr = librosa.load(test_audio_path, sr=16000)
+        input_values = feature_extractor(
+            audio,
+            sampling_rate=16000,
+            padding=True,
+            do_normalize=True,
+            return_tensors="pt",
+        ).input_values
+        input_values = input_values.to("cuda")
+        ws_feats = []
+        with torch.no_grad():
+            outputs = audio_model(input_values, output_hidden_states=True)
+            for i in range(len(outputs.hidden_states)):
+                ws_feats.append(outputs.hidden_states[i].detach().cpu().numpy())
+            ws_feat_obj = np.array(ws_feats)
+            ws_feat_obj = np.squeeze(ws_feat_obj, 1)
+            ws_feat_obj = np.pad(
+                ws_feat_obj, ((0, 0), (0, 1), (0, 0)), "edge"
+            )  # align the audio length with the video frame
 
-            # hubert model forward pass
-            audio, sr = librosa.load(test_audio_path, sr=16000)
-            input_values = feature_extractor(
-                audio,
-                sampling_rate=16000,
-                padding=True,
-                do_normalize=True,
-                return_tensors="pt",
-            ).input_values
-            input_values = input_values.to("cuda")
-            ws_feats = []
-            with torch.no_grad():
-                outputs = audio_model(input_values, output_hidden_states=True)
-                for i in range(len(outputs.hidden_states)):
-                    ws_feats.append(outputs.hidden_states[i].detach().cpu().numpy())
-                ws_feat_obj = np.array(ws_feats)
-                ws_feat_obj = np.squeeze(ws_feat_obj, 1)
-                ws_feat_obj = np.pad(
-                    ws_feat_obj, ((0, 0), (0, 1), (0, 0)), "edge"
-                )  # align the audio length with the video frame
+        execution_time = time() - start_time
+        print(f"Extraction Audio Feature: {execution_time:.2f} Seconds")
 
-            execution_time = time() - start_time
-            print(f"Extraction Audio Feature: {execution_time:.2f} Seconds")
-
-            audio_driven_obj = ws_feat_obj
-        else:
-            print(f"Using audio feature from path: {test_hubert_path}")
-            audio_driven_obj = np.load(test_hubert_path)
+        audio_driven_obj = ws_feat_obj
 
         frame_start, frame_end = 0, int(audio_driven_obj.shape[1] / 2)
         audio_start, audio_end = (
@@ -284,7 +276,7 @@ def main(
         pose_signal,
         noisy_t,
         step_t,
-        control_flag=control_flag,
+        True,
     )
     # =========================================
 
