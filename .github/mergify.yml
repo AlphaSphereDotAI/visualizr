@@ -54,7 +54,7 @@ queue_rules:
           - "check-success = DeepSource: Python"
           - check-success = CodeFactor
           - check-success = GitGuardian Security Checks
-          - check-success = SonarCloud
+          - check-success = SonarCloud Code Analysis
           - check-success = Trunk Check
           - check-success = Check Dependency Compatibility
           - check-success = CodeRabbit
