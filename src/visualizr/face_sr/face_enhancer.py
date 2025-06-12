@@ -7,6 +7,7 @@ from gfpgan import GFPGANer
 from numpy import dtype, generic, ndarray
 from tqdm import tqdm
 
+from visualizr import logger
 from visualizr.face_sr.videoio import load_video_to_cv2
 
 
@@ -70,7 +71,7 @@ def enhancer_generator_no_len(
     if method not in ["gfpgan", "RestoreFormer", "codeformer"]:
         raise ValueError(f"method {method} is not supported yet.")
 
-    print("face enhancer....")
+    logger.info("face enhancer....")
     if not isinstance(images_path, list) and path.isfile(path=images_path):
         images: list[ndarray[tuple[float, float, float], dtype[generic]]] = (
             load_video_to_cv2(input_path=images_path)

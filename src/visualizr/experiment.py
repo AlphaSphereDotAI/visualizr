@@ -14,6 +14,8 @@ from torch.cuda import amp
 from torch.optim.optimizer import Optimizer
 from torch.utils.data.dataset import TensorDataset
 
+from visualizr import logger
+
 
 # This part is modified from: https://github.com/phizaz/diffae/blob/master/experiment.py
 class LitModel(pl.LightningModule):
@@ -105,13 +107,13 @@ class LitModel(pl.LightningModule):
             np.random.seed(seed)
             torch.manual_seed(seed)
             torch.cuda.manual_seed(seed)
-            print("local seed:", seed)
+            logger.info("local seed:", seed)
         ##############################################
 
         self.train_data = self.conf.make_dataset()
-        print("train data:", len(self.train_data))
+        logger.info("train data:", len(self.train_data))
         self.val_data = self.train_data
-        print("val data:", len(self.val_data))
+        logger.info("val data:", len(self.val_data))
 
     def _train_dataloader(self, drop_last=True):
         """
@@ -132,7 +134,7 @@ class LitModel(pl.LightningModule):
         return the dataloader, if diffusion mode => return image dataset
         if latent mode => return the inferred latent dataset
         """
-        print("on train dataloader start ...")
+        logger.info("on train dataloader start ...")
         if self.conf.train_mode.require_dataset_infer():
             if self.conds is None:
                 # usually we load self.conds from a file
@@ -142,7 +144,7 @@ class LitModel(pl.LightningModule):
                 # (1, c)
                 self.conds_mean.data = self.conds.float().mean(dim=0, keepdim=True)
                 self.conds_std.data = self.conds.float().std(dim=0, keepdim=True)
-            print("mean:", self.conds_mean.mean(), "std:", self.conds_std.mean())
+            logger.info("mean:", self.conds_mean.mean(), "std:", self.conds_std.mean())
 
             # return the dataset with pre-calculated conds
             conf = self.conf.clone()
@@ -298,7 +300,6 @@ class LitModel(pl.LightningModule):
         n = len(x)
         rank = self.global_rank
         world_size = get_world_size()
-        # print(f'rank: {rank}/{world_size}')
         per_rank = n // world_size
         return x[rank * per_rank : (rank + 1) * per_rank]
 
@@ -326,9 +327,7 @@ def is_time(num_samples, every, step_size):
 
 
 def train(conf: TrainConfig, gpus, nodes=1, mode: str = "train"):
-    print("conf:", conf.name)
-    # assert not (conf.fp16 and conf.grad_clip > 0
-    #             ), 'pytorch lightning has bug with amp + gradient clipping'
+    logger.info("conf:", conf.name)
     model = LitModel(conf)
 
     if not os.path.exists(conf.logdir):
@@ -337,10 +336,10 @@ def train(conf: TrainConfig, gpus, nodes=1, mode: str = "train"):
         dirpath=f"{conf.logdir}", save_last=True, save_top_k=-1, every_n_epochs=10
     )
     checkpoint_path = f"{conf.logdir}/last.ckpt"
-    print("ckpt path:", checkpoint_path)
+    logger.info("ckpt path:", checkpoint_path)
     if os.path.exists(checkpoint_path):
         resume = checkpoint_path
-        print("resume!")
+        logger.info("resume!")
     else:
         if conf.continue_from is not None:
             # continue from a checkpoint

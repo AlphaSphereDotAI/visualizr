@@ -157,10 +157,8 @@ class BeatGANsUNetModel(nn.Module):
                     )
                 self.input_blocks.append(TimestepEmbedSequential(*layers))
                 self._feature_size += ch
-                # input_block_chans.append(ch)
                 input_block_chans[level].append(ch)
                 self.input_num_blocks[level] += 1
-                # print(input_block_chans)
             if level != len(conf.channel_mult) - 1:
                 resolution //= 2
                 out_ch = ch
@@ -225,7 +223,6 @@ class BeatGANsUNetModel(nn.Module):
                     # this happens only when num_res_block > num_enc_res_block
                     # we will not have enough lateral (skip) connections for all decoder blocks
                     ich = 0
-                # print('pop:', ich)
                 layers = [
                     ResBlockConfig(
                         # only direct channels when gated

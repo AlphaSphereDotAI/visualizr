@@ -4,6 +4,8 @@ from networks.encoder import Encoder
 from networks.styledecoder import Synthesis
 from torch import load, nn
 
+from visualizr import logger
+
 
 class LIA_Model(nn.Module):
     def __init__(
@@ -50,11 +52,11 @@ class LIA_Model(nn.Module):
             if name not in selfState:
                 name = name.replace("lia.", "")
                 if name not in selfState:
-                    print("%s is not in the model." % origName)
+                    logger.exception("%s is not in the model." % origName)
                     # You can ignore those errors as some parameters are only used for training
                     continue
             if selfState[name].size() != state[origName].size():
-                print(
+                logger.exception(
                     "Wrong parameter length: %s, model: %s, loaded: %s"
                     % (origName, selfState[name].size(), state[origName].size())
                 )

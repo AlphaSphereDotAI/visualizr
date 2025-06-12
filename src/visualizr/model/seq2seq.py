@@ -5,6 +5,7 @@ from espnet.nets.pytorch_backend.conformer.encoder import Encoder as ConformerEn
 from torch import nn
 from torch.nn import Conv1d, Linear, Parameter, Sequential
 
+from visualizr import logger
 from visualizr.model.base import BaseModule
 
 
@@ -48,7 +49,7 @@ class DiffusionPredictor(BaseModule):
         self.infer_type = conf.infer_type
 
         self.initialize_layers(conf)
-        print(f"infer_type: {self.infer_type}")
+        logger.info(f"infer_type: {self.infer_type}")
 
     def create_conformer_encoder(self, attention_dim, num_blocks):
         return ConformerEncoder(
@@ -102,7 +103,7 @@ class DiffusionPredictor(BaseModule):
                 speech_dim, speech_layers
             )
         else:
-            print("infer_type not supported")
+            logger.exception("infer_type not supported")
 
         # Encoders & Decoders
         self.coarse_decoder = self.create_conformer_encoder(
@@ -156,7 +157,7 @@ class DiffusionPredictor(BaseModule):
             yaw_pitch_roll,
         )
         if self.infer_type != "hubert_audio_only":
-            print(f"pose controllable. control_flag: {control_flag}")
+            logger.info(f"pose controllable. control_flag: {control_flag}")
             x, predicted_location, predicted_scale, predicted_pose = (
                 self.adjust_features(
                     x, face_location, face_scale, yaw_pitch_roll, control_flag
@@ -178,7 +179,7 @@ class DiffusionPredictor(BaseModule):
     ):
         predicted_location, predicted_scale = 0, 0
         if "full_control" in self.infer_type:
-            print(f"full controllable. control_flag: {control_flag}")
+            logger.info(f"full controllable. control_flag: {control_flag}")
             x_residual, predicted_location = self.adjust_location(
                 x, face_location, control_flag
             )

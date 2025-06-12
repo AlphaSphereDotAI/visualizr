@@ -161,10 +161,10 @@ def main(
     stage2_checkpoint_path: str,
 ):
     if not path.exists(image_path):
-        print(f"{image_path} does not exist!")
+        logger.exception(f"{image_path} does not exist!")
         exit(0)
     if not path.exists(test_audio_path):
-        print(f"{test_audio_path} does not exist!")
+        logger.exception(f"{test_audio_path} does not exist!")
         exit(0)
 
     image_name: str = Path(image_path).stem
@@ -214,14 +214,17 @@ def main(
     elif conf.infer_type.startswith("hubert"):
         # Hubert features
         if not check_package_installed("transformers"):
-            print("Please install transformers module first.")
+            logger.exception("Please install transformers module first.")
             exit(0)
         hubert_model_path = "ckpts/chinese-hubert-large"
         if not path.exists(hubert_model_path):
-            print("Please download the hubert weight into the ckpts path first.")
+            logger.exception(
+                "Please download the hubert weight into the ckpts path first."
+            )
             exit(0)
-        print(
-            "You did not extract the audio features in advance, extracting online now, which will increase processing delay"
+        logger.info(
+            "You did not extract the audio features in advance, "
+            + "extracting online now, which will increase processing delay"
         )
 
         start_time = time()
@@ -255,7 +258,7 @@ def main(
             )  # align the audio length with the video frame
 
         execution_time = time() - start_time
-        print(f"Extraction Audio Feature: {execution_time:.2f} Seconds")
+        logger.info(f"Extraction Audio Feature: {execution_time:.2f} Seconds")
 
         audio_driven_obj = ws_feat_obj
 
@@ -303,7 +306,7 @@ def main(
     # =========================================
 
     execution_time = time() - start_time
-    print(f"Motion Diffusion Model: {execution_time:.2f} Seconds")
+    logger.info(f"Motion Diffusion Model: {execution_time:.2f} Seconds")
 
     generated_directions = generated_directions.detach().cpu().numpy()
 
@@ -323,7 +326,8 @@ def main(
     # ==============================================
 
     execution_time = time() - start_time
-    print(f"Renderer Model: {execution_time:.2f} Seconds")
+    logger.info(f"Renderer Model: {execution_time:.2f} Seconds")
+    logger.info(f"Saving video at {predicted_video_256_path}")
 
     frames_to_video(
         str(FRAMES_RESULT_SAVED_PATH),

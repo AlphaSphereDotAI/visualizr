@@ -18,9 +18,7 @@ class FusedLeakyReLU(nn.Module):
         self.scale = scale
 
     def forward(self, input):
-        # print("FusedLeakyReLU: ", input.abs().mean())
         out = fused_leaky_relu(input, self.bias, self.negative_slope, self.scale)
-        # print("FusedLeakyReLU: ", out.abs().mean())
         return out
 
 

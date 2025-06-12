@@ -218,8 +218,6 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
             for i in range(len(self.input_num_blocks)):
                 for _ in range(self.input_num_blocks[i]):
                     h = self.input_blocks[k](h, emb=enc_time_emb, cond=enc_cond_emb)
-
-                    # print(i, j, h.shape)
                     hs[i].append(h)
                     k += 1
             assert k == len(self.input_blocks)

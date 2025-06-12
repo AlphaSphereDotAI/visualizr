@@ -9,6 +9,8 @@ import torchvision.transforms as transforms
 from PIL import Image
 from tqdm import tqdm
 
+from visualizr import logger
+
 
 class LatentDataLoader(object):
     def __init__(
@@ -67,7 +69,9 @@ class LatentDataLoader(object):
                     clip_name + ".npy",
                 )
                 if not os.path.exists(item_dict["yaw_pitch_roll_path"]):
-                    print(f"{db_name}'s {clip_name} miss yaw_pitch_roll_path")
+                    logger.exception(
+                        f"{db_name}'s {clip_name} miss yaw_pitch_roll_path"
+                    )
                     continue
 
                 item_dict["yaw_pitch_roll"] = np.load(item_dict["yaw_pitch_roll_path"])
@@ -76,11 +80,11 @@ class LatentDataLoader(object):
                 )
 
                 if not os.path.exists(item_dict["wav_path"]):
-                    print(f"{db_name}'s {clip_name} miss wav_path")
+                    logger.exception(f"{db_name}'s {clip_name} miss wav_path")
                     continue
 
                 if not os.path.exists(item_dict["hubert_path"]):
-                    print(f"{db_name}'s {clip_name} miss hubert_path")
+                    logger.exception(f"{db_name}'s {clip_name} miss hubert_path")
                     continue
 
                 if self.mfcc_mode:
@@ -111,10 +115,12 @@ class LatentDataLoader(object):
                 )
 
                 if not os.path.exists(motion_start_path):
-                    print(f"{db_name}'s {clip_name} miss motion_start_path")
+                    logger.exception(f"{db_name}'s {clip_name} miss motion_start_path")
                     continue
                 if not os.path.exists(motion_direction_path):
-                    print(f"{db_name}'s {clip_name} miss motion_direction_path")
+                    logger.exception(
+                        f"{db_name}'s {clip_name} miss motion_direction_path"
+                    )
                     continue
 
                 item_dict["motion_start_obj"] = np.load(motion_start_path)
@@ -149,7 +155,7 @@ class LatentDataLoader(object):
                 if min_len < self.window_size * self.video_fps + 5:
                     continue
 
-        print("Db count:", len(self.data))
+        logger.info("Db count:", len(self.data))
 
     def get_single_image(self, image_path):
         img_source = Image.open(image_path).convert("RGB")
