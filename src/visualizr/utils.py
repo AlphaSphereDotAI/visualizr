@@ -3,7 +3,6 @@ from importlib.util import find_spec
 from os import listdir, path, remove
 from pathlib import Path
 from time import time
-from typing import Any
 
 import librosa
 import numpy as np
@@ -18,7 +17,7 @@ from moviepy.editor import (
 )
 from moviepy.video.compositing.CompositeVideoClip import CompositeVideoClip
 from moviepy.video.VideoClip import VideoClip
-from numpy import dtype, generic, ndarray
+from numpy import ndarray
 from PIL import Image
 from PIL.ImageFile import ImageFile
 from torch import Tensor
@@ -27,9 +26,7 @@ from tqdm import tqdm
 from transformers import HubertModel, Wav2Vec2FeatureExtractor
 
 from visualizr import (
-    DECODER_LAYERS,
     FRAMES_RESULT_SAVED_PATH,
-    IMAGE_SIZE,
     MOTION_DIM,
     RESULTS_DIR,
     STAGE_1_CHECKPOINT_PATH,
@@ -123,7 +120,7 @@ def main(
 
     conf: TrainConfig = ffhq256_autoenc()
     conf.seed = seed
-    conf.decoder_layers = DECODER_LAYERS
+    conf.decoder_layers = 2
     conf.infer_type = infer_type
     conf.motion_dim = MOTION_DIM
 
@@ -159,7 +156,7 @@ def main(
         print(f"{test_audio_path} does not exist!")
         exit(0)
 
-    img_source: Tensor = img_preprocessing(image_path, IMAGE_SIZE).to("cuda")
+    img_source: Tensor = img_preprocessing(image_path, 256).to("cuda")
     one_shot_lia_start, one_shot_lia_direction, feats = lia.get_start_direction_code(
         img_source, img_source, img_source, img_source
     )
