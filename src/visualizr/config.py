@@ -1,26 +1,23 @@
-import os
+from dataclasses import dataclass
 from multiprocessing import get_context
 from typing import Literal, Tuple
 
-from choices import *
-from config_base import BaseConfig
-from dataset import LatentDataLoader
-from dataset_util import *
-from diffusion import *
-from diffusion.base import (
-    GenerativeType,
-    LossType,
-    ModelMeanType,
-    ModelVarType,
-    get_named_beta_schedule,
-)
-from diffusion.diffusion import space_timesteps
-from diffusion.resample import UniformSampler
-from model import *
-from model.latentnet import *
-from model.unet import ScaleAt
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
+
+from visualizr.choices import *
+from visualizr.config_base import BaseConfig
+from visualizr.dataset import LatentDataLoader
+from visualizr.dataset_util import *
+from visualizr.diffusion import *
+from visualizr.diffusion.base import (
+    get_named_beta_schedule,
+)
+from visualizr.diffusion.diffusion import space_timesteps
+from visualizr.diffusion.resample import UniformSampler
+from visualizr.model import BeatGANsAutoencConfig, ModelConfig
+from visualizr.model.latentnet import *
+from visualizr.model.unet import ScaleAt
 
 
 @dataclass
@@ -139,11 +136,11 @@ class TrainConfig(BaseConfig):
     T: int = 1_000
     total_samples: int = 10_000_000
     warmup: int = 0
-    pretrain: PretrainConfig = None
-    continue_from: PretrainConfig = None
-    eval_programs: Tuple[str] = None
-    # if present load the checkpoint from this path instead
-    eval_path: str = None
+    pretrain: PretrainConfig
+    continue_from: PretrainConfig
+    eval_programs: Tuple[str]
+    # if present, load the checkpoint from this path instead
+    eval_path: str
     base_dir: str = "checkpoints"
     use_cache_dataset: bool = False
     data_cache_dir: str = os.path.expanduser("~/cache")
@@ -172,16 +169,6 @@ class TrainConfig(BaseConfig):
         # we try to use the local dirs to reduce the load over network drives
         # hopefully, this would reduce the disconnection problems with sshfs
         return f"{self.work_cache_dir}/eval_images/{self.data_name}_size{self.img_size}_{self.eval_num_images}"
-
-    @property
-    def data_path(self):
-        # may use the cache dir
-        path = data_paths[self.data_name]
-        if self.use_cache_dataset and path is not None:
-            path = use_cached_dataset_path(
-                path, f"{self.data_cache_dir}/{self.data_name}"
-            )
-        return path
 
     @property
     def logdir(self):

@@ -3,10 +3,11 @@ from enum import Enum
 from typing import NamedTuple, Tuple
 
 import torch
-from choices import *
-from config_base import BaseConfig
 from torch import nn
 from torch.nn import init
+
+from visualizr.choices import *
+from visualizr.config_base import BaseConfig
 
 from .blocks import *
 from .nn import timestep_embedding

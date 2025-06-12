@@ -11,11 +11,12 @@ from typing import NamedTuple, Tuple
 
 import numpy as np
 import torch as th
-from choices import *
-from config_base import BaseConfig
-from model import *
-from model.nn import mean_flat
 from torch.cuda.amp import autocast
+
+from visualizr.choices import *
+from visualizr.config_base import BaseConfig
+from visualizr.model import *
+from visualizr.model.nn import mean_flat
 
 
 @dataclass
