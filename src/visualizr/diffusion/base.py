@@ -684,9 +684,9 @@ class GaussianDiffusionBeatGans:
         Sample x_{t+1} from the model using DDIM reverse ODE.
         NOTE: never used ?
         """
-        assert np.isclose(
-            eta, 0.0, 1e-09, 1e-09
-        ), "Reverse ODE only for deterministic path"
+        assert np.isclose(eta, 0.0, 1e-09, 1e-09), (
+            "Reverse ODE only for deterministic path"
+        )
         out = self.p_mean_variance(
             model, x, t, clip_denoised, denoised_fn, model_kwargs
         )
