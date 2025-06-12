@@ -1,23 +1,11 @@
 from datetime import datetime
-from os import getenv, path
+from os import getenv
 from pathlib import Path
 
 from dotenv import load_dotenv
 from huggingface_hub import snapshot_download
 from loguru import logger
 from torch import cuda
-
-# from warnings import filterwarnings
-
-
-# filterwarnings(
-#     action="ignore",
-#     message="dropout option adds dropout after all but last recurrent layer",
-# )
-# filterwarnings(
-#     action="ignore",
-#     message="`torch.nn.utils.weight_norm` is deprecated",
-# )
 
 load_dotenv()
 
@@ -43,6 +31,7 @@ CHECKPOINT_DIR.mkdir(exist_ok=True)
 FRAMES_RESULT_SAVED_PATH.mkdir(exist_ok=True)
 
 MOTION_DIM: int = 20
+TMP_MP4: str = ".tmp.mp4"
 
 logger.add(
     sink=LOG_FILE_PATH,

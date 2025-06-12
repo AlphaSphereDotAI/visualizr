@@ -30,6 +30,7 @@ from visualizr import (
     MOTION_DIM,
     RESULTS_DIR,
     STAGE_1_CHECKPOINT_PATH,
+    TMP_MP4,
     model_mapping,
 )
 from visualizr.config import TrainConfig
@@ -88,7 +89,7 @@ def load_stage_1_model() -> LIA_Model:
 def load_stage_2_model(conf: TrainConfig, stage2_checkpoint_path: str) -> LitModel:
     model = LitModel(conf)
     state = torch.load(stage2_checkpoint_path, map_location="cpu")
-    model.load_state_dict(state, strict=True)
+    model.load_state_dict(state)
     model.ema_model.eval()
     model.ema_model.to("cuda")
     return model
@@ -115,7 +116,7 @@ def main(
     predicted_video_512_path: Path = RESULTS_DIR / f"{image_name}-{audio_name}_SR.mp4"
 
     # ======Loading Stage 1 model=========
-    lia: LIA_Model = load_stage_1_model(MOTION_DIM)
+    lia: LIA_Model = load_stage_1_model()
     # ============================
 
     conf: TrainConfig = ffhq256_autoenc()
@@ -169,9 +170,7 @@ def main(
     if conf.infer_type.startswith("mfcc"):
         # MFCC features
         wav, sr = librosa.load(test_audio_path, sr=16000)
-        input_values = python_speech_features.mfcc(
-            signal=wav, samplerate=sr, numcep=13, winlen=0.025, winstep=0.01
-        )
+        input_values = python_speech_features.mfcc(signal=wav, samplerate=sr)
         d_mfcc_feat = python_speech_features.base.delta(input_values, 1)
         d_mfcc_feat2 = python_speech_features.base.delta(input_values, 2)
         audio_driven_obj: ndarray = np.hstack((input_values, d_mfcc_feat, d_mfcc_feat2))
@@ -179,7 +178,7 @@ def main(
         audio_start, audio_end = (
             int(frame_start * 4),
             int(frame_end * 4),
-        )  # The video frame is fixed to 25 hz and the audio is fixed to 100 hz
+        )  # The video frame is fixed to 25 hz, and the audio is fixed to 100 hz
 
         audio_driven = (
             torch.Tensor(audio_driven_obj[audio_start:audio_end, :])
@@ -316,20 +315,20 @@ def main(
 
         # Super-resolution
         mimsave(
-            predicted_video_512_path + ".tmp.mp4",
-            enhancer_list(predicted_video_256_path, method="gfpgan", bg_upsampler=None),
+            predicted_video_512_path / TMP_MP4,
+            enhancer_list(predicted_video_256_path, bg_upsampler=None),
             fps=25.0,
         )
 
         # Merge audio and video
-        video_clip = VideoFileClip(predicted_video_512_path + ".tmp.mp4")
+        video_clip = VideoFileClip(predicted_video_512_path / TMP_MP4)
         audio_clip = AudioFileClip(predicted_video_256_path)
         final_clip = video_clip.set_audio(audio_clip)
         final_clip.write_videofile(
             predicted_video_512_path, codec="libx264", audio_codec="aac"
         )
 
-        remove(predicted_video_512_path + ".tmp.mp4")
+        remove(predicted_video_512_path / TMP_MP4)
 
     if face_sr:
         return predicted_video_256_path, predicted_video_512_path
