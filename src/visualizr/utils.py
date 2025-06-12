@@ -26,7 +26,10 @@ from torchvision.transforms import ToPILImage
 from tqdm import tqdm
 
 from visualizr import (
+    DECODER_LAYERS,
     FRAMES_RESULT_SAVED_PATH,
+    IMAGE_SIZE,
+    MOTION_DIM,
     RESULTS_DIR,
     STAGE_1_CHECKPOINT_PATH,
     model_mapping,
@@ -77,8 +80,8 @@ def saved_image(img_tensor: Tensor, img_path: str) -> None:
     img.save(img_path)
 
 
-def load_stage_1_model(motion_dim: int) -> LIA_Model:
-    lia: LIA_Model = LIA_Model(motion_dim=motion_dim, fusion_type="weighted_sum")
+def load_stage_1_model() -> LIA_Model:
+    lia: LIA_Model = LIA_Model(motion_dim=MOTION_DIM, fusion_type="weighted_sum")
     lia.load_lightning_model(STAGE_1_CHECKPOINT_PATH)
     lia.to("cuda")
     return lia
@@ -94,38 +97,34 @@ def load_stage_2_model(conf: TrainConfig, stage2_checkpoint_path: str) -> LitMod
 
 
 def main(
-    infer_type,
-    image_path,
-    test_audio_path,
-    face_sr,
+    infer_type: str,
+    image_path: str,
+    test_audio_path: str,
+    face_sr: bool,
     pose_yaw: float,
-    pose_pitch,
-    pose_roll,
-    face_location,
-    face_scale,
-    step_T,
-    seed,
-    stage2_checkpoint_path,
-    test_hubert_path="",
-    control_flag=True,
-    image_size=256,
-    motion_dim=20,
-    decoder_layers=2,
+    pose_pitch: float,
+    pose_roll: float,
+    face_location: float,
+    face_scale: float,
+    step_t: int,
+    seed: int,
+    stage2_checkpoint_path: str,
 ):
     image_name: str = Path(image_path).stem
     audio_name: str = Path(test_audio_path).stem
+
     predicted_video_256_path: Path = RESULTS_DIR / f"{image_name}-{audio_name}.mp4"
     predicted_video_512_path: Path = RESULTS_DIR / f"{image_name}-{audio_name}_SR.mp4"
 
     # ======Loading Stage 1 model=========
-    lia: LIA_Model = load_stage_1_model(motion_dim)
+    lia: LIA_Model = load_stage_1_model(MOTION_DIM)
     # ============================
 
     conf: TrainConfig = ffhq256_autoenc()
     conf.seed = seed
-    conf.decoder_layers = decoder_layers
+    conf.decoder_layers = DECODER_LAYERS
     conf.infer_type = infer_type
-    conf.motion_dim = motion_dim
+    conf.motion_dim = MOTION_DIM
 
     match infer_type:
         case "mfcc_full_control":
@@ -159,7 +158,7 @@ def main(
         print(f"{test_audio_path} does not exist!")
         exit(0)
 
-    img_source: Tensor = img_preprocessing(image_path, image_size).to("cuda")
+    img_source: Tensor = img_preprocessing(image_path, IMAGE_SIZE).to("cuda")
     one_shot_lia_start, one_shot_lia_direction, feats = lia.get_start_direction_code(
         img_source, img_source, img_source, img_source
     )
@@ -261,7 +260,7 @@ def main(
     # ============================
 
     # Diffusion Noise
-    noisy_t = torch.randn((1, frame_end, motion_dim)).to("cuda")
+    noisy_t = torch.randn((1, frame_end, MOTION_DIM)).to("cuda")
 
     # ======Inputs for Attribute Control=========
     yaw_signal = torch.zeros(1, frame_end, 1).to("cuda") + pose_yaw
@@ -284,7 +283,7 @@ def main(
         face_scale_tensor,
         pose_signal,
         noisy_t,
-        step_T,
+        step_t,
         control_flag=control_flag,
     )
     # =========================================
@@ -366,16 +365,24 @@ def generate_video(
         return None, Markdown(
             "Error: Input image or audio file is empty. Please check and upload both files."
         )
-    stage2_checkpoint_path = model_mapping.get(infer_type, "default_checkpoint.ckpt")
-    # main(infer_type=infer_type, image_path=uploaded_img,
-    #      test_audio_path=uploaded_audio,
-    #      stage2_checkpoint_path=model_mapping.get(
-    #          infer_type, "default_checkpoint.ckpt"
-    #      ), seed=seed, pose_yaw=pose_yaw, pose_pitch=pose_pitch,
-    #      pose_roll=pose_roll, face_location=face_location,
-    #      face_scale=face_scale, step_T=step_t, face_sr=face_sr,)
     try:
-        output_256_video_path, output_512_video_path = main()
+        output_256_video_path, output_512_video_path = main(
+            infer_type,
+            uploaded_img,
+            uploaded_audio,
+            face_sr,
+            pose_yaw,
+            pose_pitch,
+            pose_roll,
+            face_location,
+            face_scale,
+            step_t,
+            seed,
+            model_mapping.get(
+                infer_type,
+                "default_checkpoint.ckpt",
+            ),
+        )
 
         if not path.exists(path=output_256_video_path):
             return None, Markdown(
