@@ -3,6 +3,7 @@ from importlib.util import find_spec
 from os import listdir, path, remove
 from pathlib import Path
 from time import time
+from typing import Literal
 
 import librosa
 import numpy as np
@@ -95,30 +96,16 @@ def load_stage_2_model(conf: TrainConfig, stage2_checkpoint_path: str) -> LitMod
     return model
 
 
-def main(
-    infer_type: str,
-    image_path: str,
-    test_audio_path: str,
-    face_sr: bool,
-    pose_yaw: float,
-    pose_pitch: float,
-    pose_roll: float,
-    face_location: float,
-    face_scale: float,
-    step_t: int,
+def init_conf(
+    infer_type: Literal[
+        "mfcc_full_control",
+        "mfcc_pose_only",
+        "hubert_pose_only",
+        "hubert_audio_only",
+        "hubert_full_control",
+    ],
     seed: int,
-    stage2_checkpoint_path: str,
-):
-    image_name: str = Path(image_path).stem
-    audio_name: str = Path(test_audio_path).stem
-
-    predicted_video_256_path: Path = RESULTS_DIR / f"{image_name}-{audio_name}.mp4"
-    predicted_video_512_path: Path = RESULTS_DIR / f"{image_name}-{audio_name}_SR.mp4"
-
-    # ======Loading Stage 1 model=========
-    lia: LIA_Model = load_stage_1_model()
-    # ============================
-
+) -> TrainConfig:
     conf: TrainConfig = ffhq256_autoenc()
     conf.seed = seed
     conf.decoder_layers = 2
@@ -146,16 +133,47 @@ def main(
             conf.face_location = True
             conf.face_scale = True
             conf.mfcc = False
-        case _:
-            print("Type NOT Found!")
-            exit(0)
+    return conf
 
+
+def main(
+    infer_type: Literal[
+        "mfcc_full_control",
+        "mfcc_pose_only",
+        "hubert_pose_only",
+        "hubert_audio_only",
+        "hubert_full_control",
+    ],
+    image_path: str,
+    test_audio_path: str,
+    face_sr: bool,
+    pose_yaw: float,
+    pose_pitch: float,
+    pose_roll: float,
+    face_location: float,
+    face_scale: float,
+    step_t: int,
+    seed: int,
+    stage2_checkpoint_path: str,
+):
     if not path.exists(image_path):
         print(f"{image_path} does not exist!")
         exit(0)
     if not path.exists(test_audio_path):
         print(f"{test_audio_path} does not exist!")
         exit(0)
+
+    image_name: str = Path(image_path).stem
+    audio_name: str = Path(test_audio_path).stem
+
+    predicted_video_256_path: Path = RESULTS_DIR / f"{image_name}-{audio_name}.mp4"
+    predicted_video_512_path: Path = RESULTS_DIR / f"{image_name}-{audio_name}_SR.mp4"
+
+    # ======Loading Stage 1 model=========
+    lia: LIA_Model = load_stage_1_model()
+    # ============================
+
+    conf: TrainConfig = init_conf(infer_type, seed)
 
     img_source: Tensor = img_preprocessing(image_path, 256).to("cuda")
     one_shot_lia_start, one_shot_lia_direction, feats = lia.get_start_direction_code(
@@ -166,6 +184,8 @@ def main(
     model = load_stage_2_model(conf, stage2_checkpoint_path)
     # =================================
 
+    frame_end = None
+    audio_driven = None
     # ======Audio Input=========
     if conf.infer_type.startswith("mfcc"):
         # MFCC features
@@ -202,7 +222,9 @@ def main(
 
         start_time = time()
 
-        audio_model = HubertModel.from_pretrained(hubert_model_path).to("cuda")
+        audio_model: HubertModel = HubertModel.from_pretrained(hubert_model_path).to(
+            "cuda"
+        )
         feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained(hubert_model_path)
         audio_model.feature_extractor._freeze_parameters()
         audio_model.eval()
@@ -339,7 +361,13 @@ def main(
 def generate_video(
     uploaded_img: str,
     uploaded_audio: str,
-    infer_type: str,
+    infer_type: Literal[
+        "mfcc_full_control",
+        "mfcc_pose_only",
+        "hubert_pose_only",
+        "hubert_audio_only",
+        "hubert_full_control",
+    ],
     pose_yaw: float,
     pose_pitch: float,
     pose_roll: float,

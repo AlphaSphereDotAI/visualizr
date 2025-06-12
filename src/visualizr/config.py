@@ -1,6 +1,6 @@
 import os
 from multiprocessing import get_context
-from typing import Tuple
+from typing import Literal, Tuple
 
 from choices import *
 from config_base import BaseConfig
@@ -33,6 +33,13 @@ class PretrainConfig(BaseConfig):
 class TrainConfig(BaseConfig):
     # random seed
     seed: int = 0
+    infer_type: Literal[
+        "mfcc_full_control",
+        "mfcc_pose_only",
+        "hubert_pose_only",
+        "hubert_audio_only",
+        "hubert_full_control",
+    ]
     train_mode: TrainMode = TrainMode.diffusion
     train_cond0_prob: float = 0
     train_pred_xstart_detach: bool = True
