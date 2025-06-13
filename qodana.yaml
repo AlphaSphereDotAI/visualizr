@@ -30,4 +30,4 @@ include:
   - name: ReassignedToPlainText
   - name: RedundantSuppression
   - name: TodoComment
-  
+
