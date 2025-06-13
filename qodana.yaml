@@ -2,8 +2,6 @@ version: "1.0"
 linter: jetbrains/qodana-python:2025.1
 bootstrap: |
   conda install -y python=3.10
-  pip install uv
-  uv export --no-hashes --no-editable --no-dev --quiet --format requirements.txt -o requirements.txt
   pip install -r requirements.txt
   rm -rf .idea
 profile:
