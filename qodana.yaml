@@ -1,18 +1,11 @@
 version: "1.0"
 linter: jetbrains/qodana-python:2025.1
-bootstrap: |+
-  set -eu
-  rm -rf /var/lib/apt/lists/*
-  mkdir -p /var/lib/apt/lists/partial
+bootstrap: |
   conda init bash
   conda config --add channels defaults
   conda update -y conda
   conda install -y python=3.10
-  apt update
-  apt install -y build-essential
-  export UV_CACHE_DIR=/data/cache
-  pip install uv
-  uv sync --frozen
+  conda install --yes --file requirements.txt
   rm -rf .idea
 profile:
   name: qodana.recommended
