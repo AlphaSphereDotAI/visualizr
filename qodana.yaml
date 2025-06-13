@@ -3,7 +3,9 @@ linter: jetbrains/qodana-python:2025.1
 bootstrap: |+
   set -eu
   rm -rf /var/lib/apt/lists/*
+  mkdir -p /var/lib/apt/lists/partial
   conda init bash
+  conda config --add channels defaults
   conda update -y conda
   conda install -y python=3.10
   apt update
