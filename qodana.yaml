@@ -3,7 +3,7 @@ linter: jetbrains/qodana-python:2025.1
 profile:
   name: qodana.recommended
 include:
-  - name: CheckDependencyLicenses  
+  - name: CheckDependencyLicenses
   - name: PyInterpreterInspection
   - name: PyArgumentListInspection
   - name: PyTypeCheckerInspection
