@@ -2,12 +2,14 @@ version: "1.0"
 linter: jetbrains/qodana-python:2025.1
 bootstrap: |+
   set -eu
-  rm -f /var/lib/apt/lists
+  rm -rf /var/lib/apt/lists/*
+  conda init bash
+  conda update -y conda
+  conda install -y python=3.10
   apt update
   apt install -y build-essential
   export UV_CACHE_DIR=/data/cache
   pip install uv
-  uv python install 3.10
   uv sync --frozen
   rm -rf .idea
 profile:
