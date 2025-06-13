@@ -1,9 +1,9 @@
 version: "1.0"
 linter: jetbrains/qodana-python:2025.1
-bootstrap: |
-  set -eux
-  apt-get update
-  apt-get install build-essential
+bootstrap: |+
+  set -eu
+  apt update
+  apt install -y build-essential
   export UV_CACHE_DIR=/data/cache
   pip install uv
   uv python install 3.10
