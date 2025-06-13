@@ -23,14 +23,6 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}  # to check out the actual pull request commit, not the merge commit
           fetch-depth: 0  # A full history is required for pull request analysis
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
-        with:
-          enable-cache: true
-          cache-dependency-glob: "uv.lock"
-          activate-environment: true
-      - name: Install the project
-        run: uv sync --frozen
       - name: Qodana Scan
         uses: JetBrains/qodana-action@v2025.1
         with:
