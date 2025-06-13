@@ -2,8 +2,8 @@ version: "1.0"
 linter: jetbrains/qodana-python:2025.1
 bootstrap: |
   export UV_CACHE_DIR=/data/cache
+  export CONDA_PREFIX=/opt/miniconda3
   pip install uv
-  which uv
   uv sync --frozen
   rm -rf .idea
 profile:
