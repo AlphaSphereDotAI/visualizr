@@ -27,8 +27,8 @@
   visualizr="visualizr.__main__:main"
 
 [build-system]
-  build-backend="setuptools"
-  requires=["setuptools"]
+  requires = ["hatchling"]
+  build-backend = "hatchling.build"
 
 [dependency-groups]
   dev=[
