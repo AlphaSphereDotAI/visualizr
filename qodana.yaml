@@ -4,7 +4,7 @@ bootstrap: |
   export UV_CACHE_DIR=/data/cache
   export CONDA_PREFIX=/opt/miniconda3
   pip install uv
-  uv pip sync pyproject.toml
+  uv pip sync pyproject.toml --python 3.10
   rm -rf .idea
 profile:
   name: qodana.recommended
