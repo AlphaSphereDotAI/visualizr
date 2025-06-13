@@ -4,7 +4,7 @@ bootstrap: |
   export UV_CACHE_DIR=/data/cache
   pip install uv
   uv python install 3.10
-  uv sync --frozen 
+  uv sync --frozen
   rm -rf .idea
 profile:
   name: qodana.recommended
