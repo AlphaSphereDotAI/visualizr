@@ -27,8 +27,8 @@
   visualizr="visualizr.__main__:main"
 
 [build-system]
-  build-backend="uv_build"
-  requires=["uv_build"]
+  build-backend="setuptools"
+  requires=["setuptools"]
 
 [dependency-groups]
   dev=[
