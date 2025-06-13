@@ -1,6 +1,11 @@
 version: "1.0"
 linter: jetbrains/qodana-python:2025.1
-bootstrap: pip install -r requirements.txt
+bootstrap: |
+  export UV_CACHE_DIR=/data/cache
+  pip install uv
+  uv python install 3.10
+  uv sync --frozen 
+  rm -rf .idea
 profile:
   name: qodana.recommended
 include:
