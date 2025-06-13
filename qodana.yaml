@@ -7,7 +7,6 @@ bootstrap: |
   # pip install uv
   # uv pip sync pyproject.toml --python 3.10
   # rm -rf .idea
-  
   conda install -y python=3.10
   pip install -r requirements.txt
   rm -rf .idea
