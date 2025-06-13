@@ -6,9 +6,6 @@ on:
     branches: # Specify your branches here
       - main # The 'main' branch
       - 'releases/*' # The release branches
-concurrency:
-  group: ${{ github.head_ref || github.run_id }}
-  cancel-in-progress: true
 jobs:
   qodana:
     name: Qodana
