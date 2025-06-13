@@ -3,4 +3,19 @@ linter: jetbrains/qodana-python:2025.1
 profile:
   name: qodana.recommended
 include:
-  - name: CheckDependencyLicenses
+  - name: CheckDependencyLicenses  
+  - name: PyInterpreterInspection
+  - name: PyArgumentListInspection
+  - name: PyTypeCheckerInspection
+  - name: PyDataclassInspection
+  - name: PyUnresolvedReferencesInspection
+  - name: CyclomaticComplexityInspection
+  - name: UnsatisfiedRequirementInspection
+  - name: IgnoreFileDuplicateEntry
+  - name: YAMLSchemaDeprecation
+  - name: YAMLDuplicatedKeys
+  - name: YAMLRecursiveAlias
+  - name: YAMLIncompatibleTypes
+  - name: YAMLUnresolvedAlias
+  - name: YAMLUnusedAnchor
+  - name: YAMLSchemaValidation
