@@ -1,11 +1,15 @@
 version: "1.0"
 linter: jetbrains/qodana-python:2025.1
 bootstrap: |
-  export UV_CACHE_DIR=/data/cache
-  export CONDA_PREFIX=/opt/miniconda3
+  # export UV_CACHE_DIR=/data/cache
+  # export CONDA_PREFIX=/opt/miniconda3
+  # conda install -y python=3.10
+  # pip install uv
+  # uv pip sync pyproject.toml --python 3.10
+  # rm -rf .idea
+  
   conda install -y python=3.10
-  pip install uv
-  uv pip sync pyproject.toml --python 3.10
+  pip install -r requirements.txt
   rm -rf .idea
 profile:
   name: qodana.recommended
