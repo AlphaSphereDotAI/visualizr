@@ -19,3 +19,15 @@ include:
   - name: YAMLUnresolvedAlias
   - name: YAMLUnusedAnchor
   - name: YAMLSchemaValidation
+  - name: CheckModuleLicenses
+  - name: CheckThirdPartySoftwareList
+  - name: Annotator
+  - name: EmptyDirectory
+  - name: InconsistentLineSeparators
+  - name: IncorrectFormatting
+  - name: LongLine
+  - name: ProblematicWhitespace
+  - name: ReassignedToPlainText
+  - name: RedundantSuppression
+  - name: TodoComment
+  
