@@ -18,7 +18,7 @@ from moviepy.editor import (
     VideoFileClip,
     concatenate_videoclips,
 )
-from PIL import Image, ImageFile
+from PIL import Image
 from torch import Tensor
 from torchvision.transforms import ToPILImage
 from tqdm import tqdm
@@ -54,8 +54,8 @@ def frames_to_video(input_path, audio_path, output_path, fps=25):
 
 
 def load_image(filename: str, size: int) -> np.ndarray:
-    img: ImageFile = Image.open(filename).convert("RGB")
-    img_resized: ImageFile = img.resize((size, size))
+    img: Image.Image = Image.open(filename).convert("RGB")
+    img_resized: Image.Image = img.resize((size, size))
     img_np: np.ndarray = np.asarray(img_resized)
     img_transposed: np.ndarray = np.transpose(img_np, (2, 0, 1))  # 3 x 256 x 256
     return img_transposed / 255.0
