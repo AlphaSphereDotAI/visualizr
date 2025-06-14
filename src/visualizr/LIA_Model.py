@@ -1,10 +1,8 @@
-from typing import Any
-
-from networks.encoder import Encoder
-from networks.styledecoder import Synthesis
 from torch import load, nn
 
 from visualizr import logger
+from visualizr.networks.encoder import Encoder
+from visualizr.networks.styledecoder import Synthesis
 
 
 class LIA_Model(nn.Module):
@@ -14,22 +12,13 @@ class LIA_Model(nn.Module):
         style_dim=512,
         motion_dim=20,
         channel_multiplier=1,
-        blur_kernel: list[int] = [1, 3, 3, 1],
+        blur_kernel=[1, 3, 3, 1],
         fusion_type="",
     ):
         super().__init__()
-        self.enc = Encoder(
-            size,
-            style_dim,
-            motion_dim,
-            fusion_type,
-        )
+        self.enc = Encoder(size, style_dim, motion_dim, fusion_type)
         self.dec = Synthesis(
-            size,
-            style_dim,
-            motion_dim,
-            blur_kernel,
-            channel_multiplier,
+            size, style_dim, motion_dim, blur_kernel, channel_multiplier
         )
 
     def get_start_direction_code(self, x_start, x_target, x_face, x_aug):
@@ -43,12 +32,11 @@ class LIA_Model(nn.Module):
         return self.dec(start, direction, feats)
 
     def load_lightning_model(self, lia_pretrained_model_path):
-        selfState: dict[str, Any] = self.state_dict()
+        selfState = self.state_dict()
 
         state = load(lia_pretrained_model_path, map_location="cpu")
         for name, param in state.items():
             origName = name
-
             if name not in selfState:
                 name = name.replace("lia.", "")
                 if name not in selfState:

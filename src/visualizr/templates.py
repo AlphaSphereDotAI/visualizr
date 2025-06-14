@@ -1,4 +1,5 @@
-from experiment import *
+from visualizr.choices import GenerativeType, ModelName
+from visualizr.config import PretrainConfig, TrainConfig
 
 
 def ddpm():

@@ -1,4 +1,5 @@
-from config import *
+from visualizr.choices import TrainMode
+from visualizr.config import TrainConfig
 
 
 def render_condition(
@@ -11,7 +12,7 @@ def render_condition(
     face_location,
     face_scale,
     yaw_pitch_roll,
-    noisyT,
+    noisy_t,
     control_flag,
 ):
     if conf.train_mode == TrainMode.diffusion:
@@ -19,7 +20,7 @@ def render_condition(
 
         return sampler.sample(
             model=model,
-            noise=noisyT,
+            noise=noisy_t,
             model_kwargs={
                 "motion_direction_start": motion_direction_start,
                 "yaw_pitch_roll": yaw_pitch_roll,

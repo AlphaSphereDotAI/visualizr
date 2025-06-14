@@ -4,20 +4,20 @@ import os
 import numpy as np
 import pytorch_lightning as pl
 import torch
-from config import *
-from dist_utils import *
-from model.seq2seq import DiffusionPredictor
 from pytorch_lightning import loggers as pl_loggers
-from pytorch_lightning.callbacks import *
-from renderer import *
+from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from torch.cuda import amp
 from torch.optim.optimizer import Optimizer
 from torch.utils.data.dataset import TensorDataset
 
 from visualizr import logger
+from visualizr.choices import OptimizerType, TrainMode
+from visualizr.config import TrainConfig
+from visualizr.dist_utils import get_world_size
+from visualizr.model.seq2seq import DiffusionPredictor
+from visualizr.renderer import render_condition
 
 
-# This part is modified from: https://github.com/phizaz/diffae/blob/master/experiment.py
 class LitModel(pl.LightningModule):
     def __init__(self, conf: TrainConfig):
         super().__init__()
@@ -300,6 +300,7 @@ class LitModel(pl.LightningModule):
         n = len(x)
         rank = self.global_rank
         world_size = get_world_size()
+        # print(f'rank: {rank}/{world_size}')
         per_rank = n // world_size
         return x[rank * per_rank : (rank + 1) * per_rank]
 

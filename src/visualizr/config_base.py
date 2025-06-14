@@ -3,8 +3,6 @@ import os
 from copy import deepcopy
 from dataclasses import dataclass
 
-from visualizr import logger
-
 
 @dataclass
 class BaseConfig:
@@ -45,7 +43,7 @@ class BaseConfig:
                 if strict:
                     raise ValueError(f"loading extra '{k}'")
                 else:
-                    logger.info(f"loading extra '{k}'")
+                    print(f"loading extra '{k}'")
                     continue
             if isinstance(self.__dict__[k], BaseConfig):
                 self.__dict__[k].from_dict(v)

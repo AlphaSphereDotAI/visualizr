@@ -1,3 +1,4 @@
+import math
 from dataclasses import dataclass
 from enum import Enum
 from typing import NamedTuple, Tuple
@@ -13,6 +14,7 @@ from visualizr.model.nn import timestep_embedding
 
 class LatentNetType(Enum):
     none = "none"
+    # injecting inputs into the hidden layers
     skip = "skip"
 
 

@@ -1,7 +1,7 @@
 from torch import nn
 
-from .encoder import Encoder
-from .styledecoder import Synthesis
+from visualizr.networks.encoder import Encoder
+from visualizr.networks.styledecoder import Synthesis
 
 
 class Generator(nn.Module):

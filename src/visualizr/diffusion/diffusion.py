@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Tuple
 
 import numpy as np
 from torch import tensor
@@ -17,7 +17,7 @@ def space_timesteps(num_timesteps, section_counts):
     given the number of timesteps we want to take from equally-sized portions
     of the original process.
 
-    For example, if there's 300 timesteps and the section counts are [10,15,20]
+    For example, if there are 300 timesteps and the section counts are [10,15,20]
     then the first 100 timesteps are strided to be 10 timesteps, the second 100
     are strided to be 15 timesteps, and the final 100 are strided to be 20.
 
@@ -69,12 +69,7 @@ def space_timesteps(num_timesteps, section_counts):
 
 @dataclass
 class SpacedDiffusionBeatGansConfig(GaussianDiffusionBeatGansConfig):
-    """
-    :param use_timesteps: a collection (sequence or set) of timesteps from the
-                          original diffusion process to retain.
-    """
-
-    use_timesteps: Optional[tuple[int]] = None
+    use_timesteps: Tuple[int] = None
 
     def make_sampler(self):
         return SpacedDiffusionBeatGans(self)
@@ -83,11 +78,11 @@ class SpacedDiffusionBeatGansConfig(GaussianDiffusionBeatGansConfig):
 class SpacedDiffusionBeatGans(GaussianDiffusionBeatGans):
     """
     A diffusion process which can skip steps in a base diffusion process.
-    """
 
-    original_num_steps: int
-    timestep_map: list[Any]
-    use_timesteps: set[int]
+    :param use_timesteps: a collection (sequence or set) of timesteps from the
+                          original diffusion process to retain.
+    :param kwargs: the kwargs to create the base diffusion process.
+    """
 
     def __init__(self, conf: SpacedDiffusionBeatGansConfig):
         self.conf = conf
@@ -111,7 +106,9 @@ class SpacedDiffusionBeatGans(GaussianDiffusionBeatGans):
     def p_mean_variance(self, model: Model, *args, **kwargs):
         return super().p_mean_variance(self._wrap_model(model), *args, **kwargs)
 
-    def training_losses(self, model: Model, *args, **kwargs):  # pylint: disable=signature-differs
+    def training_losses(
+        self, model: Model, *args, **kwargs
+    ):  # pylint: disable=signature-differs
         return super().training_losses(self._wrap_model(model), *args, **kwargs)
 
     def condition_mean(self, cond_fn, *args, **kwargs):
@@ -158,6 +155,7 @@ class _WrappedModel:
         """
         Args:
             t: t's with differrent ranges (can be << T due to smaller eval T) need to be converted to the original t's
+            t_cond: the same as t but can be of different values
         """
         map_tensor = tensor(self.timestep_map, device=t.device, dtype=t.dtype)
 

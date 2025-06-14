@@ -17,8 +17,7 @@ class AntiAliasInterpolation2d(nn.Module):
 
         kernel_size = [kernel_size, kernel_size]
         sigma = [sigma, sigma]
-        # The gaussian kernel is the product of the
-        # gaussian function of each dimension.
+        # The gaussian kernel is the product of the gaussian function of each dimension.
         kernel = 1
         meshgrids = torch.meshgrid(
             [torch.arange(size, dtype=torch.float32) for size in kernel_size]
@@ -28,7 +27,7 @@ class AntiAliasInterpolation2d(nn.Module):
             kernel *= torch.exp(-((mgrid - mean) ** 2) / (2 * std**2))
 
         # Make sure sum of values in gaussian kernel equals 1.
-        kernel = kernel / torch.sum(kernel)
+        kernel /= torch.sum(kernel)
         # Reshape to depthwise convolutional weight
         kernel = kernel.view(1, 1, *kernel.size())
         kernel = kernel.repeat(channels, *[1] * (kernel.dim() - 1))

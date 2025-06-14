@@ -1,21 +1,14 @@
 import cv2
-from numpy import dtype, generic, ndarray
+import numpy as np
 
 
-def load_video_to_cv2(
-    input_path: str,
-) -> list[ndarray[tuple[float, float, float], dtype[generic]]]:
-    video_stream = cv2.VideoCapture(filename=input_path)
-    video_stream.get(propId=cv2.CAP_PROP_FPS)
-    full_frames: list[ndarray[tuple[float, float, float], dtype[generic]]] = []
+def load_video_to_cv2(input_path: str) -> list[np.ndarray]:
+    video_stream = cv2.VideoCapture(input_path)
+    full_frames = []
     while 1:
-        video_result: tuple[
-            bool, ndarray[tuple[float, float, float], dtype[generic]]
-        ] = video_stream.read()
-        still_reading: bool = video_result[0]
-        frame: ndarray[tuple[float, float, float], dtype[generic]] = video_result[1]
+        still_reading, frame = video_stream.read()
         if not still_reading:
             video_stream.release()
             break
-        full_frames.append(cv2.cvtColor(src=frame, code=cv2.COLOR_BGR2RGB))
+        full_frames.append(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
     return full_frames
