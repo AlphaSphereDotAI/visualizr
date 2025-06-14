@@ -230,7 +230,7 @@ def main(
 
         audio_model = HubertModel.from_pretrained(hubert_model_path).to("cuda")
         feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained(hubert_model_path)
-        audio_model.feature_extractor._freeze_parameters()
+        audio_model.feature_extractor._freeze_parameters()  # skipcq: PYL-W0212
         audio_model.eval()
 
         # hubert model forward pass
@@ -408,7 +408,8 @@ def generate_video(
 
         if not os.path.exists(output_256_video_path):
             return None, gr.Markdown(
-                "Error: Video generation failed. Please check your inputs and try again."
+                "Error: Video generation failed. "
+                + "Please check your inputs and try again."
             )
         if output_256_video_path == output_512_video_path:
             return (
