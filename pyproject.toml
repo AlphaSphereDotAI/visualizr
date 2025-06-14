@@ -28,8 +28,8 @@
   visualizr="visualizr.__main__:main"
 
 [build-system]
-  requires = ["hatchling"]
-  build-backend = "hatchling.build"
+  build-backend="hatchling.build"
+  requires=["hatchling"]
 
 [dependency-groups]
   dev=[

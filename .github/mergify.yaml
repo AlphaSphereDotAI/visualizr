@@ -4,7 +4,9 @@ pull_request_rules:
       - merged
     actions:
       comment:
-        message: Thank you for your contribution @{{author}}! Your pull request has been merged.
+        message:
+          Thank you for your contribution @{{author}}! Your pull request has
+          been merged.
   - name: Comment if there is a conflict
     conditions:
       - conflict
@@ -31,7 +33,9 @@ pull_request_rules:
         toggle:
           - merge-queued
   - name: Notify when a PR is removed from the queue
-    description: Notify the PR author when its pull request is removed from the merge queue.
+    description:
+      Notify the PR author when its pull request is removed from the merge
+      queue.
     conditions:
       - queue-dequeue-reason != none
       - queue-dequeue-reason != pr-merged
