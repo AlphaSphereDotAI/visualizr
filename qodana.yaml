@@ -1,4 +1,6 @@
 version: "1.0"
+push-fixes: pull-request
+fixesStrategy: apply
 linter: jetbrains/qodana-python:2025.1
 bootstrap: |
   export UV_CACHE_DIR=/data/cache
