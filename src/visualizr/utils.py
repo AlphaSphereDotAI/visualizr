@@ -1,4 +1,3 @@
-import argparse
 import os
 import shutil
 import time
@@ -12,6 +11,7 @@ import numpy as np
 import python_speech_features
 import spaces
 import torch
+from PIL import Image, ImageFile
 from gradio import Markdown
 from moviepy.editor import (
     AudioFileClip,
@@ -19,7 +19,6 @@ from moviepy.editor import (
     VideoFileClip,
     concatenate_videoclips,
 )
-from PIL import Image, ImageFile
 from torch import Tensor
 from torchvision.transforms import ToPILImage
 from tqdm import tqdm
@@ -33,9 +32,9 @@ from visualizr import (
     logger,
     model_mapping,
 )
+from visualizr.LIA_Model import LIA_Model
 from visualizr.config import TrainConfig
 from visualizr.experiment import LitModel
-from visualizr.LIA_Model import LIA_Model
 from visualizr.templates import ffhq256_autoenc
 
 
