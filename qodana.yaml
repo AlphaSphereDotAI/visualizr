@@ -3,8 +3,8 @@ linter: jetbrains/qodana-python:2025.1
 bootstrap: |
   export UV_CACHE_DIR=/data/cache
   export CONDA_PREFIX=/opt/miniconda3
-  conda config --add channels defaults
-  conda install -y python=3.10
+  conda config --add channels defaults > .idea/output.log
+  conda install -y python=3.10 > .idea/output.log
   pip install uv
   uv pip sync pyproject.toml --python 3.10
   rm -rf .idea
