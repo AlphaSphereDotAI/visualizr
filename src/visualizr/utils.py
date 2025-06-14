@@ -1,5 +1,6 @@
 import os
 import shutil
+import sys
 import time
 from importlib.util import find_spec
 from pathlib import Path
@@ -155,10 +156,10 @@ def main(
 ):
     if not os.path.exists(image_path):
         logger.exception(f"{image_path} does not exist!")
-        exit(0)
+        sys.exit(0)
     if not os.path.exists(test_audio_path):
         logger.exception(f"{test_audio_path} does not exist!")
-        exit(0)
+        sys.exit(0)
 
     image_name: str = Path(image_path).stem
     audio_name: str = Path(test_audio_path).stem
@@ -210,13 +211,13 @@ def main(
         # Hubert features
         if not check_package_installed("transformers"):
             logger.exception("Please install transformers module first.")
-            exit(0)
+            sys.exit(0)
         hubert_model_path = "ckpts/chinese-hubert-large"
         if not os.path.exists(hubert_model_path):
             logger.exception(
                 "Please download the hubert weight into the ckpts path first."
             )
-            exit(0)
+            sys.exit(0)
         logger.info(
             "You did not extract the audio features in advance, "
             + "extracting online now, which will increase processing delay"
@@ -317,7 +318,7 @@ def main(
         ori_img_recon = ori_img_recon.clamp(-1, 1)
         wav_pred = (ori_img_recon.detach() + 1) / 2
         saved_image(
-            wav_pred, os.path.join(FRAMES_RESULT_SAVED_PATH, "%06d.png" % pred_index)
+            wav_pred, os.path.join(FRAMES_RESULT_SAVED_PATH, f"{pred_index:06d}.png")
         )
     # ==============================================
 
@@ -358,8 +359,7 @@ def main(
 
     if face_sr:
         return predicted_video_256_path, predicted_video_512_path
-    else:
-        return predicted_video_256_path, predicted_video_256_path
+    return predicted_video_256_path, predicted_video_256_path
 
 
 @spaces.GPU(duration=300)
@@ -384,46 +384,47 @@ def generate_video(
 ):
     if not uploaded_img or not uploaded_audio:
         return None, Markdown(
-            "Error: Input image or audio file is empty. Please check and upload both files."
+            "Error: Input image or audio file is empty. "
+            + "Please check and upload both files."
         )
-    # try:
-    output_256_video_path, output_512_video_path = main(
-        infer_type,
-        uploaded_img,
-        uploaded_audio,
-        face_sr,
-        pose_yaw,
-        pose_pitch,
-        pose_roll,
-        face_location,
-        face_scale,
-        step_t,
-        seed,
-        model_mapping.get(
+    try:
+        output_256_video_path, output_512_video_path = main(
             infer_type,
-            "default_checkpoint.ckpt",
-        ),
-    )
-
-    if not os.path.exists(output_256_video_path):
-        return None, gr.Markdown(
-            "Error: Video generation failed. Please check your inputs and try again."
+            uploaded_img,
+            uploaded_audio,
+            face_sr,
+            pose_yaw,
+            pose_pitch,
+            pose_roll,
+            face_location,
+            face_scale,
+            step_t,
+            seed,
+            model_mapping.get(
+                infer_type,
+                "default_checkpoint.ckpt",
+            ),
         )
-    if output_256_video_path == output_512_video_path:
+
+        if not os.path.exists(output_256_video_path):
+            return None, gr.Markdown(
+                "Error: Video generation failed. Please check your inputs and try again."
+            )
+        if output_256_video_path == output_512_video_path:
+            return (
+                gr.Video(value=output_256_video_path),
+                None,
+                gr.Markdown("Video (256*256 only) generated successfully!"),
+            )
         return (
             gr.Video(value=output_256_video_path),
-            None,
-            gr.Markdown("Video (256*256 only) generated successfully!"),
+            gr.Video(value=output_512_video_path),
+            gr.Markdown("Video generated successfully!"),
         )
-    return (
-        gr.Video(value=output_256_video_path),
-        gr.Video(value=output_512_video_path),
-        gr.Markdown("Video generated successfully!"),
-    )
 
-    # except Exception as e:
-    #     return (
-    #         None,
-    #         None,
-    #         gr.Markdown(f"Error: An unexpected error occurred - {str(e)}"),
-    #     )
+    except Exception as e:
+        return (
+            None,
+            None,
+            gr.Markdown(f"Error: An unexpected error occurred - {str(e)}"),
+        )
