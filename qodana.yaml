@@ -3,6 +3,7 @@ linter: jetbrains/qodana-python:2025.1
 bootstrap: |
   export UV_CACHE_DIR=/data/cache
   export CONDA_PREFIX=/opt/miniconda3
+  conda config --add channels defaults
   conda install -y python=3.10
   pip install uv
   uv pip sync pyproject.toml --python 3.10
@@ -37,4 +38,3 @@ include:
   - name: ReassignedToPlainText
   - name: RedundantSuppression
   - name: TodoComment
-
