@@ -8,7 +8,7 @@ bootstrap: |
   # uv pip sync pyproject.toml --python 3.10
   # rm -rf .idea
   conda install -y python=3.10
-  pip install pytorch-lightning torchmetrics torch>=2.6.0+cu126 torchvision scipy numpy tqdm espnet moviepy python_speech_features transformers facexlib tb-nightly gfpgan --extra-index-url https://download.pytorch.org/whl/cu126
+  pip install pytorch-lightning torchmetrics torch>=2.6.0+cu126 torchvision scipy numpy tqdm espnet moviepy python_speech_features transformers facexlib tb-nightly gfpgan --use-pep517 --no-build-isolation --extra-index-url https://download.pytorch.org/whl/cu126
   rm -rf .idea
 profile:
   name: qodana.recommended
