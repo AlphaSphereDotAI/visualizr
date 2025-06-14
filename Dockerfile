@@ -1,4 +1,4 @@
-FROM python:3.13 AS builder
+FROM python:3.10 AS builder
 
 SHELL ["/bin/bash", "-c"]
 
@@ -21,7 +21,7 @@ COPY . /app
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --no-dev --locked --no-editable
 
-FROM python:3.13-slim AS production
+FROM python:3.10-slim AS production
 
 SHELL ["/bin/bash", "-c"]
 
