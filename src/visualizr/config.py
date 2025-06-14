@@ -3,6 +3,7 @@ from os import path
 from typing import Tuple
 
 from torch import distributed
+from torch.multiprocessing import get_context
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 
@@ -21,7 +22,6 @@ from visualizr.choices import (
 )
 from visualizr.config_base import BaseConfig
 from visualizr.dataset import LatentDataLoader
-from visualizr.dataset_util import use_cached_dataset_path
 from visualizr.diffusion.base import get_named_beta_schedule
 from visualizr.diffusion.diffusion import SpacedDiffusionBeatGansConfig, space_timesteps
 from visualizr.diffusion.resample import UniformSampler
@@ -172,16 +172,6 @@ class TrainConfig(BaseConfig):
         # we try to use the local dirs to reduce the load over network drives
         # hopefully, this would reduce the disconnection problems with sshfs
         return f"{self.work_cache_dir}/eval_images/{self.data_name}_size{self.img_size}_{self.eval_num_images}"
-
-    @property
-    def data_path(self):
-        # may use the cache dir
-        path = data_paths[self.data_name]
-        if self.use_cache_dataset and path is not None:
-            path = use_cached_dataset_path(
-                path, f"{self.data_cache_dir}/{self.data_name}"
-            )
-        return path
 
     @property
     def logdir(self):
