@@ -38,9 +38,6 @@ class GaussianDiffusionBeatGans:
     """
     Utilities for training and sampling diffusion models.
 
-    Ported directly from here, and then adapted over time to further experimentation.
-    https://github.com/hojonathanho/diffusion/blob/1e0dceb3b3495bbe19116a5e1b3596cd0706c543/diffusion_tf/diffusion_utils_2.py#L42
-
     :param betas: A 1-D numpy array of betas for each diffusion timestep,
                   starting at T and going to 1.
     :param model_mean_type: A ModelMeanType determining what the model outputs.

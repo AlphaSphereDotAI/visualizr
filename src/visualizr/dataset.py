@@ -233,9 +233,10 @@ class LatentDataLoader(object):
             "motion_start": motion_start,
             "motion_direction": motion_direction,
             "audio_feats": audio_feats,
-            "face_location": lmd_obj_full[
-                1:, 30, 0
-            ],  # '1:' means taking the first frame as the driven frame. '30' is the noise location, '0' means x coordinate
+            # '1:' means taking the first frame as the driven frame.
+            # '30' is the noise location,
+            # '0' means x coordinate
+            "face_location": lmd_obj_full[1:, 30, 0],
             "face_scale": self.calculate_face_height(lmd_obj_full[1:, :, :]),
             "yaw_pitch_roll": yaw_pitch_roll,
             "motion_direction_start": motion_direction_start,

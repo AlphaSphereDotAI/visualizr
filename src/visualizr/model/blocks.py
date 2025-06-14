@@ -409,12 +409,7 @@ class Downsample(nn.Module):
 
 
 class AttentionBlock(nn.Module):
-    """
-    An attention block that allows spatial positions to attend to each other.
-
-    Originally ported from here, but adapted to the N-d case.
-    https://github.com/hojonathanho/diffusion/blob/1e0dceb3b3495bbe19116a5e1b3596cd0706c543/diffusion_tf/models/unet.py#L66.
-    """
+    """An attention block that allows spatial positions to attend to each other."""
 
     def __init__(
         self,
@@ -429,9 +424,9 @@ class AttentionBlock(nn.Module):
         if num_head_channels == -1:
             self.num_heads = num_heads
         else:
-            assert channels % num_head_channels == 0, (
-                f"q,k,v channels {channels} is not divisible by num_head_channels {num_head_channels}"
-            )
+            assert (
+                channels % num_head_channels == 0
+            ), f"q,k,v channels {channels} is not divisible by num_head_channels {num_head_channels}"
             self.num_heads = channels // num_head_channels
         self.use_checkpoint = use_checkpoint
         self.norm = normalization(channels)
