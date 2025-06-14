@@ -1,40 +1,46 @@
-FROM ghcr.io/prefix-dev/pixi:jammy-cuda-12.3.1
+FROM python:3.10 AS builder
 
 SHELL ["/bin/bash", "-c"]
 
+ENV UV_LINK_MODE=copy \
+    UV_COMPILE_BYTECODE=1 \
+    UV_PYTHON_DOWNLOADS=0
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
 WORKDIR /app
 
-ENV DEBIAN_FRONTEND=noninteractive \
-    UV_NO_CACHE=true \
-    PATH="/root/.pixi/bin:${PATH}"
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    --mount=type=bind,source=README.md,target=README.md \
+    uv sync --no-install-project --no-dev --locked --no-editable
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends ffmpeg libgl1-mesa-glx libsndfile1 x264 && \
-    apt-get full-upgrade -y && \
-    apt-get autoremove && \
-    apt-get clean && \
-    apt-get autoclean && \
+COPY . /app
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --no-dev --locked --no-editable
+
+FROM python:3.10-slim AS production
+
+SHELL ["/bin/bash", "-c"]
+
+ENV GRADIO_SERVER_PORT=7860 \
+    GRADIO_SERVER_NAME=0.0.0.0
+
+RUN groupadd app && \
+    useradd -m -g app -s /bin/bash app && \
+    apt-get update -qq && \
+    apt-get install -qq -y --no-install-recommends espeak-ng ffmpeg && \
+    apt-get clean -qq && \
     rm -rf /var/lib/apt/lists/*
 
-ADD https://github.com/OpenTalker/SadTalker/releases/download/v0.0.2-rc/mapping_00109-model.pth.tar ./checkpoints/mapping_00109-model.pth.tar
-ADD https://github.com/OpenTalker/SadTalker/releases/download/v0.0.2-rc/mapping_00229-model.pth.tar ./checkpoints/mapping_00229-model.pth.tar
-ADD https://github.com/OpenTalker/SadTalker/releases/download/v0.0.2-rc/SadTalker_V0.0.2_256.safetensors ./checkpoints/SadTalker_V0.0.2_256.safetensors
-ADD https://github.com/OpenTalker/SadTalker/releases/download/v0.0.2-rc/SadTalker_V0.0.2_512.safetensors ./checkpoints/SadTalker_V0.0.2_512.safetensors
-ADD https://huggingface.co/vinthony/SadTalker-V002rc/resolve/main/epoch_00190_iteration_000400000_checkpoint.pt?download=true ./checkpoints/epoch_00190_iteration_000400000_checkpoint.pt
-ADD https://github.com/xinntao/facexlib/releases/download/v0.1.0/alignment_WFLW_4HG.pth ./gfpgan/weights/alignment_WFLW_4HG.pth
-ADD https://github.com/xinntao/facexlib/releases/download/v0.1.0/detection_Resnet50_Final.pth ./gfpgan/weights/detection_Resnet50_Final.pth
-ADD https://github.com/TencentARC/GFPGAN/releases/download/v1.3.0/GFPGANv1.4.pth ./gfpgan/weights/GFPGANv1.4.pth
-ADD https://github.com/xinntao/facexlib/releases/download/v0.2.2/parsing_parsenet.pth ./gfpgan/weights/parsing_parsenet.pth
+WORKDIR /home/app
 
-COPY pyproject.toml .
+COPY --from=builder --chown=app:app /app/.venv /app/.venv
 
-RUN pixi global install uv && \
-    uv python install 3.9 && \
-    uv lock --upgrade && \
-    uv sync
+USER app
 
-COPY . .
+EXPOSE ${GRADIO_SERVER_PORT}
 
-EXPOSE 8002
-
-CMD ["uv", "run", "fastapi", "dev", "--host", "0.0.0.0", "--port", "8002"]
+CMD ["/app/.venv/bin/vocalizr"]

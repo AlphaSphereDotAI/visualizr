@@ -1,0 +1,10 @@
+**/__pycache__/
+.deepsource.toml
+.env
+.github/
+.idea/
+.mypy_cache/
+.ruff_cache/
+.venv/
+.vscode/
+renovate.json
