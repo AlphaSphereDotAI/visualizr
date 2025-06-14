@@ -1,7 +1,8 @@
-name: Trunk Code Quality
+name: Code Quality
 on:
   push:
   pull_request:
+  workflow_dispatch:
 permissions: read-all
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -18,7 +19,6 @@ jobs:
         uses: actions/checkout@v4
       - name: Install uv
         uses: astral-sh/setup-uv@v6
-        id: uv
         with:
           enable-cache: true
           cache-dependency-glob: "uv.lock"
@@ -40,10 +40,32 @@ jobs:
         uses: actions/checkout@v4
       - name: Install uv
         uses: astral-sh/setup-uv@v6
-        id: uv
         with:
           enable-cache: true
           cache-dependency-glob: "uv.lock"
           activate-environment: true
       - name: Install the project
         run: uv sync --frozen --no-install-project
+  qodana:
+    name: Qodana
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      checks: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: Qodana Scan
+        uses: JetBrains/qodana-action@v2025.1
+        with:
+          pr-mode: false
+          args: --baseline,qodana.sarif.json,--apply-fixes
+          push-fixes: pull-request
+          upload-result: true
+        env:
+          QODANA_TOKEN: ${{ secrets.QODANA_TOKEN_439778457 }}
+          QODANA_ENDPOINT: "https://qodana.cloud"

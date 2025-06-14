@@ -1,4 +1,4 @@
-FROM python:3.13 AS builder
+FROM python:3.10 AS builder
 
 SHELL ["/bin/bash", "-c"]
 
@@ -21,13 +21,13 @@ COPY . /app
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --no-dev --locked --no-editable
 
-FROM python:3.13-slim AS production
+FROM python:3.10-slim AS production
 
 SHELL ["/bin/bash", "-c"]
 
 ENV GRADIO_SERVER_PORT=7860 \
     GRADIO_SERVER_NAME=0.0.0.0
-
+# skipcq: DOK-DL3008
 RUN groupadd app && \
     useradd -m -g app -s /bin/bash app && \
     apt-get update -qq && \

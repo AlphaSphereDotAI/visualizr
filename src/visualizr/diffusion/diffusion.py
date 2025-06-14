@@ -106,7 +106,7 @@ class SpacedDiffusionBeatGans(GaussianDiffusionBeatGans):
     def p_mean_variance(self, model: Model, *args, **kwargs):
         return super().p_mean_variance(self._wrap_model(model), *args, **kwargs)
 
-    def training_losses(self, model: Model, *args, **kwargs):  # pylint: disable=signature-differs
+    def training_losses(self, model: Model, *args, **kwargs):
         return super().training_losses(self._wrap_model(model), *args, **kwargs)
 
     def condition_mean(self, cond_fn, *args, **kwargs):
@@ -128,9 +128,7 @@ class SpacedDiffusionBeatGans(GaussianDiffusionBeatGans):
 
 
 class _WrappedModel:
-    """
-    converting the supplied t's to the old t's scales.
-    """
+    """converting the supplied t's to the old t's scales."""
 
     def __init__(self, model, timestep_map, rescale_timesteps, original_num_steps):
         self.model = model
@@ -152,7 +150,9 @@ class _WrappedModel:
     ):
         """
         Args:
-            t: t's with differrent ranges (can be << T due to smaller eval T) need to be converted to the original t's
+            t: t's with different ranges
+               (can be << T due to smaller eval T)
+               need to be converted to the original t's
             t_cond: the same as t but can be of different values
         """
         map_tensor = tensor(self.timestep_map, device=t.device, dtype=t.dtype)
