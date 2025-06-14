@@ -7,6 +7,7 @@ bootstrap: |
   conda install -y python=3.10 > .idea/output.log
   pip install uv
   uv pip sync pyproject.toml --python 3.10
+  rm uv.lock
   rm -rf .idea
 profile:
   name: qodana.recommended
