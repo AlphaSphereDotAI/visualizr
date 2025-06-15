@@ -1,19 +1,18 @@
 version: "1.0"
 linter: jetbrains/qodana-python:2025.1
 bootstrap: |
-  rm uv.lock
-  rm -rd .idea
   export UV_CACHE_DIR=/data/cache
   export CONDA_PREFIX=/opt/miniconda3
-  conda config --add channels defaults > output.log
-  conda install -y python=3.10 > output.log
+  conda config --add channels defaults > .idea/output.log
+  conda install -y python=3.10 > .idea/output.log
   pip install uv
   uv pip sync pyproject.toml --python 3.10
+  rm uv.lock
+  rm -rd .idea
 profile:
   name: qodana.recommended
 include:
   - name: CheckDependencyLicenses
-  - name: PyInterpreterInspection
   - name: PyArgumentListInspection
   - name: PyTypeCheckerInspection
   - name: PyDataclassInspection
