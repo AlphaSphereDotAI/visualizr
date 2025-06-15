@@ -386,7 +386,22 @@ class Encoder(nn.Module):
         return id_emb, idrm_emb, id_density_emb
 
     def forward(self, input_source, input_target, input_face, input_aug):
-        global h_target_motion_target, h_another_face_target, h_face, h_source_id_emb, h_source_idrm_emb, h_source_id_density_emb, h_target_id_emb, h_target_idrm_emb, h_target_id_density_emb, h_face_id_emb, h_face_idrm_emb, h_face_id_density_emb, h_aug_id_emb, h_aug_idrm_emb, h_aug_id_density_emb
+        global \
+            h_target_motion_target, \
+            h_another_face_target, \
+            h_face, \
+            h_source_id_emb, \
+            h_source_idrm_emb, \
+            h_source_id_density_emb, \
+            h_target_id_emb, \
+            h_target_idrm_emb, \
+            h_target_id_density_emb, \
+            h_face_id_emb, \
+            h_face_idrm_emb, \
+            h_face_id_density_emb, \
+            h_aug_id_emb, \
+            h_aug_idrm_emb, \
+            h_aug_id_density_emb
         if input_target is not None:
             h_source, feats = self.net_app(input_source)
             h_target, _ = self.net_app(input_target)
