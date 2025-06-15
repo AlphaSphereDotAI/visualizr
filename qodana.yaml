@@ -8,7 +8,7 @@ bootstrap: |
   pip install uv
   uv pip sync pyproject.toml --python 3.10
   rm uv.lock
-  rm -rf .idea
+  rm -rd .idea
 profile:
   name: qodana.recommended
 include:
