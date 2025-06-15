@@ -5,8 +5,8 @@ bootstrap: |
   rm -rd .idea
   export UV_CACHE_DIR=/data/cache
   export CONDA_PREFIX=/opt/miniconda3
-  conda config --add channels defaults > .idea/output.log
-  conda install -y python=3.10 > .idea/output.log
+  conda config --add channels defaults > output.log
+  conda install -y python=3.10 > output.log
   pip install uv
   uv pip sync pyproject.toml --python 3.10
 profile:
