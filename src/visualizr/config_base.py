@@ -7,6 +7,7 @@ from dataclasses import dataclass
 @dataclass
 class BaseConfig:
     """BaseConfig provides methods to clone itself, inherit settings from another config, propagate settings to nested configs, and serialize/deserialize configurations to/from JSON."""
+
     def clone(self):
         """Return a deep copy of this configuration."""
         return deepcopy(self)
