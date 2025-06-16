@@ -26,7 +26,7 @@ lint:
     - gitleaks@8.27.2
     - actionlint@1.7.7
     - bandit@1.8.3
-    - checkov@3.2.439
+    - checkov@3.2.441
     - git-diff-check
     - hadolint@2.12.1-beta
     - renovate@40.48.5
