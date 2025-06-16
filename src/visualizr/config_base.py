@@ -40,9 +40,9 @@ class BaseConfig:
             conf = json.load(f)
         self.from_dict(conf)
 
-    def from_dict(self, dict, strict=False):
+    def from_dict(self, config_dict, strict=False):
         """Populate configuration attributes from a dictionary, optionally enforcing strict key checking."""
-        for k, v in dict.items():
+        for k, v in config_dict.items():
             if not hasattr(self, k):
                 if strict:
                     raise ValueError(f"loading extra '{k}'")
