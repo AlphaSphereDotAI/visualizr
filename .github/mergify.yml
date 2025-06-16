@@ -5,6 +5,12 @@ pull_request_rules:
     actions:
       comment:
         message: Hi @{{author}}! Your pull request is ready for merging
+  - name: Queue the configuration of Mergify
+    conditions:
+      - author = MH0386
+      - "title = ci(Mergify): configuration update"
+    actions:
+      queue:
   - name: Comment when a pull request is merged
     conditions:
       - merged
@@ -40,7 +46,8 @@ pull_request_rules:
           - merge-queued
   - name: Notify when a PR is removed from the queue
     description: >
-      Notify the PR author when its pull request is removed from the merge queue.
+      Notify the PR author when its pull request is removed from the merge
+      queue.
     conditions:
       - queue-dequeue-reason != none
       - queue-dequeue-reason != pr-merged
