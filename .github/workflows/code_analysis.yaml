@@ -27,8 +27,6 @@ jobs:
         run: uv sync --frozen
       - name: Trunk Code Quality
         uses: trunk-io/trunk-action@v1
-        with:
-          arguments: --github-annotate-new-only=false
   compatibility:
     name: Check Dependency Compatibility
     runs-on: ubuntu-latest
