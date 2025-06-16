@@ -1,4 +1,10 @@
 pull_request_rules:
+  - name: Notify the PR author when All tests are passed
+    conditions:
+      - author = MH0386
+      - "title = ci(Mergify): configuration update"
+    actions:
+      queue:
   - name: Comment when a pull request is merged
     conditions:
       - merged
