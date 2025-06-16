@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SonarLintProjectSettings">
+    <option name="bindingEnabled" value="true" />
+    <option name="projectKey" value="AlphaSphereDotAI_chatacter_backend_video_generator" />
+    <option name="serverId" value="AlphaSphere.AI" />
+  </component>
+</project>

@@ -1,5 +1,6 @@
 import os
 import random
+from typing import Dict
 
 import librosa
 import numpy as np
@@ -48,7 +49,7 @@ class LatentDataLoader(object):
         for db_name in ["VoxCeleb2", "HDTF"]:
             db_png_path = os.path.join(frame_jpgs, db_name)
             for clip_name in tqdm(os.listdir(db_png_path)):
-                item_dict = dict()
+                item_dict: Dict = {}
                 item_dict["clip_name"] = clip_name
                 item_dict["frame_count"] = len(
                     list(os.listdir(os.path.join(frame_jpgs, db_name, clip_name)))
