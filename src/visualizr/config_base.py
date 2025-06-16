@@ -4,6 +4,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 
+
 @dataclass
 class BaseConfig:
     """BaseConfig provides methods to clone itself,
