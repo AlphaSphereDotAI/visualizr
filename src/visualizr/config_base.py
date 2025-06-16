@@ -6,7 +6,9 @@ from dataclasses import dataclass
 
 @dataclass
 class BaseConfig:
+    """BaseConfig provides methods to clone itself, inherit settings from another config, propagate settings to nested configs, and serialize/deserialize configurations to/from JSON."""
     def clone(self):
+        """Return a deep copy of this configuration."""
         return deepcopy(self)
 
     def inherit(self, another):
@@ -38,6 +40,7 @@ class BaseConfig:
         self.from_dict(conf)
 
     def from_dict(self, dict, strict=False):
+        """Populate configuration attributes from a dictionary, optionally enforcing strict key checking."""
         for k, v in dict.items():
             if not hasattr(self, k):
                 if strict:
@@ -50,6 +53,7 @@ class BaseConfig:
                 self.__dict__[k] = v
 
     def as_dict_jsonable(self):
+        """Convert the configuration to a JSON-serializable dictionary."""
         conf = {}
         for k, v in self.__dict__.items():
             if isinstance(v, BaseConfig):
@@ -64,6 +68,7 @@ class BaseConfig:
 
 
 def jsonable(x):
+    """Check if the object x is JSON serializable."""
     try:
         json.dumps(x)
         return True
