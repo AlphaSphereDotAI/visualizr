@@ -20,7 +20,7 @@ class BaseConfig:
 
     def propagate(self):
         """push down the configuration to all members"""
-        for k, v in self.__dict__.items():
+        for _, v in self.__dict__.items():
             if isinstance(v, BaseConfig):
                 v.inherit(self)
                 v.propagate()
