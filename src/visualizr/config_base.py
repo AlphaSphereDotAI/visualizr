@@ -2,7 +2,7 @@ import json
 import os
 from copy import deepcopy
 from dataclasses import dataclass
-
+from pathlib import Path
 
 @dataclass
 class BaseConfig:
@@ -27,7 +27,7 @@ class BaseConfig:
                 v.inherit(self)
                 v.propagate()
 
-    def save(self, save_path):
+    def save(self, save_path: Path):
         """save config to json file"""
         dirname = os.path.dirname(save_path)
         if not os.path.exists(dirname):
@@ -36,7 +36,7 @@ class BaseConfig:
         with open(save_path, "w") as f:
             json.dump(conf, f)
 
-    def load(self, load_path):
+    def load(self, load_path: Path):
         """load json config"""
         with open(load_path) as f:
             conf = json.load(f)
