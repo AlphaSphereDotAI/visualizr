@@ -164,8 +164,7 @@ class LatentDataLoader(object):
                 "multi_ranges must be a list of (start, end) tuples with exactly two elements each"
             )
         extracted_elements = [lists[start:end] for start, end in multi_ranges]
-        flat_list = [item for sublist in extracted_elements for item in sublist]
-        return flat_list
+        return [item for sublist in extracted_elements for item in sublist]
 
     def read_landmark_info(self, lmd_path, upper_face=True):
         with open(lmd_path, "r") as file:
