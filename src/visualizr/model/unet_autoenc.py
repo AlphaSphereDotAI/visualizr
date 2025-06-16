@@ -82,8 +82,8 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
 
     def noise_to_cond(self, noise: Tensor):
         raise NotImplementedError()
-        assert self.conf.noise_net_conf is not None
-        return self.noise_net.forward(noise)
+        # assert self.conf.noise_net_conf is not None
+        # return self.noise_net.forward(noise)
 
     def encode(self, x):
         cond = self.encoder.forward(x)

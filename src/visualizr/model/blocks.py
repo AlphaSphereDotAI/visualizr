@@ -409,12 +409,7 @@ class Downsample(nn.Module):
 
 
 class AttentionBlock(nn.Module):
-    """
-    An attention block that allows spatial positions to attend to each other.
-
-    Originally ported from here, but adapted to the N-d case.
-    https://github.com/hojonathanho/diffusion/blob/1e0dceb3b3495bbe19116a5e1b3596cd0706c543/diffusion_tf/models/unet.py#L66.
-    """
+    """An attention block that allows spatial positions to attend to each other."""
 
     def __init__(
         self,

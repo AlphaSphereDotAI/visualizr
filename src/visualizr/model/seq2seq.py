@@ -124,6 +124,7 @@ class DiffusionPredictor(BaseModule):
         t_emb,
         control_flag=False,
     ):
+        global x
         if self.infer_type.startswith("mfcc"):
             x = self.mfcc_speech_downsample(seq_input_vector)
         elif self.infer_type.startswith("hubert"):
@@ -145,9 +146,12 @@ class DiffusionPredictor(BaseModule):
                     x, face_location, face_scale, yaw_pitch_roll, control_flag
                 )
             )
+        # Variable initial_code and direction_code serve as a motion guide
+        # extracted from the reference image.
+        # This aims to tell the model what the starting motion should be.
         concatenated_features = self.combine_features(
             x, initial_code, direction_code, noisy_x, t_emb
-        )  # initial_code and direction_code serve as a motion guide extracted from the reference image. This aims to tell the model what the starting motion should be.
+        )
         outputs = self.decode_features(concatenated_features)
         return outputs, predicted_location, predicted_scale, predicted_pose
 

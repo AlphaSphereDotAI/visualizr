@@ -26,11 +26,12 @@ from visualizr.model.nn import (
 class BeatGANsUNetConfig(BaseConfig):
     image_size: int = 64
     in_channels: int = 3
-    # base channels, will be multiplied
+    # base channels will be multiplied
     model_channels: int = 64
     # output of the unet
     # suggest: 3
-    # you only need 6 if you also model the variance of the noise prediction (usually we use an analytical variance hence 3)
+    # you only need 6 if you also model the variance of the noise prediction
+    # (usually we use an analytical variance hence 3)
     out_channels: int = 3
     # how many repeating resblocks per resolution
     # the decoding side would have "one more" resblock

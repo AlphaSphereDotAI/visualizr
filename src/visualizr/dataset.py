@@ -1,5 +1,6 @@
 import os
 import random
+from typing import Dict
 
 import librosa
 import numpy as np
@@ -48,7 +49,7 @@ class LatentDataLoader(object):
         for db_name in ["VoxCeleb2", "HDTF"]:
             db_png_path = os.path.join(frame_jpgs, db_name)
             for clip_name in tqdm(os.listdir(db_png_path)):
-                item_dict = dict()
+                item_dict: Dict = {}
                 item_dict["clip_name"] = clip_name
                 item_dict["frame_count"] = len(
                     list(os.listdir(os.path.join(frame_jpgs, db_name, clip_name)))
@@ -163,8 +164,7 @@ class LatentDataLoader(object):
                 "multi_ranges must be a list of (start, end) tuples with exactly two elements each"
             )
         extracted_elements = [lists[start:end] for start, end in multi_ranges]
-        flat_list = [item for sublist in extracted_elements for item in sublist]
-        return flat_list
+        return [item for sublist in extracted_elements for item in sublist]
 
     def read_landmark_info(self, lmd_path, upper_face=True):
         with open(lmd_path, "r") as file:
@@ -233,9 +233,10 @@ class LatentDataLoader(object):
             "motion_start": motion_start,
             "motion_direction": motion_direction,
             "audio_feats": audio_feats,
-            "face_location": lmd_obj_full[
-                1:, 30, 0
-            ],  # '1:' means taking the first frame as the driven frame. '30' is the noise location, '0' means x coordinate
+            # '1:' means taking the first frame as the driven frame.
+            # '30' is the noise location,
+            # '0' means x coordinate
+            "face_location": lmd_obj_full[1:, 30, 0],
             "face_scale": self.calculate_face_height(lmd_obj_full[1:, :, :]),
             "yaw_pitch_roll": yaw_pitch_roll,
             "motion_direction_start": motion_direction_start,

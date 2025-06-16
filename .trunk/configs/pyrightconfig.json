@@ -1,7 +1,0 @@
-{
-  "venvPath": ".",
-  "reportMissingParameterType": true,
-  "reportMissingTypeStubs": false,
-  "analyzeUnannotatedFunctions": true,
-  "venv": ".venv"
-}
