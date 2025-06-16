@@ -5,12 +5,13 @@ pull_request_rules:
     actions:
       comment:
         message: Hi @{{author}}! Your pull request is ready for merging
-  - name: Queue the configuration of Mergify
+  - name: Merge pull request when the configuration of Mergify is valid
     conditions:
       - author = MH0386
       - "title = ci(Mergify): configuration update"
+      - head = mergify/MH0386/config-update
     actions:
-      queue:
+      merge:
   - name: Comment when a pull request is merged
     conditions:
       - merged
