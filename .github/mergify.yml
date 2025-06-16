@@ -40,7 +40,8 @@ pull_request_rules:
           - merge-queued
   - name: Notify when a PR is removed from the queue
     description: >
-      Notify the PR author when its pull request is removed from the merge queue.
+      Notify the PR author when its pull request is removed from the merge
+      queue.
     conditions:
       - queue-dequeue-reason != none
       - queue-dequeue-reason != pr-merged
