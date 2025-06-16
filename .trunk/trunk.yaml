@@ -15,7 +15,6 @@ lint:
   enabled:
     - ty@0.0.1-alpha.10
     - pre-commit-hooks@5.0.0
-    - snyk@1.1295.0
     - trivy@0.63.0
     - gitleaks@8.27.2
     - actionlint@1.7.7
