@@ -42,3 +42,46 @@ include:
   - name: ReassignedToPlainText
   - name: RedundantSuppression
   - name: TodoComment
+  - name: ComposeErroneousRelation
+  - name: ComposeMissingKeys
+  - name: ComposeUnknownKeys
+  - name: ComposeUnknownValues
+  - name: ComposeUnquotedPorts
+  - name: DockerJsonFormStringLiterals
+  - name: DockerFileDuplicatedStageName
+  - name: DockerFileAddOrCopyPaths
+  - name: DockerFileAssignments
+  - name: DockerFileRunCommandMissingContinuation
+  - name: DockerFileArgumentCount
+  - name: DockerFileEntrypointWithoutExec
+  - name: MarkdownIncorrectTableFormatting
+  - name: MarkdownIncorrectlyNumberedListItem
+  - name: MarkdownLinkDestinationWithSpaces
+  - name: MarkdownOutdatedTableOfContents
+  - name: MarkdownNoTableBorders
+  - name: MarkdownUnresolvedFileReference
+  - name: MarkdownUnresolvedHeaderReference
+  - name: MarkdownUnresolvedLinkLabel
+  - name: DotEnvDuplicateKeyInspection
+  - name: DotEnvExtraBlankLineInspection
+  - name: DotEnvSpaceAroundSeparatorInspection
+  - name: DotEnvIncorrectDelimiterInspection
+  - name: DotEnvLeadingCharacterInspection
+  - name: DotEnvLowercaseKeyInspection
+  - name: NestedVariableOutsideDoubleQuotesInspection
+  - name: UndefinedNestedVariableInspection
+  - name: EmptyNestedVariableInspection
+  - name: DotEnvSpaceInsideNonQuotedInspection
+  - name: DotEnvTrailingWhitespaceInspection
+  - name: TaskProblemsInspection
+  - name: CyclicJobDependency
+  - name: MandatoryParamsAbsent
+  - name: GithubFunctionSignatureValidation
+  - name: UndefinedAction
+  - name: IllegalJobDependency
+  - name: UndefinedParamsPresent
+  - name: IgnoreCoverEntry
+  - name: IgnoreDuplicateEntry
+  - name: IgnoreIncorrectEntry
+  - name: IgnoreRelativeEntry
+  - name: IgnoreSyntaxEntry
