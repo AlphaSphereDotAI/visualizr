@@ -16,9 +16,8 @@ repos:
     rev: v0.11.13
     hooks:
       - id: ruff-check
-        args: [ --fix --config .trunk/configs/ruff.toml ]
+        args: [ --fix ]
       - id: ruff-format
-        args: [ --config .trunk/configs/ruff.toml ]
   - repo: https://github.com/abravalheri/validate-pyproject
     rev: v0.24.1
     hooks:
