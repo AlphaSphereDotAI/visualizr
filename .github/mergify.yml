@@ -69,5 +69,6 @@ queue_rules:
           - check-success = Trunk Check
           - check-success = Check Dependency Compatibility
           - check-success = CodeRabbit
+      - or:
           - check-success = pre-commit.ci - push
           - check-success = pre-commit.ci - pr
