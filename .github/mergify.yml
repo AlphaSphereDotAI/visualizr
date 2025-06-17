@@ -1,10 +1,4 @@
 pull_request_rules:
-  - name: Notify Me when All tests are passed
-    conditions:
-      - author = MH0386
-    actions:
-      comment:
-        message: Hi @{{author}}! Your pull request is ready for merging
   - name: Merge pull request when the configuration of Mergify is valid
     conditions:
       - author = MH0386
