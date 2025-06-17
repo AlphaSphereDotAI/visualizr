@@ -32,7 +32,7 @@ class BaseConfig:
     def save(self, save_path: Path):
         """save config to JSON file"""
         if not save_path.exists():
-            save_path.mkdir(parents=True,exist_ok=True)
+            save_path.mkdir(parents=True, exist_ok=True)
         conf = self.as_dict_jsonable()
         with open(save_path, "w") as f:
             json.dump(conf, f)
@@ -40,7 +40,7 @@ class BaseConfig:
     def load(self, load_path: Path):
         """load json config"""
         if not load_path.exists():
-            load_path.mkdir(parents=True,exist_ok=True)
+            load_path.mkdir(parents=True, exist_ok=True)
         with open(load_path) as f:
             conf = json.load(f)
         self.from_dict(conf)
