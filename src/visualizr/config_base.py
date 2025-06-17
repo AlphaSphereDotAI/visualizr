@@ -46,7 +46,8 @@ class BaseConfig:
 
     def from_dict(self, config_dict, strict=False):
         """Populate configuration attributes from a dictionary, optionally
-        enforcing strict key checking."""
+        enforcing strict key checking.
+        """
         for k, v in config_dict.items():
             if not hasattr(self, k):
                 if strict:
