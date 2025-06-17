@@ -27,6 +27,7 @@ jobs:
         run: |
           echo "" >> .gitignore
           echo ".github/" >> .gitignore
+          echo ".trunk/" >> .gitignore
           echo ".idea/" >> .gitignore
           echo "renovate.json" >> .gitignore
           echo ".deepsource.toml" >> .gitignore
