@@ -13,6 +13,16 @@ exclude:
   - name: All
     paths:
       - uv.lock
+      - .venv
+      - ckpts
+      - logs
+      - results
+      - .trunk/actions
+      - .trunk/logs
+      - .trunk/notifications
+      - .trunk/out
+      - .trunk/plugins
+      - .trunk/tools
 profile:
   name: qodana.recommended
 include:
