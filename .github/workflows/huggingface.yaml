@@ -1,8 +1,12 @@
 name: Push to HuggingFace
 on:
+  workflow_dispatch:
   push:
-    branches:
-      - main
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+      - "[0-9]+.[0-9]+.[0-9]+a[0-9]+"
+      - "[0-9]+.[0-9]+.[0-9]+b[0-9]+"
+      - "[0-9]+.[0-9]+.[0-9]+rc[0-9]+"
 env:
   HF_HUB_ENABLE_HF_TRANSFER: "1"
   UV_FROZEN: "1"
