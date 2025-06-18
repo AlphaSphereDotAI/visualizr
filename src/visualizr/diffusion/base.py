@@ -162,7 +162,6 @@ class GaussianDiffusionBeatGans:
             if self.loss_type == LossType.mse:
                 if self.model_mean_type == ModelMeanType.eps:
                     direction_loss = mean_flat((target - predicted_direction) ** 2)
-                    # import pdb;pdb.set_trace()
                     location_loss = mean_flat(
                         (face_location.unsqueeze(-1) - predicted_location) ** 2
                     )
@@ -606,7 +605,6 @@ class GaussianDiffusionBeatGans:
             indices = tqdm(indices)
 
         for i in indices:
-            # t = th.tensor([i] * shape[0], device=device)
             t = th.tensor([i] * len(img), device=device)
             with th.no_grad():
                 out = self.p_sample(

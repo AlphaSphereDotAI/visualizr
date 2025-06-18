@@ -154,7 +154,6 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
             cond: output of the encoder
             noise: random noise (to predict the cond)
         """
-
         if t_cond is None:
             t_cond = t
 
@@ -204,8 +203,6 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
 
         if self.conf.num_classes is not None:
             raise NotImplementedError()
-            # assert y.shape == (x.shape[0], )
-            # emb = emb + self.label_emb(y)
 
         # where in the model to supply time conditions
         enc_time_emb = emb
@@ -216,7 +213,6 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
         mid_cond_emb = cond_emb
         dec_cond_emb = cond_emb
 
-        # hs = []
         hs = [[] for _ in range(len(self.conf.channel_mult))]
 
         if x is not None:
@@ -247,10 +243,8 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
                 # until there is no more, use None
                 try:
                     lateral = hs[-i - 1].pop()
-                    # print(i, j, lateral.shape)
                 except IndexError:
                     lateral = None
-                    # print(i, j, lateral)
 
                 h = self.output_blocks[k](
                     h, emb=dec_time_emb, cond=dec_cond_emb, lateral=lateral

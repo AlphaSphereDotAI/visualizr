@@ -529,7 +529,6 @@ class ToFlow(nn.Module):
             .repeat(input.size(0), 1, 1, 1)
             .to(input.device)
         )
-        # import pdb;pdb.set_trace()
         if skip is not None:
             skip = self.upsample
             out += skip
@@ -539,10 +538,7 @@ class ToFlow(nn.Module):
         flow = sampler.permute(0, 2, 3, 1) + xs  # xs在这里相当于一个 location 的位置
 
         feat_warp = F.grid_sample(feat, flow) * mask
-        # import pdb;pdb.set_trace()
         return feat_warp, feat_warp + input * (1.0 - mask), out
-
-
 class Direction(nn.Module):
     """ """
 
