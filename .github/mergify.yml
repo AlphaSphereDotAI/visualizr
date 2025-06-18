@@ -22,7 +22,7 @@ pull_request_rules:
         message: Hi @{{author}}, Your PR is in conflict and cannot be merged.
   - name: Automatic update of the pull requests
     conditions:
-      - base = main
+      - -merged
     actions:
       update:
   - name: Automatically queue valid Bot PRs

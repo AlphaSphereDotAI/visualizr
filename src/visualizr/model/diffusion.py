@@ -217,8 +217,7 @@ class GradLogPEstimator2d(BaseModule):
         self.final_conv = torch.nn.Conv2d(dim, 1, 1)
 
     def forward(self, x, mask, mu, t, spk=None):
-        """ """
-        global s
+        s = None
         if not isinstance(spk, type(None)):
             s = self.spk_mlp(spk)
 

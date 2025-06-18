@@ -316,7 +316,8 @@ class GaussianDiffusionBeatGans:
                  - 'log_variance': the log of 'variance'.
                  - 'pred_xstart': the prediction for x_0.
         """
-        global model_log_variance, model_variance
+        model_log_variance = None
+        model_variance = None
         if model_kwargs is None:
             model_kwargs = {}
 
