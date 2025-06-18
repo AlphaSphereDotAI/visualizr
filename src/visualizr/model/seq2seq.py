@@ -8,8 +8,7 @@ from visualizr.model.base import BaseModule
 
 
 class LSTM(nn.Module):
-    """
-    """
+    """ """
 
     def __init__(self, motion_dim, output_dim, num_layers=2, hidden_dim=128):
         super().__init__()
@@ -22,15 +21,13 @@ class LSTM(nn.Module):
         self.fc = nn.Linear(hidden_dim, output_dim)
 
     def forward(self, x):
-        """
-        """
+        """ """
         x, _ = self.lstm(x)
         return self.fc(x)
 
 
 class DiffusionPredictor(BaseModule):
-    """
-    """
+    """ """
 
     def __init__(self, conf):
         super(DiffusionPredictor, self).__init__()
@@ -42,8 +39,7 @@ class DiffusionPredictor(BaseModule):
         logger.info(f"infer_type: {self.infer_type}")
 
     def create_conformer_encoder(self, attention_dim, num_blocks):
-        """
-        """
+        """ """
         return Encoder(
             idim=0,
             attention_dim=attention_dim,
@@ -66,18 +62,17 @@ class DiffusionPredictor(BaseModule):
         )
 
     def initialize_layers(
-            self,
-            conf,
-            mfcc_dim=39,
-            hubert_dim=1024,
-            speech_layers=4,
-            speech_dim=512,
-            decoder_dim=1024,
-            motion_start_dim=512,
-            HAL_layers=25,
+        self,
+        conf,
+        mfcc_dim=39,
+        hubert_dim=1024,
+        speech_layers=4,
+        speech_dim=512,
+        decoder_dim=1024,
+        motion_start_dim=512,
+        HAL_layers=25,
     ):
-        """
-        """
+        """ """
         self.conf = conf
         # Speech downsampling
         if self.infer_type.startswith("mfcc"):
@@ -125,26 +120,25 @@ class DiffusionPredictor(BaseModule):
         self.out_proj = nn.Linear(decoder_dim, conf.motion_dim)
 
     def forward(
-            self,
-            initial_code,
-            direction_code,
-            seq_input_vector,
-            face_location,
-            face_scale,
-            yaw_pitch_roll,
-            noisy_x,
-            t_emb,
-            control_flag=False,
+        self,
+        initial_code,
+        direction_code,
+        seq_input_vector,
+        face_location,
+        face_scale,
+        yaw_pitch_roll,
+        noisy_x,
+        t_emb,
+        control_flag=False,
     ):
-        """
-        """
+        """ """
         global x
         if self.infer_type.startswith("mfcc"):
             x = self.mfcc_speech_downsample(seq_input_vector)
         elif self.infer_type.startswith("hubert"):
             norm_weights = F.softmax(self.weights, dim=-1)
             weighted_feature = (
-                    norm_weights.unsqueeze(0).unsqueeze(-1).unsqueeze(-1) * seq_input_vector
+                norm_weights.unsqueeze(0).unsqueeze(-1).unsqueeze(-1) * seq_input_vector
             ).sum(dim=1)
             x = self.down_sample1(weighted_feature.transpose(1, 2)).transpose(1, 2)
             x, _ = self.speech_encoder(x, masks=None)
@@ -170,16 +164,14 @@ class DiffusionPredictor(BaseModule):
         return outputs, predicted_location, predicted_scale, predicted_pose
 
     def mfcc_speech_downsample(self, seq_input_vector):
-        """
-        """
+        """ """
         x = self.down_sample1(seq_input_vector.transpose(1, 2))
         return self.down_sample2(x).transpose(1, 2)
 
     def adjust_features(
-            self, x, face_location, face_scale, yaw_pitch_roll, control_flag
+        self, x, face_location, face_scale, yaw_pitch_roll, control_flag
     ):
-        """
-        """
+        """ """
         predicted_location, predicted_scale = 0, 0
         if "full_control" in self.infer_type:
             logger.info(f"full controllable. control_flag: {control_flag}")
@@ -196,8 +188,7 @@ class DiffusionPredictor(BaseModule):
         return x, predicted_location, predicted_scale, predicted_pose
 
     def adjust_location(self, x, face_location, control_flag):
-        """
-        """
+        """ """
         if control_flag:
             predicted_location = face_location
         else:
@@ -205,8 +196,7 @@ class DiffusionPredictor(BaseModule):
         return self.location_encoder, predicted_location
 
     def adjust_scale(self, x, face_scale, control_flag):
-        """
-        """
+        """ """
         if control_flag:
             predicted_face_scale = face_scale
         else:
@@ -214,8 +204,7 @@ class DiffusionPredictor(BaseModule):
         return self.face_scale_encoder, predicted_face_scale
 
     def adjust_pose(self, x, yaw_pitch_roll, control_flag):
-        """
-        """
+        """ """
         if control_flag:
             predicted_pose = yaw_pitch_roll
         else:
@@ -223,8 +212,7 @@ class DiffusionPredictor(BaseModule):
         return self.pose_encoder, predicted_pose
 
     def combine_features(self, x, initial_code, direction_code, noisy_x, t_emb):
-        """
-        """
+        """ """
         init_code_proj = (
             self.init_code_proj(initial_code).unsqueeze(1).repeat(1, x.size(1), 1)
         )
@@ -245,7 +233,6 @@ class DiffusionPredictor(BaseModule):
         )
 
     def decode_features(self, concatenated_features):
-        """
-        """
+        """ """
         outputs, _ = self.coarse_decoder(concatenated_features, masks=None)
         return self.out_proj(outputs)
