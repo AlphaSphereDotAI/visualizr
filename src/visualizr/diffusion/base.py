@@ -121,8 +121,8 @@ class GaussianDiffusionBeatGans:
         :return: a dict with the key "loss" containing a tensor of shape [N].
                  Some mean or variance settings may also have other keys.
         """
-        if model_kwargs is None:
-            {}
+        if not model_kwargs:
+            model_kwargs = {}
         if noise is None:
             noise = th.randn_like(motion_target)
 
@@ -317,7 +317,8 @@ class GaussianDiffusionBeatGans:
                  - 'log_variance': the log of 'variance'.
                  - 'pred_xstart': the prediction for x_0.
         """
-        global model_log_variance, model_variance
+        model_log_variance = None
+        model_variance = None
         if model_kwargs is None:
             model_kwargs = {}
 

@@ -321,7 +321,7 @@ class BeatGANsUNetModel(nn.Module):
             # assert y.shape == (x.shape[0], )
             # emb = emb + self.label_emb(y)
 
-        # new code supports input_num_blocks != output_num_blocks
+        # the new code supports input_num_blocks != output_num_blocks
         h = x.type(self.dtype)
         k = 0
         for i in range(len(self.input_num_blocks)):
@@ -535,17 +535,13 @@ class BeatGANsEncoderModel(nn.Module):
         h_2d = h
         h = self.out(h)
 
-        if return_2d_feature:
-            return h, h_2d
-        else:
-            return h
+        return (h, h_2d) if return_2d_feature else h
 
     def forward_flatten(self, x):
         """
-        transform the last 2d feature into a flatten vector
+        transform the last 2d feature into a flattened vector
         """
-        h = self.out(x)
-        return h
+        return self.out(x)
 
 
 class SuperResModel(BeatGANsUNetModel):
