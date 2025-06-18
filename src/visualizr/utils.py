@@ -101,14 +101,14 @@ def load_stage_2_model(conf: TrainConfig, stage2_checkpoint_path: str) -> LitMod
 
 
 def init_conf(
-        infer_type: Literal[
-            "mfcc_full_control",
-            "mfcc_pose_only",
-            "hubert_pose_only",
-            "hubert_audio_only",
-            "hubert_full_control",
-        ],
-        seed: int,
+    infer_type: Literal[
+        "mfcc_full_control",
+        "mfcc_pose_only",
+        "hubert_pose_only",
+        "hubert_audio_only",
+        "hubert_full_control",
+    ],
+    seed: int,
 ) -> TrainConfig:
     """ """
     logger.info("Initializing configuration... ")
@@ -143,24 +143,24 @@ def init_conf(
 
 
 def main(
-        infer_type: Literal[
-            "mfcc_full_control",
-            "mfcc_pose_only",
-            "hubert_pose_only",
-            "hubert_audio_only",
-            "hubert_full_control",
-        ],
-        image_path: str,
-        test_audio_path: str,
-        face_sr: bool,
-        pose_yaw: float,
-        pose_pitch: float,
-        pose_roll: float,
-        face_location: float,
-        face_scale: float,
-        step_t: int,
-        seed: int,
-        stage2_checkpoint_path: str,
+    infer_type: Literal[
+        "mfcc_full_control",
+        "mfcc_pose_only",
+        "hubert_pose_only",
+        "hubert_audio_only",
+        "hubert_full_control",
+    ],
+    image_path: str,
+    test_audio_path: str,
+    face_sr: bool,
+    pose_yaw: float,
+    pose_pitch: float,
+    pose_roll: float,
+    face_location: float,
+    face_scale: float,
+    step_t: int,
+    seed: int,
+    stage2_checkpoint_path: str,
 ):
     """ """
     global frame_end, audio_driven
@@ -374,23 +374,23 @@ def main(
 
 @spaces.GPU(duration=300)
 def generate_video(
-        uploaded_img: str,
-        uploaded_audio: str,
-        infer_type: Literal[
-            "mfcc_full_control",
-            "mfcc_pose_only",
-            "hubert_pose_only",
-            "hubert_audio_only",
-            "hubert_full_control",
-        ],
-        pose_yaw: float,
-        pose_pitch: float,
-        pose_roll: float,
-        face_location: float,
-        face_scale: float,
-        step_t: int,
-        face_sr: bool,
-        seed: int,
+    uploaded_img: str,
+    uploaded_audio: str,
+    infer_type: Literal[
+        "mfcc_full_control",
+        "mfcc_pose_only",
+        "hubert_pose_only",
+        "hubert_audio_only",
+        "hubert_full_control",
+    ],
+    pose_yaw: float,
+    pose_pitch: float,
+    pose_roll: float,
+    face_location: float,
+    face_scale: float,
+    step_t: int,
+    face_sr: bool,
+    seed: int,
 ):
     """ """
     if not uploaded_img or not uploaded_audio:
