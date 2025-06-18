@@ -83,8 +83,7 @@ class ResBlockConfig(BaseConfig):
         self.cond_emb_channels = self.cond_emb_channels or self.emb_channels
 
     def make_model(self):
-        """
-        """
+        """ """
         return ResBlock(self)
 
 
@@ -207,11 +206,11 @@ class ResBlock(TimestepBlock):
         )
 
     def _forward(
-            self,
-            x,
-            emb=None,
-            cond=None,
-            lateral=None,
+        self,
+        x,
+        emb=None,
+        cond=None,
+        lateral=None,
     ):
         """
         Args:
@@ -271,13 +270,13 @@ class ResBlock(TimestepBlock):
 
 
 def apply_conditions(
-        h,
-        emb=None,
-        cond=None,
-        layers: nn.Sequential = None,
-        scale_bias: float = 1,
-        in_channels: int = 512,
-        up_down_layer: nn.Module = None,
+    h,
+    emb=None,
+    cond=None,
+    layers: nn.Sequential = None,
+    scale_bias: float = 1,
+    in_channels: int = 512,
+    up_down_layer: nn.Module = None,
 ):
     """
     apply conditions on the feature maps
@@ -368,8 +367,7 @@ class Upsample(nn.Module):
             self.conv = conv_nd(dims, self.channels, self.out_channels, 3, padding=1)
 
     def forward(self, x):
-        """
-        """
+        """ """
         assert x.shape[1] == self.channels
         if self.dims == 3:
             x = F.interpolate(
@@ -408,8 +406,7 @@ class Downsample(nn.Module):
             self.op = avg_pool_nd(dims, kernel_size=stride, stride=stride)
 
     def forward(self, x):
-        """
-        """
+        """ """
         assert x.shape[1] == self.channels
         return self.op(x)
 
@@ -418,12 +415,12 @@ class AttentionBlock(nn.Module):
     """An attention block that allows spatial positions to attend to each other."""
 
     def __init__(
-            self,
-            channels,
-            num_heads=1,
-            num_head_channels=-1,
-            use_checkpoint=False,
-            use_new_attention_order=False,
+        self,
+        channels,
+        num_heads=1,
+        num_head_channels=-1,
+        use_checkpoint=False,
+        use_new_attention_order=False,
     ):
         super().__init__()
         self.channels = channels
@@ -447,8 +444,7 @@ class AttentionBlock(nn.Module):
         self.proj_out = zero_module(conv_nd(1, channels, channels, 1))
 
     def forward(self, x):
-        """
-        """
+        """ """
         return torch_checkpoint(self._forward, (x,), self.use_checkpoint)
 
     def _forward(self, x):
@@ -476,7 +472,7 @@ def count_flops_attn(model, _x, y):
     # We perform two matmuls with the same number of ops.
     # The first computes the weight matrix, the second computes
     # the combination of the value vectors.
-    matmul_ops = 2 * b * (num_spatial ** 2) * c
+    matmul_ops = 2 * b * (num_spatial**2) * c
     model.total_ops += th.DoubleTensor([matmul_ops])
 
 
@@ -510,8 +506,7 @@ class QKVAttentionLegacy(nn.Module):
 
     @staticmethod
     def count_flops(model, _x, y):
-        """
-        """
+        """ """
         return count_flops_attn(model, _x, y)
 
 
@@ -547,8 +542,7 @@ class QKVAttention(nn.Module):
 
     @staticmethod
     def count_flops(model, _x, y):
-        """
-        """
+        """ """
         return count_flops_attn(model, _x, y)
 
 
@@ -558,15 +552,15 @@ class AttentionPool2d(nn.Module):
     """
 
     def __init__(
-            self,
-            spacial_dim: int,
-            embed_dim: int,
-            num_heads_channels: int,
-            output_dim: int = None,
+        self,
+        spacial_dim: int,
+        embed_dim: int,
+        num_heads_channels: int,
+        output_dim: int = None,
     ):
         super().__init__()
         self.positional_embedding = nn.Parameter(
-            th.randn(embed_dim, spacial_dim ** 2 + 1) / embed_dim ** 0.5
+            th.randn(embed_dim, spacial_dim**2 + 1) / embed_dim**0.5
         )
         self.qkv_proj = conv_nd(1, embed_dim, 3 * embed_dim, 1)
         self.c_proj = conv_nd(1, embed_dim, output_dim or embed_dim, 1)
@@ -574,8 +568,7 @@ class AttentionPool2d(nn.Module):
         self.attention = QKVAttention(self.num_heads)
 
     def forward(self, x):
-        """
-        """
+        """ """
         b, c, *_spatial = x.shape
         x = x.reshape(b, c, -1)  # NC(HW)
         x = th.cat([x.mean(dim=-1, keepdim=True), x], dim=-1)  # NC(HW+1)
