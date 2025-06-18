@@ -3,17 +3,17 @@ from visualizr.config import TrainConfig
 
 
 def render_condition(
-        conf: TrainConfig,
-        model,
-        sampler,
-        start,
-        motion_direction_start,
-        audio_driven,
-        face_location,
-        face_scale,
-        yaw_pitch_roll,
-        noisy_t,
-        control_flag,
+    conf: TrainConfig,
+    model,
+    sampler,
+    start,
+    motion_direction_start,
+    audio_driven,
+    face_location,
+    face_scale,
+    yaw_pitch_roll,
+    noisy_t,
+    control_flag,
 ):
     """ """
     if conf.train_mode == TrainMode.diffusion:
