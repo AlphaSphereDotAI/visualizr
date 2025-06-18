@@ -35,7 +35,7 @@ def space_timesteps(num_timesteps, section_counts):
     """
     if isinstance(section_counts, str):
         if section_counts.startswith("ddim"):
-            desired_count = int(section_counts[len("ddim"):])
+            desired_count = int(section_counts[len("ddim") :])
             for i in range(1, num_timesteps):
                 if len(range(0, num_timesteps, i)) == desired_count:
                     return set(range(0, num_timesteps, i))
@@ -69,8 +69,7 @@ class SpacedDiffusionBeatGansConfig(GaussianDiffusionBeatGansConfig):
     use_timesteps: Tuple[int] = None
 
     def make_sampler(self):
-        """
-        """
+        """ """
         return SpacedDiffusionBeatGans(self)
 
 
@@ -103,23 +102,19 @@ class SpacedDiffusionBeatGans(GaussianDiffusionBeatGans):
         super().__init__(conf)
 
     def p_mean_variance(self, model: Model, *args, **kwargs):
-        """
-        """
+        """ """
         return super().p_mean_variance(self._wrap_model(model), *args, **kwargs)
 
     def training_losses(self, model: Model, *args, **kwargs):
-        """
-        """
+        """ """
         return super().training_losses(self._wrap_model(model), *args, **kwargs)
 
     def condition_mean(self, cond_fn, *args, **kwargs):
-        """
-        """
+        """ """
         return super().condition_mean(self._wrap_model(cond_fn), *args, **kwargs)
 
     def condition_score(self, cond_fn, *args, **kwargs):
-        """
-        """
+        """ """
         return super().condition_score(self._wrap_model(cond_fn), *args, **kwargs)
 
     def _wrap_model(self, model: Model):
@@ -144,16 +139,16 @@ class _WrappedModel:
         self.original_num_steps = original_num_steps
 
     def forward(
-            self,
-            motion_start,
-            motion_direction_start,
-            audio_feats,
-            face_location,
-            face_scale,
-            yaw_pitch_roll,
-            x_t,
-            t,
-            control_flag=False,
+        self,
+        motion_start,
+        motion_direction_start,
+        audio_feats,
+        face_location,
+        face_scale,
+        yaw_pitch_roll,
+        x_t,
+        t,
+        control_flag=False,
     ):
         """
         Args:
@@ -165,8 +160,7 @@ class _WrappedModel:
         map_tensor = tensor(self.timestep_map, device=t.device, dtype=t.dtype)
 
         def do(t):
-            """
-            """
+            """ """
             new_ts = map_tensor[t]
             if self.rescale_timesteps:
                 new_ts = new_ts.float() * (1000.0 / self.original_num_steps)
