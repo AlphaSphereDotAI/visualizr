@@ -539,6 +539,8 @@ class ToFlow(nn.Module):
 
         feat_warp = F.grid_sample(feat, flow) * mask
         return feat_warp, feat_warp + input * (1.0 - mask), out
+
+
 class Direction(nn.Module):
     """ """
 

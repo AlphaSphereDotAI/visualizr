@@ -23,6 +23,8 @@ class FusedLeakyReLU(nn.Module):
         """ """
         out = fused_leaky_relu(input, self.bias, self.negative_slope, self.scale)
         return out
+
+
 def upfirdn2d_native(
     input, kernel, up_x, up_y, down_x, down_y, pad_x0, pad_x1, pad_y0, pad_y1
 ):
@@ -55,6 +57,8 @@ def upfirdn2d_native(
     )
 
     return out[:, :, ::down_y, ::down_x]
+
+
 def upfirdn2d(input, kernel, up=1, down=1, pad=(0, 0)):
     """ """
     return upfirdn2d_native(
