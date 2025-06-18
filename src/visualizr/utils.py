@@ -154,7 +154,8 @@ def main(
     seed: int,
     stage2_checkpoint_path: str,
 ):
-    global frame_end, audio_driven
+    frame_end = None
+    audio_driven = None
     if not os.path.exists(image_path):
         logger.exception(f"{image_path} does not exist!")
         sys.exit(0)

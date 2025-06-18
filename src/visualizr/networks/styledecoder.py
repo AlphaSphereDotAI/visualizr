@@ -587,7 +587,8 @@ class Synthesis(nn.Module):
         self.n_latent = self.log_size * 2 - 2
 
     def forward(self, source_before_decoupling, target_motion, feats):
-        global skip_flow, skip
+        skip_flow = None
+        skip = None
         directions = self.direction(target_motion)
         latent = source_before_decoupling + directions  # wa + directions
 

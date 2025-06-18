@@ -124,7 +124,7 @@ class DiffusionPredictor(BaseModule):
         t_emb,
         control_flag=False,
     ):
-        global x
+        x = None
         if self.infer_type.startswith("mfcc"):
             x = self.mfcc_speech_downsample(seq_input_vector)
         elif self.infer_type.startswith("hubert"):
