@@ -1,13 +1,16 @@
-import json
+from json import dumps, load, dump
 from copy import deepcopy
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
+from typing import Any
+from visualizr import logger
 
 
 @dataclass
 class BaseConfig:
     """BaseConfig provides methods to clone itself,
-    inherit settings from another config, propagate settings to nested configs,
+    inherit settings from another config, propagate setting to nested configs,
     and serialize/deserialize configurations to/from JSON.
     """
 
@@ -34,14 +37,14 @@ class BaseConfig:
             save_path.mkdir(parents=True, exist_ok=True)
         conf = self.as_dict_jsonable()
         with open(save_path, "w") as f:
-            json.dump(conf, f)
+            dump(conf, f)
 
     def load(self, load_path: Path):
         """load json config"""
         if not load_path.exists():
             load_path.mkdir(parents=True, exist_ok=True)
         with open(load_path) as f:
-            conf = json.load(f)
+            conf = load(f)
         self.from_dict(conf)
 
     def from_dict(self, config_dict, strict=False):
@@ -52,7 +55,7 @@ class BaseConfig:
             if not hasattr(self, k):
                 if strict:
                     raise ValueError(f"loading extra '{k}'")
-                print(f"loading extra '{k}'")
+                logger.info(f"loading extra '{k}'")
                 continue
             if isinstance(self.__dict__[k], BaseConfig):
                 self.__dict__[k].from_dict(v)
@@ -65,19 +68,16 @@ class BaseConfig:
         for k, v in self.__dict__.items():
             if isinstance(v, BaseConfig):
                 conf[k] = v.as_dict_jsonable()
-            else:
-                if jsonable(v):
-                    conf[k] = v
-                else:
-                    # ignore not jsonable
-                    pass
+            elif jsonable(v):
+                conf[k] = v
         return conf
 
 
-def jsonable(x):
+@lru_cache
+def jsonable(x: Any) -> bool:
     """Check if the object x is JSON serializable."""
     try:
-        json.dumps(x)
+        dumps(x)
         return True
     except TypeError:
         return False

@@ -39,7 +39,7 @@ class LitModel(pl.LightningModule):
         self.eval_sampler = conf.make_eval_diffusion_conf().make_sampler()
 
         # this is shared for both model and latent
-        self.T_sampler = conf.make_T_sampler()
+        self.T_sampler = conf.make_t_sampler()
 
         if conf.train_mode.use_latent_net():
             self.latent_sampler = conf.make_latent_diffusion_conf().make_sampler()
@@ -89,12 +89,8 @@ class LitModel(pl.LightningModule):
 
     def forward(self, noise=None, x_start=None, ema_model: bool = False):
         with amp.autocast(False):
-            if not self.disable_ema:
-                model = self.ema_model
-            else:
-                model = self.model
-            gen = self.eval_sampler.sample(model=model, noise=noise, x_start=x_start)
-            return gen
+            model = self.model if self.disable_ema else self.ema_model
+            return self.eval_sampler.sample(model=model, noise=noise, x_start=x_start)
 
     def setup(self, stage=None) -> None:
         """

@@ -218,10 +218,8 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
             # input blocks
             k = 0
             for i in range(len(self.input_num_blocks)):
-                for j in range(self.input_num_blocks[i]):
+                for _ in range(self.input_num_blocks[i]):
                     h = self.input_blocks[k](h, emb=enc_time_emb, cond=enc_cond_emb)
-
-                    # print(i, j, h.shape)
                     hs[i].append(h)
                     k += 1
             assert k == len(self.input_blocks)
@@ -230,14 +228,14 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
             h = self.middle_block(h, emb=mid_time_emb, cond=mid_cond_emb)
         else:
             # no lateral connections
-            # happens when training only the autonecoder
+            # happen when training only the autoencoder
             h = None
             hs = [[] for _ in range(len(self.conf.channel_mult))]
 
         # output blocks
         k = 0
         for i in range(len(self.output_num_blocks)):
-            for j in range(self.output_num_blocks[i]):
+            for _ in range(self.output_num_blocks[i]):
                 # take the lateral connection from the same layer (in reserve)
                 # until there is no more, use None
                 try:
@@ -282,10 +280,6 @@ class TimeStyleSeperateEmbed(nn.Module):
         self.style = nn.Identity()
 
     def forward(self, time_emb=None, cond=None, **kwargs):
-        if time_emb is None:
-            # happens with autoenc training mode
-            time_emb = None
-        else:
-            time_emb = self.time_embed(time_emb)
+        time_emb = None if time_emb is None else self.time_embed(time_emb)
         style = self.style(cond)
         return EmbedReturn(emb=style, time_emb=time_emb, style=style)

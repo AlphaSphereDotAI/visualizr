@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from os import path
-from typing import Tuple
+from typing import Tuple, Optional
 
 from torch import distributed
 from torch.multiprocessing import get_context
@@ -183,45 +183,42 @@ class TrainConfig(BaseConfig):
         # hopefully, this would reduce the disconnection problems with sshfs
         return f"{self.work_cache_dir}/gen_images/{self.name}"
 
-    def _make_diffusion_conf(self, T=None):
-        if self.diffusion_type == "beatgans":
-            # can use T < self.T for evaluation
-            # follows the guided-diffusion repo conventions
-            # t's are evenly spaced
-            if self.beatgans_gen_type == GenerativeType.ddpm:
-                section_counts = [T]
-            elif self.beatgans_gen_type == GenerativeType.ddim:
-                section_counts = f"ddim{T}"
-            else:
-                raise NotImplementedError()
-
-            return SpacedDiffusionBeatGansConfig(
-                gen_type=self.beatgans_gen_type,
-                model_type=self.model_type,
-                betas=get_named_beta_schedule(self.beta_scheduler, self.T),
-                model_mean_type=self.beatgans_model_mean_type,
-                model_var_type=self.beatgans_model_var_type,
-                loss_type=self.beatgans_loss_type,
-                rescale_timesteps=self.beatgans_rescale_timesteps,
-                use_timesteps=space_timesteps(
-                    num_timesteps=self.T, section_counts=section_counts
-                ),
-                fp16=self.fp16,
-            )
+    def _make_diffusion_conf(self, t: int):
+        if self.diffusion_type != "beatgans":
+            raise NotImplementedError()
+        # can use T < self.T for evaluation
+        # follows the guided-diffusion repo conventions
+        # t's are evenly spaced
+        if self.beatgans_gen_type == GenerativeType.ddpm:
+            section_counts = [t]
+        elif self.beatgans_gen_type == GenerativeType.ddim:
+            section_counts = f"ddim{t}"
         else:
             raise NotImplementedError()
+        return SpacedDiffusionBeatGansConfig(
+            gen_type=self.beatgans_gen_type,
+            model_type=self.model_type,
+            betas=get_named_beta_schedule(self.beta_scheduler, self.T),
+            model_mean_type=self.beatgans_model_mean_type,
+            model_var_type=self.beatgans_model_var_type,
+            loss_type=self.beatgans_loss_type,
+            rescale_timesteps=self.beatgans_rescale_timesteps,
+            use_timesteps=space_timesteps(
+                num_timesteps=self.T, section_counts=section_counts
+            ),
+            fp16=self.fp16,
+        )
 
-    def _make_latent_diffusion_conf(self, T=None):
+    def _make_latent_diffusion_conf(self, t: int):
         # can use T < self.T for evaluation
         # follows the guided-diffusion repo conventions
         # t's are evenly spaced
         if self.latent_gen_type == GenerativeType.ddpm:
-            section_counts = [T]
+            section_counts = [t]
         elif self.latent_gen_type == GenerativeType.ddim:
-            section_counts = f"ddim{T}"
+            section_counts = f"ddim{t}"
         else:
             raise NotImplementedError()
-
         return SpacedDiffusionBeatGansConfig(
             train_pred_xstart_detach=self.train_pred_xstart_detach,
             gen_type=self.latent_gen_type,
@@ -243,24 +240,23 @@ class TrainConfig(BaseConfig):
     def model_out_channels(self):
         return 3
 
-    def make_T_sampler(self):
-        if self.T_sampler == "uniform":
-            return UniformSampler(self.T)
-        else:
+    def make_t_sampler(self) -> UniformSampler:
+        if self.T_sampler != "uniform":
             raise NotImplementedError()
+        return UniformSampler(self.T)
 
     def make_diffusion_conf(self):
         return self._make_diffusion_conf(self.T)
 
     def make_eval_diffusion_conf(self):
-        return self._make_diffusion_conf(T=self.T_eval)
+        return self._make_diffusion_conf(self.T_eval)
 
     def make_latent_diffusion_conf(self):
-        return self._make_latent_diffusion_conf(T=self.T)
+        return self._make_latent_diffusion_conf(self.T)
 
     def make_latent_eval_diffusion_conf(self):
         # latent can have different eval T
-        return self._make_latent_diffusion_conf(T=self.latent_T_eval)
+        return self._make_latent_diffusion_conf(self.latent_T_eval)
 
     def make_dataset(self, path=None, **kwargs):
         return LatentDataLoader(
@@ -284,11 +280,10 @@ class TrainConfig(BaseConfig):
         batch_size: int = None,
         parallel: bool = False,
     ):
+        sampler: Optional[DistributedSampler] = None
         if parallel and distributed.is_initialized():
-            # drop last to make sure that there is no added special indexes
+            # drop last to make sure that there are no added special indexes
             sampler = DistributedSampler(dataset, shuffle=shuffle, drop_last=True)
-        else:
-            sampler = None
         return DataLoader(
             dataset,
             batch_size=batch_size or self.batch_size,
