@@ -35,7 +35,7 @@ def space_timesteps(num_timesteps, section_counts):
     """
     if isinstance(section_counts, str):
         if section_counts.startswith("ddim"):
-            desired_count = int(section_counts[len("ddim") :])
+            desired_count = int(section_counts[len("ddim"):])
             for i in range(1, num_timesteps):
                 if len(range(0, num_timesteps, i)) == desired_count:
                     return set(range(0, num_timesteps, i))
@@ -142,16 +142,16 @@ class _WrappedModel:
         self.original_num_steps = original_num_steps
 
     def forward(
-        self,
-        motion_start,
-        motion_direction_start,
-        audio_feats,
-        face_location,
-        face_scale,
-        yaw_pitch_roll,
-        x_t,
-        t,
-        control_flag=False,
+            self,
+            motion_start,
+            motion_direction_start,
+            audio_feats,
+            face_location,
+            face_scale,
+            yaw_pitch_roll,
+            x_t,
+            t,
+            control_flag=False,
     ):
         """
         Args:
