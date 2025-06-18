@@ -8,12 +8,12 @@ class Generator(nn.Module):
     """ """
 
     def __init__(
-        self,
-        size,
-        style_dim=512,
-        motion_dim=20,
-        channel_multiplier=1,
-        blur_kernel=[1, 3, 3, 1],
+            self,
+            size,
+            style_dim=512,
+            motion_dim=20,
+            channel_multiplier=1,
+            blur_kernel=[1, 3, 3, 1],
     ):
         super(Generator, self).__init__()
 
