@@ -5,7 +5,7 @@ services:
     ports:
       - "7860:7860"
     volumes:
-      - visualizr_venv:/venv
+      - visualizr_venv:/app/.venv
     restart: on-failure:3
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:7860" ]
