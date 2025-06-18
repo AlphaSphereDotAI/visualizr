@@ -24,7 +24,7 @@ class AntiAliasInterpolation2d(nn.Module):
         )
         for size, std, mgrid in zip(kernel_size, sigma, meshgrids):
             mean = (size - 1) / 2
-            kernel *= torch.exp(-((mgrid - mean) ** 2) / (2 * std**2))
+            kernel *= torch.exp(-((mgrid - mean) ** 2) / (2 * std ** 2))
 
         # Make sure sum of values in gaussian kernel equals 1.
         kernel /= torch.sum(kernel)
@@ -39,6 +39,8 @@ class AntiAliasInterpolation2d(nn.Module):
         self.int_inv_scale = int(inv_scale)
 
     def forward(self, input):
+        """
+        """
         if self.scale == 1.0:
             return input
 
