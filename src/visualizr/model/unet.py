@@ -79,10 +79,14 @@ class BeatGANsUNetConfig(BaseConfig):
     attn_checkpoint: bool = False
 
     def make_model(self):
+        """
+        """
         return BeatGANsUNetModel(self)
 
 
 class BeatGANsUNetModel(nn.Module):
+    """
+    """
     def __init__(self, conf: BeatGANsUNetConfig):
         super().__init__()
         self.conf = conf
@@ -322,7 +326,7 @@ class BeatGANsUNetModel(nn.Module):
         h = x.type(self.dtype)
         k = 0
         for i in range(len(self.input_num_blocks)):
-            for j in range(self.input_num_blocks[i]):
+            for _ in range(self.input_num_blocks[i]):
                 h = self.input_blocks[k](h, emb=emb)
                 # print(i, j, h.shape)
                 hs[i].append(h)
@@ -332,7 +336,7 @@ class BeatGANsUNetModel(nn.Module):
         h = self.middle_block(h, emb=emb)
         k = 0
         for i in range(len(self.output_num_blocks)):
-            for j in range(self.output_num_blocks[i]):
+            for _ in range(self.output_num_blocks[i]):
                 # take the lateral connection from the same layer (in reserve)
                 # until there is no more, use None
                 try:
@@ -375,6 +379,8 @@ class BeatGANsEncoderConfig(BaseConfig):
     pool: str = "adaptivenonzero"
 
     def make_model(self):
+        """
+        """
         return BeatGANsEncoderModel(self)
 
 
@@ -454,7 +460,7 @@ class BeatGANsEncoderModel(nn.Module):
                             use_checkpoint=conf.use_checkpoint,
                             down=True,
                         ).make_model()
-                        if (conf.resblock_updown)
+                        if conf.resblock_updown
                         else Downsample(
                             ch, conf.conv_resample, dims=conf.dims, out_channels=out_ch
                         )
@@ -552,7 +558,7 @@ class SuperResModel(BeatGANsUNetModel):
     """
 
     def __init__(self, image_size, in_channels, *args, **kwargs):
-        super().__init__(image_size, in_channels * 2, *args, **kwargs)
+        super().__init__(image_size)
 
     def forward(self, x, timesteps, low_res=None, **kwargs):
         _, _, new_height, new_width = x.shape
