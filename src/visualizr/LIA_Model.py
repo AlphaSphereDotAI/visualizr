@@ -9,13 +9,13 @@ class LIA_Model(nn.Module):
     """ """
 
     def __init__(
-            self,
-            size=256,
-            style_dim=512,
-            motion_dim=20,
-            channel_multiplier=1,
-            blur_kernel=[1, 3, 3, 1],
-            fusion_type="",
+        self,
+        size=256,
+        style_dim=512,
+        motion_dim=20,
+        channel_multiplier=1,
+        blur_kernel=[1, 3, 3, 1],
+        fusion_type="",
     ):
         super().__init__()
         self.enc = Encoder(size, style_dim, motion_dim, fusion_type)
