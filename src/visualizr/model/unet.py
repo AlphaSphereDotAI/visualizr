@@ -318,11 +318,11 @@ class BeatGANsUNetModel(nn.Module):
             # assert y.shape == (x.shape[0], )
             # emb = emb + self.label_emb(y)
 
-        # new code supports input_num_blocks != output_num_blocks
+        # the new code supports input_num_blocks != output_num_blocks
         h = x.type(self.dtype)
         k = 0
         for i in range(len(self.input_num_blocks)):
-            for j in range(self.input_num_blocks[i]):
+            for _ in range(self.input_num_blocks[i]):
                 h = self.input_blocks[k](h, emb=emb)
                 # print(i, j, h.shape)
                 hs[i].append(h)
@@ -332,7 +332,7 @@ class BeatGANsUNetModel(nn.Module):
         h = self.middle_block(h, emb=emb)
         k = 0
         for i in range(len(self.output_num_blocks)):
-            for j in range(self.output_num_blocks[i]):
+            for _ in range(self.output_num_blocks[i]):
                 # take the lateral connection from the same layer (in reserve)
                 # until there is no more, use None
                 try:
@@ -454,7 +454,7 @@ class BeatGANsEncoderModel(nn.Module):
                             use_checkpoint=conf.use_checkpoint,
                             down=True,
                         ).make_model()
-                        if (conf.resblock_updown)
+                        if conf.resblock_updown
                         else Downsample(
                             ch, conf.conv_resample, dims=conf.dims, out_channels=out_ch
                         )
@@ -531,17 +531,13 @@ class BeatGANsEncoderModel(nn.Module):
         h_2d = h
         h = self.out(h)
 
-        if return_2d_feature:
-            return h, h_2d
-        else:
-            return h
+        return (h, h_2d) if return_2d_feature else h
 
     def forward_flatten(self, x):
         """
-        transform the last 2d feature into a flatten vector
+        transform the last 2d feature into a flattened vector
         """
-        h = self.out(x)
-        return h
+        return self.out(x)
 
 
 class SuperResModel(BeatGANsUNetModel):
