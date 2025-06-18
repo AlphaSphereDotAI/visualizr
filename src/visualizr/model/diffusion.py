@@ -150,14 +150,14 @@ class GradLogPEstimator2d(BaseModule):
     """ """
 
     def __init__(
-            self,
-            dim,
-            dim_mults=(1, 2, 4),
-            groups=8,
-            n_spks=None,
-            spk_emb_dim=64,
-            n_feats=80,
-            pe_scale=1000,
+        self,
+        dim,
+        dim_mults=(1, 2, 4),
+        groups=8,
+        n_spks=None,
+        spk_emb_dim=64,
+        n_feats=80,
+        pe_scale=1000,
     ):
         super(GradLogPEstimator2d, self).__init__()
         self.dim = dim
@@ -217,8 +217,7 @@ class GradLogPEstimator2d(BaseModule):
         self.final_conv = torch.nn.Conv2d(dim, 1, 1)
 
     def forward(self, x, mask, mu, t, spk=None):
-        """
-        """
+        """ """
         s = None
         if not isinstance(spk, type(None)):
             s = self.spk_mlp(spk)
@@ -267,7 +266,7 @@ class GradLogPEstimator2d(BaseModule):
 def get_noise(t, beta_init, beta_term, cumulative=False):
     """ """
     if cumulative:
-        noise = beta_init * t + 0.5 * (beta_term - beta_init) * (t ** 2)
+        noise = beta_init * t + 0.5 * (beta_term - beta_init) * (t**2)
     else:
         noise = beta_init + (beta_term - beta_init) * t
     return noise
@@ -277,14 +276,14 @@ class Diffusion(BaseModule):
     """ """
 
     def __init__(
-            self,
-            n_feats,
-            dim,
-            n_spks=1,
-            spk_emb_dim=64,
-            beta_min=0.05,
-            beta_max=20,
-            pe_scale=1000,
+        self,
+        n_feats,
+        dim,
+        n_spks=1,
+        spk_emb_dim=64,
+        beta_min=0.05,
+        beta_max=20,
+        pe_scale=1000,
     ):
         super(Diffusion, self).__init__()
         self.n_feats = n_feats
@@ -304,7 +303,7 @@ class Diffusion(BaseModule):
         time = t.unsqueeze(-1).unsqueeze(-1)
         cum_noise = get_noise(time, self.beta_min, self.beta_max, cumulative=True)
         mean = x0 * torch.exp(-0.5 * cum_noise) + mu * (
-                1.0 - torch.exp(-0.5 * cum_noise)
+            1.0 - torch.exp(-0.5 * cum_noise)
         )
         variance = 1.0 - torch.exp(-cum_noise)
         z = torch.randn(x0.shape, dtype=x0.dtype, device=x0.device, requires_grad=False)

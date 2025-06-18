@@ -7,7 +7,7 @@ from torch.nn import functional as F
 from visualizr import logger
 
 
-def fused_leaky_relu(input, bias, negative_slope=0.2, scale=2 ** 0.5):
+def fused_leaky_relu(input, bias, negative_slope=0.2, scale=2**0.5):
     """ """
     return F.leaky_relu(input + bias, negative_slope) * scale
 
@@ -15,7 +15,7 @@ def fused_leaky_relu(input, bias, negative_slope=0.2, scale=2 ** 0.5):
 class FusedLeakyReLU(nn.Module):
     """ """
 
-    def __init__(self, channel, negative_slope=0.2, scale=2 ** 0.5):
+    def __init__(self, channel, negative_slope=0.2, scale=2**0.5):
         super().__init__()
         self.bias = nn.Parameter(torch.zeros(1, channel, 1, 1))
         self.negative_slope = negative_slope
@@ -28,7 +28,7 @@ class FusedLeakyReLU(nn.Module):
 
 
 def upfirdn2d_native(
-        input, kernel, up_x, up_y, down_x, down_y, pad_x0, pad_x1, pad_y0, pad_y1
+    input, kernel, up_x, up_y, down_x, down_y, pad_x0, pad_x1, pad_y0, pad_y1
 ):
     """ """
     _, minor, in_h, in_w = input.shape
@@ -40,11 +40,11 @@ def upfirdn2d_native(
 
     out = F.pad(out, [max(pad_x0, 0), max(pad_x1, 0), max(pad_y0, 0), max(pad_y1, 0)])
     out = out[
-          :,
-          :,
-          max(-pad_y0, 0): out.shape[2] - max(-pad_y1, 0),
-          max(-pad_x0, 0): out.shape[3] - max(-pad_x1, 0),
-          ]
+        :,
+        :,
+        max(-pad_y0, 0) : out.shape[2] - max(-pad_y1, 0),
+        max(-pad_x0, 0) : out.shape[3] - max(-pad_x1, 0),
+    ]
 
     out = out.reshape(
         [-1, 1, in_h * up_y + pad_y0 + pad_y1, in_w * up_x + pad_x0 + pad_x1]
@@ -89,7 +89,7 @@ class Blur(nn.Module):
         kernel = make_kernel(kernel)
 
         if upsample_factor > 1:
-            kernel = kernel * (upsample_factor ** 2)
+            kernel = kernel * (upsample_factor**2)
 
         self.register_buffer("kernel", kernel)
 
@@ -117,14 +117,14 @@ class EqualConv2d(nn.Module):
     """ """
 
     def __init__(
-            self, in_channel, out_channel, kernel_size, stride=1, padding=0, bias=True
+        self, in_channel, out_channel, kernel_size, stride=1, padding=0, bias=True
     ):
         super().__init__()
 
         self.weight = nn.Parameter(
             torch.randn(out_channel, in_channel, kernel_size, kernel_size)
         )
-        self.scale = 1 / math.sqrt(in_channel * kernel_size ** 2)
+        self.scale = 1 / math.sqrt(in_channel * kernel_size**2)
 
         self.stride = stride
         self.padding = padding
@@ -155,7 +155,7 @@ class EqualLinear(nn.Module):
     """ """
 
     def __init__(
-            self, in_dim, out_dim, bias=True, bias_init=0, lr_mul=1, activation=None
+        self, in_dim, out_dim, bias=True, bias_init=0, lr_mul=1, activation=None
     ):
         super().__init__()
 
@@ -193,14 +193,14 @@ class ConvLayer(nn.Sequential):
     """ """
 
     def __init__(
-            self,
-            in_channel,
-            out_channel,
-            kernel_size,
-            downsample=False,
-            blur_kernel=[1, 3, 3, 1],
-            bias=True,
-            activate=True,
+        self,
+        in_channel,
+        out_channel,
+        kernel_size,
+        downsample=False,
+        blur_kernel=[1, 3, 3, 1],
+        bias=True,
+        activate=True,
     ):
         layers = []
 
