@@ -1,19 +1,19 @@
-version=1
+version = 1
 
 [[analyzers]]
-  dependency_file_paths=["pyproject.toml"]
-  name="python"
+dependency_file_paths = ["pyproject.toml"]
+name = "python"
 
 [analyzers.meta]
-  additional_builtins=["_", "pretty_output"]
-  runtime_version="3.x.x"
-  type_checker="mypy"
+additional_builtins = ["_", "pretty_output"]
+runtime_version = "3.x.x"
+type_checker = "mypy"
 
 [[analyzers]]
-  name="docker"
+name = "docker"
 
 [[analyzers]]
-  name="secrets"
+name = "secrets"
 
 [[transformers]]
-  name="ruff"
+name = "ruff"

@@ -12,20 +12,22 @@ from tqdm import tqdm
 
 
 class LatentDataLoader(object):
+    """
+    """
     def __init__(
-        self,
-        window_size,
-        frame_jpgs,
-        lmd_feats_prefix,
-        audio_prefix,
-        raw_audio_prefix,
-        motion_latents_prefix,
-        pose_prefix,
-        db_name,
-        video_fps=25,
-        audio_hz=50,
-        size=256,
-        mfcc_mode=False,
+            self,
+            window_size,
+            frame_jpgs,
+            lmd_feats_prefix,
+            audio_prefix,
+            raw_audio_prefix,
+            motion_latents_prefix,
+            pose_prefix,
+            db_name,
+            video_fps=25,
+            audio_hz=50,
+            size=256,
+            mfcc_mode=False,
     ):
         self.window_size = window_size
         self.lmd_feats_prefix = lmd_feats_prefix
@@ -49,31 +51,26 @@ class LatentDataLoader(object):
         for db_name in ["VoxCeleb2", "HDTF"]:
             db_png_path = os.path.join(frame_jpgs, db_name)
             for clip_name in tqdm(os.listdir(db_png_path)):
-                item_dict: Dict = {}
-                item_dict["clip_name"] = clip_name
-                item_dict["frame_count"] = len(
+                item_dict: Dict = {"clip_name": clip_name, "frame_count": len(
                     list(os.listdir(os.path.join(frame_jpgs, db_name, clip_name)))
-                )
-                item_dict["hubert_path"] = os.path.join(
+                ), "hubert_path": os.path.join(
                     audio_prefix, db_name, clip_name + ".npy"
-                )
-                item_dict["wav_path"] = os.path.join(
+                ), "wav_path": os.path.join(
                     raw_audio_prefix, db_name, clip_name + ".wav"
-                )
-
-                item_dict["yaw_pitch_roll_path"] = os.path.join(
+                ), "yaw_pitch_roll_path": os.path.join(
                     pose_prefix,
                     db_name,
                     "raw_videos_pose_yaw_pitch_roll",
                     clip_name + ".npy",
-                )
+                )}
+
                 if not os.path.exists(item_dict["yaw_pitch_roll_path"]):
                     print(f"{db_name}'s {clip_name} miss yaw_pitch_roll_path")
                     continue
 
                 item_dict["yaw_pitch_roll"] = np.load(item_dict["yaw_pitch_roll_path"])
                 item_dict["yaw_pitch_roll"] = (
-                    np.clip(item_dict["yaw_pitch_roll"], -90, 90) / 90.0
+                        np.clip(item_dict["yaw_pitch_roll"], -90, 90) / 90.0
                 )
 
                 if not os.path.exists(item_dict["wav_path"]):
@@ -144,8 +141,8 @@ class LatentDataLoader(object):
 
                     item_dict["frame_count"] = min_len
                     item_dict["hubert_obj"] = item_dict["hubert_obj"][
-                        :, : min_len * 2, :
-                    ]
+                                              :, : min_len * 2, :
+                                              ]
 
                 if min_len < self.window_size * self.video_fps + 5:
                     continue
@@ -153,11 +150,15 @@ class LatentDataLoader(object):
         print("Db count:", len(self.data))
 
     def get_single_image(self, image_path):
+        """
+        """
         img_source = Image.open(image_path).convert("RGB")
         img_source = self.transform(img_source)
         return img_source
 
     def get_multiple_ranges(self, lists, multi_ranges):
+        """
+        """
         # Ensure that multi_ranges is a list of tuples
         if not all(isinstance(item, tuple) and len(item) == 2 for item in multi_ranges):
             raise ValueError(
@@ -167,6 +168,8 @@ class LatentDataLoader(object):
         return [item for sublist in extracted_elements for item in sublist]
 
     def read_landmark_info(self, lmd_path, upper_face=True):
+        """
+        """
         with open(lmd_path, "r") as file:
             lmd_lines = file.readlines()
         lmd_lines.sort()
@@ -180,7 +183,7 @@ class LatentDataLoader(object):
             if upper_face:
                 # Ensure that the coordinates are parsed as integers
                 for coord_pair in self.get_multiple_ranges(
-                    coords, [(0, 3), (14, 27), (36, 48)]
+                        coords, [(0, 3), (14, 27), (36, 48)]
                 ):  # 28个
                     x, y = coord_pair.split("_")
                     lmd_obj.append((int(x) / 512, int(y) / 512))
@@ -193,6 +196,8 @@ class LatentDataLoader(object):
         return np.array(total_lmd_obj, dtype=np.float32)
 
     def calculate_face_height(self, landmarks):
+        """
+        """
         forehead_center = (landmarks[:, 21, :] + landmarks[:, 22, :]) / 2
         chin_bottom = landmarks[:, 8, :]
         distances = np.linalg.norm(forehead_center - chin_bottom, axis=1, keepdims=True)

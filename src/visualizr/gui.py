@@ -95,3 +95,4 @@ def app_block() -> Blocks:
             outputs=[output_video_256, output_video_512, output_message],
         )
         return app
+    return None

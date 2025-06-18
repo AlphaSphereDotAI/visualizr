@@ -13,28 +13,38 @@ class TrainMode(Enum):
     latent_diffusion = "latentdiffusion"
 
     def is_manipulate(self):
+        """
+        """
         return self in [
             TrainMode.manipulate,
         ]
 
     def is_diffusion(self):
+        """
+        """
         return self in [
             TrainMode.diffusion,
             TrainMode.latent_diffusion,
         ]
 
     def is_autoenc(self):
+        """
+        """
         # the network possibly does autoencoding
         return self in [
             TrainMode.diffusion,
         ]
 
     def is_latent_diffusion(self):
+        """
+        """
         return self in [
             TrainMode.latent_diffusion,
         ]
 
     def use_latent_net(self):
+        """
+        """
         return self.is_latent_diffusion()
 
     def require_dataset_infer(self):
@@ -61,6 +71,8 @@ class ManipulateMode(Enum):
     d2c_fewshot_allneg = "d2cfewshotallneg"
 
     def is_celeba_attr(self):
+        """
+        """
         return self in [
             ManipulateMode.d2c_fewshot,
             ManipulateMode.d2c_fewshot_allneg,
@@ -68,18 +80,24 @@ class ManipulateMode(Enum):
         ]
 
     def is_single_class(self):
+        """
+        """
         return self in [
             ManipulateMode.d2c_fewshot,
             ManipulateMode.d2c_fewshot_allneg,
         ]
 
     def is_fewshot(self):
+        """
+        """
         return self in [
             ManipulateMode.d2c_fewshot,
             ManipulateMode.d2c_fewshot_allneg,
         ]
 
     def is_fewshot_allneg(self):
+        """
+        """
         return self in [
             ManipulateMode.d2c_fewshot_allneg,
         ]
@@ -96,11 +114,15 @@ class ModelType(Enum):
     autoencoder = "autoencoder"
 
     def has_autoenc(self):
+        """
+        """
         return self in [
             ModelType.autoencoder,
         ]
 
     def can_sample(self):
+        """
+        """
         return self in [ModelType.ddpm]
 
 
@@ -162,6 +184,8 @@ class Activation(Enum):
     tanh = "tanh"
 
     def get_act(self):
+        """
+        """
         if self == Activation.none:
             return nn.Identity()
         elif self == Activation.relu:
