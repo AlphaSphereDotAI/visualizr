@@ -9,11 +9,15 @@ import torch.utils.checkpoint
 class SiLU(nn.Module):
     # @th.jit.script
     def forward(self, x):
+        """
+        """
         return x * th.sigmoid(x)
 
 
 class GroupNorm32(nn.GroupNorm):
     def forward(self, x):
+        """
+        """
         return super().forward(x.float()).type(x.dtype)
 
 
@@ -120,6 +124,8 @@ def timestep_embedding(timesteps, dim, max_period=10000):
 
 
 def torch_checkpoint(func, args, flag, preserve_rng_state=False):
+    """
+    """
     # torch's gradient checkpoint works with automatic mixed precision, given torch >= 1.8
     if flag:
         return torch.utils.checkpoint.checkpoint(
