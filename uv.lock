@@ -1012,7 +1012,7 @@ wheels = [
 
 [[package]]
 name = "gradio"
-version = "5.34.0"
+version = "5.34.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiofiles" },
@@ -1045,9 +1045,9 @@ dependencies = [
     { name = "urllib3", marker = "sys_platform == 'emscripten'" },
     { name = "uvicorn", marker = "sys_platform != 'emscripten'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/60/c3/da66123482304744ca873ac71aef14aee79028b17d5d7a1b4f8ce9f455ea/gradio-5.34.0.tar.gz", hash = "sha256:7d150fe2c6cf7b4776ef61f318d531cfd653f028029287f3db3470936483b3cf", size = 63821757, upload-time = "2025-06-13T21:23:16.662Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2f/39/da989c62cbe787e19e452dcbd4cd0d19de22a47e390810ba75cef4b94eac/gradio-5.34.2.tar.gz", hash = "sha256:1bd729d268268ceec2826bb4ec900d7303de6e783e2a42e3f0f16daa4cab1027", size = 65345636, upload-time = "2025-06-19T18:20:05.17Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6f/0d/676653dd6cd8dca60ed253d93a29c6e769e55dccf40929ac4b127b7953ff/gradio-5.34.0-py3-none-any.whl", hash = "sha256:a5eeb9bd2db923fc4b39abceac27886e5e05f20e89c0026bbdd2e2be6d5fbe32", size = 54270681, upload-time = "2025-06-13T21:23:11.89Z" },
+    { url = "https://files.pythonhosted.org/packages/7c/66/71e55221a5c41d4ebf885ee0cd6186673542fe8c76b5f2efdc8dbc037ace/gradio-5.34.2-py3-none-any.whl", hash = "sha256:3123a6e8fea8e1dfecac0742c3c0ba5683ebf0ae02ba684a37a372bd4ff26d97", size = 54274804, upload-time = "2025-06-19T18:20:00.105Z" },
 ]
 
 [package.optional-dependencies]
@@ -1628,11 +1628,11 @@ wheels = [
 
 [[package]]
 name = "markdown"
-version = "3.8"
+version = "3.8.2"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/2f/15/222b423b0b88689c266d9eac4e61396fe2cc53464459d6a37618ac863b24/markdown-3.8.tar.gz", hash = "sha256:7df81e63f0df5c4b24b7d156eb81e4690595239b7d70937d0409f1b0de319c6f", size = 360906, upload-time = "2025-04-11T14:42:50.928Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d7/c2/4ab49206c17f75cb08d6311171f2d65798988db4360c4d1485bd0eedd67c/markdown-3.8.2.tar.gz", hash = "sha256:247b9a70dd12e27f67431ce62523e675b866d254f900c4fe75ce3dda62237c45", size = 362071, upload-time = "2025-06-19T17:12:44.483Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/51/3f/afe76f8e2246ffbc867440cbcf90525264df0e658f8a5ca1f872b3f6192a/markdown-3.8-py3-none-any.whl", hash = "sha256:794a929b79c5af141ef5ab0f2f642d0f7b1872981250230e72682346f7cc90dc", size = 106210, upload-time = "2025-04-11T14:42:49.178Z" },
+    { url = "https://files.pythonhosted.org/packages/96/2b/34cc11786bc00d0f04d0f5fdc3a2b1ae0b6239eef72d3d345805f9ad92a1/markdown-3.8.2-py3-none-any.whl", hash = "sha256:5c83764dbd4e00bdd94d85a19b8d55ccca20fe35b2e678a1422b380324dd5f24", size = 106827, upload-time = "2025-06-19T17:12:42.994Z" },
 ]
 
 [[package]]
@@ -3312,7 +3312,7 @@ wheels = [
 
 [[package]]
 name = "tb-nightly"
-version = "2.20.0a20250617"
+version = "2.20.0a20250619"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "absl-py" },
@@ -3327,7 +3327,7 @@ dependencies = [
     { name = "werkzeug" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/42/7e/15392282fe4423bba47c4b59914a5fd2a9709b2afc980c0c9e1a0060346b/tb_nightly-2.20.0a20250617-py3-none-any.whl", hash = "sha256:7d06ee0510baa0465cac30fe6e4dbe1931503750b51c7aa8d7094a7a186f7e01", size = 5503815, upload-time = "2025-06-17T11:14:50.1Z" },
+    { url = "https://files.pythonhosted.org/packages/19/a5/f724db490e630b084e3bbdedab2d4c872fac965748466ebc4b1922ec29bc/tb_nightly-2.20.0a20250619-py3-none-any.whl", hash = "sha256:8282fe198276ad5488307be0b038c4a571c648cd6e7978695bb55a2d4b5a4c8f", size = 5503817, upload-time = "2025-06-19T11:14:33.847Z" },
 ]
 
 [[package]]
@@ -3758,14 +3758,14 @@ wheels = [
 
 [[package]]
 name = "typeguard"
-version = "4.4.3"
+version = "4.4.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/34/53/f701077a29ddf65ed4556119961ef517d767c07f15f6cdf0717ad985426b/typeguard-4.4.3.tar.gz", hash = "sha256:be72b9c85f322c20459b29060c5c099cd733d5886c4ee14297795e62b0c0d59b", size = 75072, upload-time = "2025-06-04T21:47:07.733Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c7/68/71c1a15b5f65f40e91b65da23b8224dad41349894535a97f63a52e462196/typeguard-4.4.4.tar.gz", hash = "sha256:3a7fd2dffb705d4d0efaed4306a704c89b9dee850b688f060a8b1615a79e5f74", size = 75203, upload-time = "2025-06-18T09:56:07.624Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5c/18/662e2a14fcdbbc9e7842ad801a7f9292fcd6cf7df43af94e59ac9c0da9af/typeguard-4.4.3-py3-none-any.whl", hash = "sha256:7d8b4a3d280257fd1aa29023f22de64e29334bda0b172ff1040f05682223795e", size = 34855, upload-time = "2025-06-04T21:47:03.683Z" },
+    { url = "https://files.pythonhosted.org/packages/1b/a9/e3aee762739c1d7528da1c3e06d518503f8b6c439c35549b53735ba52ead/typeguard-4.4.4-py3-none-any.whl", hash = "sha256:b5f562281b6bfa1f5492470464730ef001646128b180769880468bd84b68b09e", size = 34874, upload-time = "2025-06-18T09:56:05.999Z" },
 ]
 
 [[package]]
@@ -3824,11 +3824,11 @@ wheels = [
 
 [[package]]
 name = "urllib3"
-version = "2.4.0"
+version = "2.5.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/8a/78/16493d9c386d8e60e442a35feac5e00f0913c0f4b7c217c11e8ec2ff53e0/urllib3-2.4.0.tar.gz", hash = "sha256:414bc6535b787febd7567804cc015fee39daab8ad86268f1310a9250697de466", size = 390672, upload-time = "2025-04-10T15:23:39.232Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/15/22/9ee70a2574a4f4599c47dd506532914ce044817c7752a79b6a51286319bc/urllib3-2.5.0.tar.gz", hash = "sha256:3fc47733c7e419d4bc3f6b3dc2b4f890bb743906a30d56ba4a5bfa4bbff92760", size = 393185, upload-time = "2025-06-18T14:07:41.644Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6b/11/cc635220681e93a0183390e26485430ca2c7b5f9d33b15c74c2861cb8091/urllib3-2.4.0-py3-none-any.whl", hash = "sha256:4e16665048960a0900c702d4a66415956a584919c03361cac9f1df5c5dd7e813", size = 128680, upload-time = "2025-04-10T15:23:37.377Z" },
+    { url = "https://files.pythonhosted.org/packages/a7/c2/fe1e52489ae3122415c51f387e221dd0773709bad6c6cdaa599e8a2c5185/urllib3-2.5.0-py3-none-any.whl", hash = "sha256:e6b01673c0fa6a13e374b50871808eb3bf7046c4b125b216f6bf1cc604cff0dc", size = 129795, upload-time = "2025-06-18T14:07:40.39Z" },
 ]
 
 [[package]]
