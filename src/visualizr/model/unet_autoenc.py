@@ -23,14 +23,12 @@ class BeatGANsAutoencConfig(BeatGANsUNetConfig):
     latent_net_conf: MLPSkipNetConfig = None
 
     def make_model(self):
-        """
-        """
+        """ """
         return BeatGANsAutoencModel(self)
 
 
 class BeatGANsAutoencModel(BeatGANsUNetModel):
-    """
-    """
+    """ """
 
     def __init__(self, conf: BeatGANsAutoencConfig):
         super().__init__(conf)
@@ -50,7 +48,7 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
             out_channels=conf.enc_out_channels,
             num_res_blocks=conf.enc_num_res_block,
             attention_resolutions=(
-                    conf.enc_attn_resolutions or conf.attention_resolutions
+                conf.enc_attn_resolutions or conf.attention_resolutions
             ),
             dropout=conf.dropout,
             channel_mult=conf.enc_channel_mult or conf.channel_mult,
@@ -82,32 +80,28 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
         return eps * std + mu
 
     def sample_z(self, n: int, device):
-        """
-        """
+        """ """
         assert self.conf.is_stochastic
         return torch.randn(n, self.conf.enc_out_channels, device=device)
 
     def noise_to_cond(self, noise: Tensor):
-        """
-        """
+        """ """
         raise NotImplementedError()
         # assert self.conf.noise_net_conf is not None
         # return self.noise_net.forward(noise)
 
     def encode(self, x):
-        """
-        """
+        """ """
         cond = self.encoder.forward(x)
         return {"cond": cond}
 
     @property
     def stylespace_sizes(self):
-        """
-        """
+        """ """
         modules = (
-                list(self.input_blocks.modules())
-                + list(self.middle_block.modules())
-                + list(self.output_blocks.modules())
+            list(self.input_blocks.modules())
+            + list(self.middle_block.modules())
+            + list(self.output_blocks.modules())
         )
         sizes = []
         for module in modules:
@@ -121,9 +115,9 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
         encode to style space
         """
         modules = (
-                list(self.input_blocks.modules())
-                + list(self.middle_block.modules())
-                + list(self.output_blocks.modules())
+            list(self.input_blocks.modules())
+            + list(self.middle_block.modules())
+            + list(self.output_blocks.modules())
         )
         # (n, c)
         cond = self.encoder.forward(x)
@@ -141,16 +135,16 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
             return S
 
     def forward(
-            self,
-            x,
-            t,
-            y=None,
-            x_start=None,
-            cond=None,
-            style=None,
-            noise=None,
-            t_cond=None,
-            **kwargs,
+        self,
+        x,
+        t,
+        y=None,
+        x_start=None,
+        cond=None,
+        style=None,
+        noise=None,
+        t_cond=None,
+        **kwargs,
     ):
         """
         Apply the model to an input batch.
@@ -282,8 +276,7 @@ class EmbedReturn(NamedTuple):
 
 
 class TimeStyleSeperateEmbed(nn.Module):
-    """
-    """
+    """ """
 
     # embed only style
     def __init__(self, time_channels, time_out_channels):
@@ -296,8 +289,7 @@ class TimeStyleSeperateEmbed(nn.Module):
         self.style = nn.Identity()
 
     def forward(self, time_emb=None, cond=None, **kwargs):
-        """
-        """
+        """ """
         time_emb = None if time_emb is None else self.time_embed(time_emb)
         style = self.style(cond)
         return EmbedReturn(emb=style, time_emb=time_emb, style=style)

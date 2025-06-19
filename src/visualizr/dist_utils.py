@@ -4,8 +4,7 @@ from torch import distributed
 
 
 def barrier():
-    """
-    """
+    """ """
     if distributed.is_initialized():
         distributed.barrier()
     else:
@@ -13,8 +12,7 @@ def barrier():
 
 
 def broadcast(data, src):
-    """
-    """
+    """ """
     if distributed.is_initialized():
         distributed.broadcast(data, src)
     else:
@@ -22,8 +20,7 @@ def broadcast(data, src):
 
 
 def all_gather(data: List, src):
-    """
-    """
+    """ """
     if distributed.is_initialized():
         distributed.all_gather(data, src)
     else:
@@ -31,8 +28,7 @@ def all_gather(data: List, src):
 
 
 def get_rank():
-    """
-    """
+    """ """
     if distributed.is_initialized():
         return distributed.get_rank()
     else:
@@ -40,8 +36,7 @@ def get_rank():
 
 
 def get_world_size():
-    """
-    """
+    """ """
     if distributed.is_initialized():
         return distributed.get_world_size()
     else:
@@ -49,7 +44,6 @@ def get_world_size():
 
 
 def chunk_size(size, rank, world_size):
-    """
-    """
+    """ """
     extra = rank < size % world_size
     return size // world_size + extra

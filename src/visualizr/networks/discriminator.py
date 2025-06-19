@@ -5,25 +5,22 @@ from torch import nn
 from torch.nn import functional as F
 
 
-def fused_leaky_relu(input, bias, negative_slope=0.2, scale=2 ** 0.5):
-    """
-    """
+def fused_leaky_relu(input, bias, negative_slope=0.2, scale=2**0.5):
+    """ """
     return F.leaky_relu(input + bias, negative_slope) * scale
 
 
 class FusedLeakyReLU(nn.Module):
-    """
-    """
+    """ """
 
-    def __init__(self, channel, negative_slope=0.2, scale=2 ** 0.5):
+    def __init__(self, channel, negative_slope=0.2, scale=2**0.5):
         super().__init__()
         self.bias = nn.Parameter(torch.zeros(1, channel, 1, 1))
         self.negative_slope = negative_slope
         self.scale = scale
 
     def forward(self, input):
-        """
-        """
+        """ """
         # print("FusedLeakyReLU: ", input.abs().mean())
         out = fused_leaky_relu(input, self.bias, self.negative_slope, self.scale)
         # print("FusedLeakyReLU: ", out.abs().mean())
@@ -31,10 +28,9 @@ class FusedLeakyReLU(nn.Module):
 
 
 def upfirdn2d_native(
-        input, kernel, up_x, up_y, down_x, down_y, pad_x0, pad_x1, pad_y0, pad_y1
+    input, kernel, up_x, up_y, down_x, down_y, pad_x0, pad_x1, pad_y0, pad_y1
 ):
-    """
-    """
+    """ """
     _, minor, in_h, in_w = input.shape
     kernel_h, kernel_w = kernel.shape
 
@@ -44,11 +40,11 @@ def upfirdn2d_native(
 
     out = F.pad(out, [max(pad_x0, 0), max(pad_x1, 0), max(pad_y0, 0), max(pad_y1, 0)])
     out = out[
-          :,
-          :,
-          max(-pad_y0, 0): out.shape[2] - max(-pad_y1, 0),
-          max(-pad_x0, 0): out.shape[3] - max(-pad_x1, 0),
-          ]
+        :,
+        :,
+        max(-pad_y0, 0) : out.shape[2] - max(-pad_y1, 0),
+        max(-pad_x0, 0) : out.shape[3] - max(-pad_x1, 0),
+    ]
 
     # out = out.permute(0, 3, 1, 2)
     out = out.reshape(
@@ -68,16 +64,14 @@ def upfirdn2d_native(
 
 
 def upfirdn2d(input, kernel, up=1, down=1, pad=(0, 0)):
-    """
-    """
+    """ """
     return upfirdn2d_native(
         input, kernel, up, up, down, down, pad[0], pad[1], pad[0], pad[1]
     )
 
 
 def make_kernel(k):
-    """
-    """
+    """ """
     k = torch.tensor(k, dtype=torch.float32)
 
     if k.ndim == 1:
@@ -89,8 +83,7 @@ def make_kernel(k):
 
 
 class Blur(nn.Module):
-    """
-    """
+    """ """
 
     def __init__(self, kernel, pad, upsample_factor=1):
         super().__init__()
@@ -98,21 +91,19 @@ class Blur(nn.Module):
         kernel = make_kernel(kernel)
 
         if upsample_factor > 1:
-            kernel = kernel * (upsample_factor ** 2)
+            kernel = kernel * (upsample_factor**2)
 
         self.register_buffer("kernel", kernel)
 
         self.pad = pad
 
     def forward(self, input):
-        """
-        """
+        """ """
         return upfirdn2d(input, self.kernel, pad=self.pad)
 
 
 class ScaledLeakyReLU(nn.Module):
-    """
-    """
+    """ """
 
     def __init__(self, negative_slope=0.2):
         super().__init__()
@@ -120,24 +111,22 @@ class ScaledLeakyReLU(nn.Module):
         self.negative_slope = negative_slope
 
     def forward(self, input):
-        """
-        """
+        """ """
         return F.leaky_relu(input, negative_slope=self.negative_slope)
 
 
 class EqualConv2d(nn.Module):
-    """
-    """
+    """ """
 
     def __init__(
-            self, in_channel, out_channel, kernel_size, stride=1, padding=0, bias=True
+        self, in_channel, out_channel, kernel_size, stride=1, padding=0, bias=True
     ):
         super().__init__()
 
         self.weight = nn.Parameter(
             torch.randn(out_channel, in_channel, kernel_size, kernel_size)
         )
-        self.scale = 1 / math.sqrt(in_channel * kernel_size ** 2)
+        self.scale = 1 / math.sqrt(in_channel * kernel_size**2)
 
         self.stride = stride
         self.padding = padding
@@ -148,8 +137,7 @@ class EqualConv2d(nn.Module):
             self.bias = None
 
     def forward(self, input):
-        """
-        """
+        """ """
         return F.conv2d(
             input,
             self.weight * self.scale,
@@ -166,11 +154,10 @@ class EqualConv2d(nn.Module):
 
 
 class EqualLinear(nn.Module):
-    """
-    """
+    """ """
 
     def __init__(
-            self, in_dim, out_dim, bias=True, bias_init=0, lr_mul=1, activation=None
+        self, in_dim, out_dim, bias=True, bias_init=0, lr_mul=1, activation=None
     ):
         super().__init__()
 
@@ -187,8 +174,7 @@ class EqualLinear(nn.Module):
         self.lr_mul = lr_mul
 
     def forward(self, input):
-        """
-        """
+        """ """
         if self.activation:
             out = F.linear(input, self.weight * self.scale)
             out = fused_leaky_relu(out, self.bias * self.lr_mul)
@@ -206,18 +192,17 @@ class EqualLinear(nn.Module):
 
 
 class ConvLayer(nn.Sequential):
-    """
-    """
+    """ """
 
     def __init__(
-            self,
-            in_channel,
-            out_channel,
-            kernel_size,
-            downsample=False,
-            blur_kernel=[1, 3, 3, 1],
-            bias=True,
-            activate=True,
+        self,
+        in_channel,
+        out_channel,
+        kernel_size,
+        downsample=False,
+        blur_kernel=[1, 3, 3, 1],
+        bias=True,
+        activate=True,
     ):
         layers = []
 
@@ -257,8 +242,7 @@ class ConvLayer(nn.Sequential):
 
 
 class ResBlock(nn.Module):
-    """
-    """
+    """ """
 
     def __init__(self, in_channel, out_channel, blur_kernel=[1, 3, 3, 1]):
         super().__init__()
@@ -271,8 +255,7 @@ class ResBlock(nn.Module):
         )
 
     def forward(self, input):
-        """
-        """
+        """ """
         out = self.conv1
         out = self.conv2
 
@@ -283,8 +266,7 @@ class ResBlock(nn.Module):
 
 
 class Discriminator(nn.Module):
-    """
-    """
+    """ """
 
     def __init__(self, size, channel_multiplier=1, blur_kernel=[1, 3, 3, 1]):
         super().__init__()
@@ -324,8 +306,7 @@ class Discriminator(nn.Module):
         )
 
     def forward(self, input):
-        """
-        """
+        """ """
         out = self.convs(input)
         batch, channel, height, width = out.shape
 
