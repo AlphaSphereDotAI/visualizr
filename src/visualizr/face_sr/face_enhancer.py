@@ -24,6 +24,8 @@ class GeneratorWithLen(object):
 
 
 def enhancer_list(images, method="gfpgan", bg_upsampler="realesrgan"):
+    """
+    """
     gen = enhancer_generator_no_len(images, method=method, bg_upsampler=bg_upsampler)
     return list(gen)
 
@@ -44,11 +46,12 @@ def enhancer_generator_no_len(images, method="gfpgan", bg_upsampler="realesrgan"
     """Provide a generator function so that all of the enhanced images don't need
     to be stored in memory at the same time. This can save tons of RAM compared to
     the enhancer function."""
+    global model_name, url, arch, channel_multiplier
     if method not in ["gfpgan", "RestoreFormer", "codeformer"]:
         raise ValueError(f"Wrong model version {method}.")
     logger.info("face enhancer....")
     if not isinstance(images, list) and os.path.isfile(
-        images
+            images
     ):  # handle video to images
         images = load_video_to_cv2(images)
 
