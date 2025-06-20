@@ -40,10 +40,14 @@ from visualizr.templates import ffhq256_autoenc
 
 
 def check_package_installed(package_name: str) -> bool:
+    """
+    """
     return find_spec(package_name) is not None
 
 
 def frames_to_video(input_path, audio_path, output_path, fps=25):
+    """
+    """
     image_files = [
         os.path.join(input_path, img) for img in sorted(os.listdir(input_path))
     ]
@@ -55,6 +59,8 @@ def frames_to_video(input_path, audio_path, output_path, fps=25):
 
 
 def load_image(filename: str, size: int) -> np.ndarray:
+    """
+    """
     img: Image.Image = Image.open(filename).convert("RGB")
     img_resized: Image.Image = img.resize((size, size))
     img_np: np.ndarray = np.asarray(img_resized)
@@ -63,6 +69,8 @@ def load_image(filename: str, size: int) -> np.ndarray:
 
 
 def img_preprocessing(img_path: str, size: int) -> Tensor:
+    """
+    """
     img_np: np.ndarray = load_image(img_path, size)  # [0, 1]
     img: Tensor = torch.from_numpy(img_np).unsqueeze(0).float()  # [0, 1]
     normalized_image: Tensor = (img - 0.5) * 2.0  # [-1, 1]
@@ -70,12 +78,16 @@ def img_preprocessing(img_path: str, size: int) -> Tensor:
 
 
 def saved_image(img_tensor: Tensor, img_path: str) -> None:
+    """
+    """
     pil_image_converter: ToPILImage = ToPILImage()
     img = pil_image_converter(img_tensor.detach().cpu().squeeze(0))
     img.save(img_path)
 
 
 def load_stage_1_model() -> LIA_Model:
+    """
+    """
     logger.info("Loading stage 1 model... ")
     lia: LIA_Model = LIA_Model(motion_dim=MOTION_DIM, fusion_type="weighted_sum")
     lia.load_lightning_model(STAGE_1_CHECKPOINT_PATH)
@@ -84,6 +96,8 @@ def load_stage_1_model() -> LIA_Model:
 
 
 def load_stage_2_model(conf: TrainConfig, stage2_checkpoint_path: str) -> LitModel:
+    """
+    """
     logger.info("Loading stage 2 model... ")
     model = LitModel(conf)
     state = torch.load(stage2_checkpoint_path, "cpu")
@@ -94,15 +108,17 @@ def load_stage_2_model(conf: TrainConfig, stage2_checkpoint_path: str) -> LitMod
 
 
 def init_conf(
-    infer_type: Literal[
-        "mfcc_full_control",
-        "mfcc_pose_only",
-        "hubert_pose_only",
-        "hubert_audio_only",
-        "hubert_full_control",
-    ],
-    seed: int,
+        infer_type: Literal[
+            "mfcc_full_control",
+            "mfcc_pose_only",
+            "hubert_pose_only",
+            "hubert_audio_only",
+            "hubert_full_control",
+        ],
+        seed: int,
 ) -> TrainConfig:
+    """
+    """
     logger.info("Initializing configuration... ")
     conf: TrainConfig = ffhq256_autoenc()
     conf.seed = seed
@@ -135,25 +151,27 @@ def init_conf(
 
 
 def main(
-    infer_type: Literal[
-        "mfcc_full_control",
-        "mfcc_pose_only",
-        "hubert_pose_only",
-        "hubert_audio_only",
-        "hubert_full_control",
-    ],
-    image_path: str,
-    test_audio_path: str,
-    face_sr: bool,
-    pose_yaw: float,
-    pose_pitch: float,
-    pose_roll: float,
-    face_location: float,
-    face_scale: float,
-    step_t: int,
-    seed: int,
-    stage2_checkpoint_path: str,
+        infer_type: Literal[
+            "mfcc_full_control",
+            "mfcc_pose_only",
+            "hubert_pose_only",
+            "hubert_audio_only",
+            "hubert_full_control",
+        ],
+        image_path: str,
+        test_audio_path: str,
+        face_sr: bool,
+        pose_yaw: float,
+        pose_pitch: float,
+        pose_roll: float,
+        face_location: float,
+        face_scale: float,
+        step_t: int,
+        seed: int,
+        stage2_checkpoint_path: str,
 ):
+    """
+    """
     frame_end = None
     audio_driven = None
     if not os.path.exists(image_path):
@@ -366,24 +384,26 @@ def main(
 
 @spaces.GPU(duration=300)
 def generate_video(
-    uploaded_img: str,
-    uploaded_audio: str,
-    infer_type: Literal[
-        "mfcc_full_control",
-        "mfcc_pose_only",
-        "hubert_pose_only",
-        "hubert_audio_only",
-        "hubert_full_control",
-    ],
-    pose_yaw: float,
-    pose_pitch: float,
-    pose_roll: float,
-    face_location: float,
-    face_scale: float,
-    step_t: int,
-    face_sr: bool,
-    seed: int,
+        uploaded_img: str,
+        uploaded_audio: str,
+        infer_type: Literal[
+            "mfcc_full_control",
+            "mfcc_pose_only",
+            "hubert_pose_only",
+            "hubert_audio_only",
+            "hubert_full_control",
+        ],
+        pose_yaw: float,
+        pose_pitch: float,
+        pose_roll: float,
+        face_location: float,
+        face_scale: float,
+        step_t: int,
+        face_sr: bool,
+        seed: int,
 ):
+    """
+    """
     if not uploaded_img or not uploaded_audio:
         return None, Markdown(
             "Error: Input image or audio file is empty. "

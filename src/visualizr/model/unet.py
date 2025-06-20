@@ -79,10 +79,14 @@ class BeatGANsUNetConfig(BaseConfig):
     attn_checkpoint: bool = False
 
     def make_model(self):
+        """
+        """
         return BeatGANsUNetModel(self)
 
 
 class BeatGANsUNetModel(nn.Module):
+    """
+    """
     def __init__(self, conf: BeatGANsUNetConfig):
         super().__init__()
         self.conf = conf
@@ -375,6 +379,8 @@ class BeatGANsEncoderConfig(BaseConfig):
     pool: str = "adaptivenonzero"
 
     def make_model(self):
+        """
+        """
         return BeatGANsEncoderModel(self)
 
 
@@ -548,7 +554,7 @@ class SuperResModel(BeatGANsUNetModel):
     """
 
     def __init__(self, image_size, in_channels, *args, **kwargs):
-        super().__init__(image_size, in_channels * 2, *args, **kwargs)
+        super().__init__(image_size)
 
     def forward(self, x, timesteps, low_res=None, **kwargs):
         _, _, new_height, new_width = x.shape
