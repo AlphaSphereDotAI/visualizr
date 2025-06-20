@@ -61,16 +61,16 @@ class LitModel(pl.LightningModule):
         )
 
     def render(
-        self,
-        start,
-        motion_direction_start,
-        audio_driven,
-        face_location,
-        face_scale,
-        ypr_info,
-        noisyT,
-        step_T,
-        control_flag,
+            self,
+            start,
+            motion_direction_start,
+            audio_driven,
+            face_location,
+            face_scale,
+            ypr_info,
+            noisyT,
+            step_T,
+            control_flag,
     ):
         """ """
         if step_T is None:
@@ -236,7 +236,7 @@ class LitModel(pl.LightningModule):
         return {"loss": loss}
 
     def on_train_batch_end(
-        self, outputs, batch, batch_idx: int, dataloader_idx: int
+            self, outputs, batch, batch_idx: int, dataloader_idx: int
     ) -> None:
         """
         after each training step ...
@@ -253,7 +253,7 @@ class LitModel(pl.LightningModule):
                 ema(self.model, self.ema_model, self.conf.ema_decay)
 
     def on_before_optimizer_step(
-        self, optimizer: Optimizer, optimizer_idx: int
+            self, optimizer: Optimizer, optimizer_idx: int
     ) -> None:
         """ """
         # fix the fp16 + clip grad norm problem with pytorch lightinng
@@ -305,7 +305,7 @@ class LitModel(pl.LightningModule):
         world_size = get_world_size()
         # print(f'rank: {rank}/{world_size}')
         per_rank = n // world_size
-        return x[rank * per_rank : (rank + 1) * per_rank]
+        return x[rank * per_rank: (rank + 1) * per_rank]
 
 
 def ema(source, target, decay):

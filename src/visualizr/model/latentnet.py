@@ -125,15 +125,15 @@ class MLPLNAct(nn.Module):
     """ """
 
     def __init__(
-        self,
-        in_channels: int,
-        out_channels: int,
-        norm: bool,
-        use_cond: bool,
-        activation: Activation,
-        cond_channels: int,
-        condition_bias: float = 0,
-        dropout: float = 0,
+            self,
+            in_channels: int,
+            out_channels: int,
+            norm: bool,
+            use_cond: bool,
+            activation: Activation,
+            cond_channels: int,
+            condition_bias: float = 0,
+            dropout: float = 0,
     ):
         super().__init__()
         self.activation = activation
