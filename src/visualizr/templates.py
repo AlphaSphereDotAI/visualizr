@@ -3,9 +3,7 @@ from visualizr.config import PretrainConfig, TrainConfig
 
 
 def ddpm():
-    """
-    base configuration for all DDIM-based models.
-    """
+    """base configuration for all DDIM-based models."""
     conf = TrainConfig()
     conf.batch_size = 32
     conf.beatgans_gen_type = GenerativeType.ddim
@@ -60,7 +58,6 @@ def autoenc_base():
 
 
 def ffhq64_ddpm():
-    """ """
     conf = ddpm()
     conf.data_name = "ffhqlmdb256"
     conf.warmup = 0
@@ -70,7 +67,6 @@ def ffhq64_ddpm():
 
 
 def ffhq64_autoenc():
-    """ """
     conf = autoenc_base()
     conf.data_name = "ffhqlmdb256"
     conf.warmup = 0
@@ -85,7 +81,6 @@ def ffhq64_autoenc():
 
 
 def celeba64d2c_ddpm():
-    """ """
     conf = ffhq128_ddpm()
     conf.data_name = "celebalmdb"
     conf.eval_every_samples = 10_000_000
@@ -96,7 +91,6 @@ def celeba64d2c_ddpm():
 
 
 def celeba64d2c_autoenc():
-    """ """
     conf = ffhq64_autoenc()
     conf.data_name = "celebalmdb"
     conf.eval_every_samples = 10_000_000
@@ -107,7 +101,6 @@ def celeba64d2c_autoenc():
 
 
 def ffhq128_ddpm():
-    """ """
     conf = ddpm()
     conf.data_name = "ffhqlmdb256"
     conf.warmup = 0
@@ -129,7 +122,6 @@ def ffhq128_ddpm():
 
 
 def ffhq128_autoenc_base():
-    """ """
     conf = autoenc_base()
     conf.data_name = "ffhqlmdb256"
     conf.scale_up_gpus(4)
@@ -146,7 +138,6 @@ def ffhq128_autoenc_base():
 
 
 def ffhq256_autoenc():
-    """ """
     conf = ffhq128_autoenc_base()
     conf.img_size = 256
     conf.net_ch = 128
@@ -162,7 +153,6 @@ def ffhq256_autoenc():
 
 
 def ffhq256_autoenc_eco():
-    """ """
     conf = ffhq128_autoenc_base()
     conf.img_size = 256
     conf.net_ch = 128
@@ -178,7 +168,6 @@ def ffhq256_autoenc_eco():
 
 
 def ffhq128_ddpm_72M():
-    """ """
     conf = ffhq128_ddpm()
     conf.total_samples = 72_000_000
     conf.name = "ffhq128_ddpm_72M"
@@ -186,7 +175,6 @@ def ffhq128_ddpm_72M():
 
 
 def ffhq128_autoenc_72M():
-    """ """
     conf = ffhq128_autoenc_base()
     conf.total_samples = 72_000_000
     conf.name = "ffhq128_autoenc_72M"
@@ -194,7 +182,6 @@ def ffhq128_autoenc_72M():
 
 
 def ffhq128_ddpm_130M():
-    """ """
     conf = ffhq128_ddpm()
     conf.total_samples = 130_000_000
     conf.eval_ema_every_samples = 10_000_000
@@ -204,7 +191,6 @@ def ffhq128_ddpm_130M():
 
 
 def ffhq128_autoenc_130M():
-    """ """
     conf = ffhq128_autoenc_base()
     conf.total_samples = 130_000_000
     conf.eval_ema_every_samples = 10_000_000
@@ -214,7 +200,6 @@ def ffhq128_autoenc_130M():
 
 
 def horse128_ddpm():
-    """ """
     conf = ffhq128_ddpm()
     conf.data_name = "horse256"
     conf.total_samples = 130_000_000
@@ -225,7 +210,6 @@ def horse128_ddpm():
 
 
 def horse128_autoenc():
-    """ """
     conf = ffhq128_autoenc_base()
     conf.data_name = "horse256"
     conf.total_samples = 130_000_000
@@ -236,7 +220,6 @@ def horse128_autoenc():
 
 
 def bedroom128_ddpm():
-    """ """
     conf = ffhq128_ddpm()
     conf.data_name = "bedroom256"
     conf.eval_ema_every_samples = 10_000_000
@@ -247,7 +230,6 @@ def bedroom128_ddpm():
 
 
 def bedroom128_autoenc():
-    """ """
     conf = ffhq128_autoenc_base()
     conf.data_name = "bedroom256"
     conf.eval_ema_every_samples = 10_000_000
@@ -258,7 +240,6 @@ def bedroom128_autoenc():
 
 
 def pretrain_celeba64d2c_72M():
-    """ """
     conf = celeba64d2c_autoenc()
     conf.pretrain = PretrainConfig(
         name="72M",
@@ -269,7 +250,6 @@ def pretrain_celeba64d2c_72M():
 
 
 def pretrain_ffhq128_autoenc72M():
-    """ """
     conf = ffhq128_autoenc_base()
     conf.postfix = ""
     conf.pretrain = PretrainConfig(
@@ -281,7 +261,6 @@ def pretrain_ffhq128_autoenc72M():
 
 
 def pretrain_ffhq128_autoenc130M():
-    """ """
     conf = ffhq128_autoenc_base()
     conf.pretrain = PretrainConfig(
         name="130M",
@@ -292,7 +271,6 @@ def pretrain_ffhq128_autoenc130M():
 
 
 def pretrain_ffhq256_autoenc():
-    """ """
     conf = ffhq256_autoenc()
     conf.pretrain = PretrainConfig(
         name="90M",
@@ -303,7 +281,6 @@ def pretrain_ffhq256_autoenc():
 
 
 def pretrain_horse128():
-    """ """
     conf = horse128_autoenc()
     conf.pretrain = PretrainConfig(
         name="82M",
@@ -314,7 +291,6 @@ def pretrain_horse128():
 
 
 def pretrain_bedroom128():
-    """ """
     conf = bedroom128_autoenc()
     conf.pretrain = PretrainConfig(
         name="120M",

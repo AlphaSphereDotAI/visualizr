@@ -7,4 +7,3 @@
 .ruff_cache/
 .venv/
 .vscode/
-renovate.json

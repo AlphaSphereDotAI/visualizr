@@ -19,13 +19,8 @@ from visualizr.renderer import render_condition
 
 
 class LitModel(pl.LightningModule):
-    """ """
-
     def __init__(self, conf: TrainConfig):
         super().__init__()
-        self.conds = self.infer_whole_dataset()
-        self.train_data = self.conf.make_dataset()
-        self.val_data = self.train_data
         assert conf.train_mode != TrainMode.manipulate
         if conf.seed is not None:
             pl.seed_everything(conf.seed)
@@ -72,7 +67,6 @@ class LitModel(pl.LightningModule):
         step_T,
         control_flag,
     ):
-        """ """
         if step_T is None:
             sampler = self.eval_sampler
         else:
@@ -94,11 +88,9 @@ class LitModel(pl.LightningModule):
         return pred_img
 
     def forward(self, noise=None, x_start=None, ema_model: bool = False):
-        """ """
         with amp.autocast(False):
             model = self.model if self.disable_ema else self.ema_model
             return self.eval_sampler.sample(model=model, noise=noise, x_start=x_start)
-        return None
 
     def setup(self, stage=None) -> None:
         """
@@ -114,7 +106,9 @@ class LitModel(pl.LightningModule):
             logger.info("local seed:", seed)
         ##############################################
 
+        self.train_data = self.conf.make_dataset()
         logger.info("train data:", len(self.train_data))
+        self.val_data = self.train_data
         logger.info("val data:", len(self.val_data))
 
     def _train_dataloader(self, drop_last=True):
@@ -133,14 +127,15 @@ class LitModel(pl.LightningModule):
 
     def train_dataloader(self):
         """
-        return the dataloader, if diffusion mode => return image dataset
-        if latent mode => return the inferred latent dataset
+        return the dataloader, if diffusion mode, return image dataset
+        if latent mode, return the inferred latent dataset
         """
         logger.info("on train dataloader start ...")
         if self.conf.train_mode.require_dataset_infer():
             if self.conds is None:
                 # usually we load self.conds from a file
                 # so we do not need to do this again!
+                self.conds = self.infer_whole_dataset()
                 # need to use float32! unless the mean & std will be off!
                 # (1, c)
                 self.conds_mean.data = self.conds.float().mean(dim=0, keepdim=True)
@@ -201,7 +196,7 @@ class LitModel(pl.LightningModule):
                 """
                 main training mode!!!
                 """
-                # with numpy seed we have the problem that the sample t's are related!
+                # with numpy seed, we have the problem that the sample t's are related!
                 t, weight = self.T_sampler.sample(
                     len(motion_start), motion_start.device
                 )
@@ -255,8 +250,7 @@ class LitModel(pl.LightningModule):
     def on_before_optimizer_step(
         self, optimizer: Optimizer, optimizer_idx: int
     ) -> None:
-        """ """
-        # fix the fp16 + clip grad norm problem with pytorch lightinng
+        # fix the fp16 + clip grad norm problem with pytorch lighting
         # this is the currently correct way to do it
         if self.conf.grad_clip > 0:
             # from trainer.params_grads import grads_norm, iter_opt_params
@@ -264,7 +258,6 @@ class LitModel(pl.LightningModule):
             torch.nn.utils.clip_grad_norm_(params, max_norm=self.conf.grad_clip)
 
     def configure_optimizers(self):
-        """ """
         out = {}
         if self.conf.optimizer == OptimizerType.adam:
             optim = torch.optim.Adam(
@@ -309,7 +302,6 @@ class LitModel(pl.LightningModule):
 
 
 def ema(source, target, decay):
-    """ """
     source_dict = source.state_dict()
     target_dict = target.state_dict()
     for key in source_dict.keys():
@@ -319,8 +311,6 @@ def ema(source, target, decay):
 
 
 class WarmupLR:
-    """ """
-
     def __init__(self, warmup) -> None:
         self.warmup = warmup
 
@@ -329,13 +319,11 @@ class WarmupLR:
 
 
 def is_time(num_samples, every, step_size):
-    """ """
     closest = (num_samples // every) * every
     return num_samples - closest < step_size
 
 
 def train(conf: TrainConfig, gpus, nodes=1, mode: str = "train"):
-    """ """
     logger.info("conf:", conf.name)
     model = LitModel(conf)
 

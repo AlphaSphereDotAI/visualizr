@@ -41,7 +41,6 @@ class MLPSkipNetConfig(BaseConfig):
     time_last_act: bool = False
 
     def make_model(self):
-        """ """
         return MLPSkipNet(self)
 
 
@@ -108,7 +107,6 @@ class MLPSkipNet(nn.Module):
         self.last_act = conf.last_act.get_act()
 
     def forward(self, x, t, **kwargs):
-        """ """
         t = timestep_embedding(t, self.conf.num_time_emb_channels)
         cond = self.time_embed(t)
         h = x
@@ -122,8 +120,6 @@ class MLPSkipNet(nn.Module):
 
 
 class MLPLNAct(nn.Module):
-    """ """
-
     def __init__(
         self,
         in_channels: int,
@@ -158,7 +154,6 @@ class MLPLNAct(nn.Module):
         self.init_weights()
 
     def init_weights(self):
-        """ """
         for module in self.modules():
             if isinstance(module, nn.Linear):
                 if self.activation == Activation.relu:
@@ -174,7 +169,6 @@ class MLPLNAct(nn.Module):
                     pass
 
     def forward(self, x, cond=None):
-        """ """
         x = self.linear(x)
         if self.use_cond:
             # (n, c) or (n, c * 2)

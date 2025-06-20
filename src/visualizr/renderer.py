@@ -15,7 +15,6 @@ def render_condition(
     noisy_t,
     control_flag,
 ):
-    """ """
     if conf.train_mode == TrainMode.diffusion:
         assert conf.model_type.has_autoenc()
 

@@ -23,13 +23,10 @@ class BeatGANsAutoencConfig(BeatGANsUNetConfig):
     latent_net_conf: MLPSkipNetConfig = None
 
     def make_model(self):
-        """ """
         return BeatGANsAutoencModel(self)
 
 
 class BeatGANsAutoencModel(BeatGANsUNetModel):
-    """ """
-
     def __init__(self, conf: BeatGANsAutoencConfig):
         super().__init__(conf)
         self.conf = conf
@@ -68,11 +65,10 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
 
     def reparameterize(self, mu: Tensor, logvar: Tensor) -> Tensor:
         """
-        Reparameterization trick to sample from N(mu, var) from
-        N(0,1).
-        :param mu: (Tensor) Mean of the latent Gaussian [B x D]
-        :param logvar: (Tensor) Standard deviation of the latent Gaussian [B x D]
-        :return: (Tensor) [B x D]
+        Reparameterization trick to sample from N(mu, var) from N(0,1).
+        :param mu: (Tensor) Mean of the latent Gaussian [BxD]
+        :param logvar: (Tensor) Standard deviation of the latent Gaussian [BxD]
+        :return: (Tensor) [BxD]
         """
         assert self.conf.is_stochastic
         std = torch.exp(0.5 * logvar)
@@ -80,24 +76,20 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
         return eps * std + mu
 
     def sample_z(self, n: int, device):
-        """ """
         assert self.conf.is_stochastic
         return torch.randn(n, self.conf.enc_out_channels, device=device)
 
     def noise_to_cond(self, noise: Tensor):
-        """ """
         raise NotImplementedError()
         # assert self.conf.noise_net_conf is not None
         # return self.noise_net.forward(noise)
 
     def encode(self, x):
-        """ """
         cond = self.encoder.forward(x)
         return {"cond": cond}
 
     @property
     def stylespace_sizes(self):
-        """ """
         modules = (
             list(self.input_blocks.modules())
             + list(self.middle_block.modules())
@@ -196,7 +188,7 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
             cond_emb = None
 
         # override the style if given
-        style or res.style
+        style = style or res.style
 
         assert (y is not None) == (self.conf.num_classes is not None), (
             "must specify y if and only if the model is class-conditional"
@@ -276,9 +268,7 @@ class EmbedReturn(NamedTuple):
 
 
 class TimeStyleSeperateEmbed(nn.Module):
-    """ """
-
-    # embed only style
+    # embed-only style
     def __init__(self, time_channels, time_out_channels):
         super().__init__()
         self.time_embed = nn.Sequential(

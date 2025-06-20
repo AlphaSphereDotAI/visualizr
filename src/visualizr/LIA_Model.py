@@ -6,8 +6,6 @@ from visualizr.networks.styledecoder import Synthesis
 
 
 class LIA_Model(nn.Module):
-    """ """
-
     def __init__(
         self,
         size=256,
@@ -24,7 +22,6 @@ class LIA_Model(nn.Module):
         )
 
     def get_start_direction_code(self, x_start, x_target, x_face, x_aug):
-        """ """
         enc_dic = self.enc(x_start, x_target, x_face, x_aug)
 
         wa, alpha, feats = enc_dic["h_source"], enc_dic["h_motion"], enc_dic["feats"]
@@ -32,11 +29,9 @@ class LIA_Model(nn.Module):
         return wa, alpha, feats
 
     def render(self, start, direction, feats):
-        """ """
         return self.dec(start, direction, feats)
 
     def load_lightning_model(self, lia_pretrained_model_path):
-        """ """
         selfState = self.state_dict()
 
         state = load(lia_pretrained_model_path, map_location="cpu")

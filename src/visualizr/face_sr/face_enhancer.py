@@ -24,13 +24,12 @@ class GeneratorWithLen(object):
 
 
 def enhancer_list(images, method="gfpgan", bg_upsampler="realesrgan"):
-    """ """
     gen = enhancer_generator_no_len(images, method=method, bg_upsampler=bg_upsampler)
     return list(gen)
 
 
 def enhancer_generator_with_len(images, method="gfpgan", bg_upsampler="realesrgan"):
-    """Provide a generator with a __len__ method so that it can passed to functions that
+    """Provide a generator with a __len__ method so that it can be passed to functions that
     call len()"""
 
     if os.path.isfile(images):  # handle video to images
@@ -42,35 +41,37 @@ def enhancer_generator_with_len(images, method="gfpgan", bg_upsampler="realesrga
 
 
 def enhancer_generator_no_len(images, method="gfpgan", bg_upsampler="realesrgan"):
-    """Provide a generator function so that all of the enhanced images don't need
+    """Provide a generator function so that all the enhanced images don't need
     to be stored in memory at the same time. This can save tons of RAM compared to
-    the enhancer function."""
-    global model_name, url, arch, channel_multiplier
+    the enhancer function.
+    """
     if method not in ["gfpgan", "RestoreFormer", "codeformer"]:
         raise ValueError(f"Wrong model version {method}.")
     logger.info("face enhancer....")
-    if not isinstance(images, list) and os.path.isfile(
-        images
-    ):  # handle video to images
+    
+    # handle video to images
+    if not isinstance(images, list) and os.path.isfile(images):
         images = load_video_to_cv2(images)
 
     # ------------------------ set up GFPGAN restorer ------------------------
-    match method:
-        case "gfpgan":
-            arch = "clean"
-            channel_multiplier = 2
-            model_name = "GFPGANv1.4"
-            url = "https://github.com/TencentARC/GFPGAN/releases/download/v1.3.0/GFPGANv1.4.pth"
-        case "RestoreFormer":
-            arch = "RestoreFormer"
-            channel_multiplier = 2
-            model_name = "RestoreFormer"
-            url = "https://github.com/TencentARC/GFPGAN/releases/download/v1.3.4/RestoreFormer.pth"
-        case "codeformer":
-            arch = "CodeFormer"
-            channel_multiplier = 2
-            model_name = "CodeFormer"
-            url = "https://github.com/sczhou/CodeFormer/releases/download/v0.1.0/codeformer.pth"
+    if method == "gfpgan":
+        arch = "clean"
+        channel_multiplier = 2
+        model_name = "GFPGANv1.4"
+        url = "https://github.com/TencentARC/GFPGAN/releases/download/v1.3.0/GFPGANv1.4.pth"
+    elif method == "RestoreFormer":
+        arch = "RestoreFormer"
+        channel_multiplier = 2
+        model_name = "RestoreFormer"
+        url = "https://github.com/TencentARC/GFPGAN/releases/download/v1.3.4/RestoreFormer.pth"
+    elif method == "codeformer":
+        arch = "CodeFormer"
+        channel_multiplier = 2
+        model_name = "CodeFormer"
+        url = "https://github.com/sczhou/CodeFormer/releases/download/v0.1.0/codeformer.pth"
+    else:
+        raise ValueError(f"Wrong model version {method}.")
+
     # ------------------------ set up background upsampler ------------------------
     if bg_upsampler == "realesrgan":
         if not torch.cuda.is_available():  # CPU

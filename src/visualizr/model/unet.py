@@ -79,13 +79,10 @@ class BeatGANsUNetConfig(BaseConfig):
     attn_checkpoint: bool = False
 
     def make_model(self):
-        """ """
         return BeatGANsUNetModel(self)
 
 
 class BeatGANsUNetModel(nn.Module):
-    """ """
-
     def __init__(self, conf: BeatGANsUNetConfig):
         super().__init__()
         self.conf = conf
@@ -181,7 +178,9 @@ class BeatGANsUNetModel(nn.Module):
                             **kwargs,
                         ).make_model()
                         if conf.resblock_updown
-                        else Downsample(ch, conf.conv_resample, conf.dims, out_ch)
+                        else Downsample(
+                            ch, conf.conv_resample, dims=conf.dims, out_channels=out_ch
+                        )
                     )
                 )
                 ch = out_ch
@@ -280,10 +279,6 @@ class BeatGANsUNetModel(nn.Module):
                 self.output_num_blocks[level] += 1
                 self._feature_size += ch
 
-        # print(input_block_chans)
-        # print('inputs:', self.input_num_blocks)
-        # print('outputs:', self.output_num_blocks)
-
         if conf.resnet_use_zero_module:
             self.out = nn.Sequential(
                 normalization(ch),
@@ -303,10 +298,10 @@ class BeatGANsUNetModel(nn.Module):
         """
         Apply the model to an input batch.
 
-        :param x: an [N x C x ...] Tensor of inputs.
-        :param timesteps: a 1-D batch of timesteps.
-        :param y: an [N] Tensor of labels, if class-conditional.
-        :return: an [N x C x ...] Tensor of outputs.
+        :param x: An [N x C x ...] Tensor of inputs.
+        :param timesteps: A 1-D batch of timesteps.
+        :param y: An [N] Tensor of labels, if class-conditional.
+        :return: An [N x C x ...] Tensor of outputs.
         """
         assert (y is not None) == (self.conf.num_classes is not None), (
             "must specify y if and only if the model is class-conditional"
@@ -378,7 +373,6 @@ class BeatGANsEncoderConfig(BaseConfig):
     pool: str = "adaptivenonzero"
 
     def make_model(self):
-        """ """
         return BeatGANsEncoderModel(self)
 
 
@@ -510,9 +504,9 @@ class BeatGANsEncoderModel(nn.Module):
         """
         Apply the model to an input batch.
 
-        :param x: an [N x C x ...] Tensor of inputs.
-        :param timesteps: a 1-D batch of timesteps.
-        :return: an [N x K] Tensor of outputs.
+        :param x: An [N x C x ...] Tensor of inputs.
+        :param timesteps: A 1-D batch of timesteps.
+        :return: An [N x K] Tensor of outputs.
         """
         if self.conf.use_time_condition:
             emb = self.time_embed(timestep_embedding(t, self.model_channels))
@@ -552,7 +546,7 @@ class SuperResModel(BeatGANsUNetModel):
     """
 
     def __init__(self, image_size, in_channels, *args, **kwargs):
-        super().__init__(image_size)
+        super().__init__(image_size, in_channels * 2, *args, **kwargs)
 
     def forward(self, x, timesteps, low_res=None, **kwargs):
         _, _, new_height, new_width = x.shape

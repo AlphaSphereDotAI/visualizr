@@ -12,8 +12,6 @@ from tqdm import tqdm
 
 
 class LatentDataLoader(object):
-    """ """
-
     def __init__(
         self,
         window_size,
@@ -156,13 +154,11 @@ class LatentDataLoader(object):
         print("Db count:", len(self.data))
 
     def get_single_image(self, image_path):
-        """ """
         img_source = Image.open(image_path).convert("RGB")
         img_source = self.transform(img_source)
         return img_source
 
     def get_multiple_ranges(self, lists, multi_ranges):
-        """ """
         # Ensure that multi_ranges is a list of tuples
         if not all(isinstance(item, tuple) and len(item) == 2 for item in multi_ranges):
             raise ValueError(
@@ -172,7 +168,6 @@ class LatentDataLoader(object):
         return [item for sublist in extracted_elements for item in sublist]
 
     def read_landmark_info(self, lmd_path, upper_face=True):
-        """ """
         with open(lmd_path, "r") as file:
             lmd_lines = file.readlines()
         lmd_lines.sort()
@@ -199,7 +194,6 @@ class LatentDataLoader(object):
         return np.array(total_lmd_obj, dtype=np.float32)
 
     def calculate_face_height(self, landmarks):
-        """ """
         forehead_center = (landmarks[:, 21, :] + landmarks[:, 22, :]) / 2
         chin_bottom = landmarks[:, 8, :]
         distances = np.linalg.norm(forehead_center - chin_bottom, axis=1, keepdims=True)

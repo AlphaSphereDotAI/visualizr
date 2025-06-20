@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from os import path
-from typing import Tuple, Optional
+from typing import Optional, Tuple
 
 from torch import distributed
 from torch.multiprocessing import get_context
@@ -91,7 +91,7 @@ class TrainConfig(BaseConfig):
     model_type: ModelType = None
     net_attn: Tuple[int] = None
     net_beatgans_attn_head: int = 1
-    # not necessarily the same as the the number of style channels
+    # not necessarily the same as the number of style channels
     net_beatgans_embed_channels: int = 512
     net_resblock_updown: bool = True
     net_enc_use_time: bool = False
@@ -142,7 +142,7 @@ class TrainConfig(BaseConfig):
     pretrain: PretrainConfig = None
     continue_from: PretrainConfig = None
     eval_programs: Tuple[str] = None
-    # if present load the checkpoint from this path instead
+    # if present, load the checkpoint from this path instead
     eval_path: str = None
     base_dir: str = "checkpoints"
     use_cache_dataset: bool = False
@@ -156,7 +156,6 @@ class TrainConfig(BaseConfig):
         self.data_val_name = self.data_val_name or self.data_name
 
     def scale_up_gpus(self, num_gpus, num_nodes=1):
-        """ """
         self.eval_ema_every_samples *= num_gpus * num_nodes
         self.eval_every_samples *= num_gpus * num_nodes
         self.sample_every_samples *= num_gpus * num_nodes
@@ -166,26 +165,22 @@ class TrainConfig(BaseConfig):
 
     @property
     def batch_size_effective(self):
-        """ """
         return self.batch_size * self.accum_batches
 
     @property
     def fid_cache(self):
-        """ """
-        # we try to use the local dirs to reduce the load over network drives
-        # hopefully, this would reduce the disconnection problems with sshfs
+        # we try to use the local dirs to reduce the load over network drives,
+        # hopefully. this would reduce the disconnection problems with sshfs
         return f"{self.work_cache_dir}/eval_images/{self.data_name}_size{self.img_size}_{self.eval_num_images}"
 
     @property
     def logdir(self):
-        """ """
         return f"{self.base_dir}/{self.name}"
 
     @property
     def generate_dir(self):
-        """ """
-        # we try to use the local dirs to reduce the load over network drives
-        # hopefully, this would reduce the disconnection problems with sshfs
+        # we try to use the local dirs to reduce the load over network drives,
+        # hopefully. this would reduce the disconnection problems with sshfs
         return f"{self.work_cache_dir}/gen_images/{self.name}"
 
     def _make_diffusion_conf(self, t: int):
@@ -224,6 +219,7 @@ class TrainConfig(BaseConfig):
             section_counts = f"ddim{t}"
         else:
             raise NotImplementedError()
+
         return SpacedDiffusionBeatGansConfig(
             train_pred_xstart_detach=self.train_pred_xstart_detach,
             gen_type=self.latent_gen_type,
@@ -243,34 +239,27 @@ class TrainConfig(BaseConfig):
 
     @property
     def model_out_channels(self):
-        """ """
         return 3
 
     def make_t_sampler(self) -> UniformSampler:
-        """ """
         if self.T_sampler != "uniform":
             raise NotImplementedError()
         return UniformSampler(self.T)
 
     def make_diffusion_conf(self):
-        """ """
         return self._make_diffusion_conf(self.T)
 
     def make_eval_diffusion_conf(self):
-        """ """
         return self._make_diffusion_conf(self.T_eval)
 
     def make_latent_diffusion_conf(self):
-        """ """
         return self._make_latent_diffusion_conf(self.T)
 
     def make_latent_eval_diffusion_conf(self):
-        """ """
         # latent can have different eval T
         return self._make_latent_diffusion_conf(self.latent_T_eval)
 
     def make_dataset(self, path=None, **kwargs):
-        """ """
         return LatentDataLoader(
             self.window_size,
             self.frame_jpgs,
@@ -290,9 +279,8 @@ class TrainConfig(BaseConfig):
         num_worker: bool = None,
         drop_last: bool = True,
         batch_size: int = None,
-        parallel: bool = False,
+        parallel: bool = False
     ):
-        """ """
         sampler: Optional[DistributedSampler] = None
         if parallel and distributed.is_initialized():
             # drop last to make sure that there are no added special indexes
@@ -310,7 +298,6 @@ class TrainConfig(BaseConfig):
         )
 
     def make_model_conf(self):
-        """ """
         if self.model_name == ModelName.beatgans_ddpm:
             self.model_type = ModelType.ddpm
             self.model_conf = BeatGANsUNetConfig(

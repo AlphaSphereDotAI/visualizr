@@ -26,7 +26,7 @@ class AntiAliasInterpolation2d(nn.Module):
             mean = (size - 1) / 2
             kernel *= torch.exp(-((mgrid - mean) ** 2) / (2 * std**2))
 
-        # Make sure sum of values in gaussian kernel equals 1.
+        # Make sure a sum of values in gaussian kernel equals 1.
         kernel /= torch.sum(kernel)
         # Reshape to depthwise convolutional weight
         kernel = kernel.view(1, 1, *kernel.size())
@@ -39,7 +39,6 @@ class AntiAliasInterpolation2d(nn.Module):
         self.int_inv_scale = int(inv_scale)
 
     def forward(self, input):
-        """ """
         if self.scale == 1.0:
             return input
 
