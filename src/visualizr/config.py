@@ -284,13 +284,13 @@ class TrainConfig(BaseConfig):
         )
 
     def make_loader(
-        self,
-        dataset,
-        shuffle: bool,
-        num_worker: bool = None,
-        drop_last: bool = True,
-        batch_size: int = None,
-        parallel: bool = False,
+            self,
+            dataset,
+            shuffle: bool,
+            num_worker: bool = None,
+            drop_last: bool = True,
+            batch_size: int = None,
+            parallel: bool = False,
     ):
         """ """
         sampler: Optional[DistributedSampler] = None
