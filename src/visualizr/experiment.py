@@ -19,8 +19,8 @@ from visualizr.renderer import render_condition
 
 
 class LitModel(pl.LightningModule):
-    """
-    """
+    """ """
+
     def __init__(self, conf: TrainConfig):
         super().__init__()
         self.conds = self.infer_whole_dataset()
@@ -61,19 +61,18 @@ class LitModel(pl.LightningModule):
         )
 
     def render(
-            self,
-            start,
-            motion_direction_start,
-            audio_driven,
-            face_location,
-            face_scale,
-            ypr_info,
-            noisyT,
-            step_T,
-            control_flag,
+        self,
+        start,
+        motion_direction_start,
+        audio_driven,
+        face_location,
+        face_scale,
+        ypr_info,
+        noisyT,
+        step_T,
+        control_flag,
     ):
-        """
-        """
+        """ """
         if step_T is None:
             sampler = self.eval_sampler
         else:
@@ -95,8 +94,7 @@ class LitModel(pl.LightningModule):
         return pred_img
 
     def forward(self, noise=None, x_start=None, ema_model: bool = False):
-        """
-        """
+        """ """
         with amp.autocast(False):
             model = self.model if self.disable_ema else self.ema_model
             return self.eval_sampler.sample(model=model, noise=noise, x_start=x_start)
@@ -238,7 +236,7 @@ class LitModel(pl.LightningModule):
         return {"loss": loss}
 
     def on_train_batch_end(
-            self, outputs, batch, batch_idx: int, dataloader_idx: int
+        self, outputs, batch, batch_idx: int, dataloader_idx: int
     ) -> None:
         """
         after each training step ...
@@ -255,10 +253,9 @@ class LitModel(pl.LightningModule):
                 ema(self.model, self.ema_model, self.conf.ema_decay)
 
     def on_before_optimizer_step(
-            self, optimizer: Optimizer, optimizer_idx: int
+        self, optimizer: Optimizer, optimizer_idx: int
     ) -> None:
-        """
-        """
+        """ """
         # fix the fp16 + clip grad norm problem with pytorch lightinng
         # this is the currently correct way to do it
         if self.conf.grad_clip > 0:
@@ -267,8 +264,7 @@ class LitModel(pl.LightningModule):
             torch.nn.utils.clip_grad_norm_(params, max_norm=self.conf.grad_clip)
 
     def configure_optimizers(self):
-        """
-        """
+        """ """
         out = {}
         if self.conf.optimizer == OptimizerType.adam:
             optim = torch.optim.Adam(
@@ -309,12 +305,11 @@ class LitModel(pl.LightningModule):
         world_size = get_world_size()
         # print(f'rank: {rank}/{world_size}')
         per_rank = n // world_size
-        return x[rank * per_rank: (rank + 1) * per_rank]
+        return x[rank * per_rank : (rank + 1) * per_rank]
 
 
 def ema(source, target, decay):
-    """
-    """
+    """ """
     source_dict = source.state_dict()
     target_dict = target.state_dict()
     for key in source_dict.keys():
@@ -324,8 +319,8 @@ def ema(source, target, decay):
 
 
 class WarmupLR:
-    """
-    """
+    """ """
+
     def __init__(self, warmup) -> None:
         self.warmup = warmup
 
@@ -334,15 +329,13 @@ class WarmupLR:
 
 
 def is_time(num_samples, every, step_size):
-    """
-    """
+    """ """
     closest = (num_samples // every) * every
     return num_samples - closest < step_size
 
 
 def train(conf: TrainConfig, gpus, nodes=1, mode: str = "train"):
-    """
-    """
+    """ """
     logger.info("conf:", conf.name)
     model = LitModel(conf)
 
