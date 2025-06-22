@@ -2,9 +2,8 @@ from visualizr.choices import GenerativeType, ModelName
 from visualizr.config import PretrainConfig, TrainConfig
 
 
-def ddpm():
+def ddpm(conf: TrainConfig = TrainConfig()):
     """base configuration for all DDIM-based models."""
-    conf = TrainConfig()
     conf.batch_size = 32
     conf.beatgans_gen_type = GenerativeType.ddim
     conf.beta_scheduler = "linear"
@@ -27,11 +26,8 @@ def ddpm():
     return conf
 
 
-def autoenc_base():
-    """
-    base configuration for all Diff-AE models.
-    """
-    conf = TrainConfig()
+def autoenc_base(conf : TrainConfig = TrainConfig()):
+    """base configuration for all Diff-AE models."""
     conf.batch_size = 32
     conf.beatgans_gen_type = GenerativeType.ddim
     conf.beta_scheduler = "linear"

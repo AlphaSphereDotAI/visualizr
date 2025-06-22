@@ -181,7 +181,7 @@ class GaussianDiffusionBeatGans:
                 raise NotImplementedError()
 
             if "vb" in terms:
-                # if learning the variance also use the vlb loss
+                # if learning the variance, also use the vlb loss
                 terms["loss"] = terms["mse"] + terms["vb"]
             else:
                 terms["loss"] = terms["mse"]
@@ -345,7 +345,7 @@ class GaussianDiffusionBeatGans:
 
         if self.model_var_type in [ModelVarType.fixed_large, ModelVarType.fixed_small]:
             model_variance, model_log_variance = {
-                # for fixedlarge, we set the initial (log-)variance like so
+                # for fixed_large, we set the initial (log-)variance like so
                 # to get a better decoder log likelihood.
                 ModelVarType.fixed_large: (
                     np.append(self.posterior_variance[1], self.betas[1:]),
@@ -443,10 +443,7 @@ class GaussianDiffusionBeatGans:
         x. This uses the conditioning strategy from Sohl-Dickstein et al. (2015).
         """
         gradient = cond_fn(x, self._scale_timesteps(t), **model_kwargs)
-        new_mean = (
-            p_mean_var["mean"].float() + p_mean_var["variance"] * gradient.float()
-        )
-        return new_mean
+        return (            p_mean_var["mean"].float() + p_mean_var["variance"] * gradient.float()        )
 
     def condition_score(self, cond_fn, p_mean_var, x, t, model_kwargs=None):
         """
@@ -486,7 +483,7 @@ class GaussianDiffusionBeatGans:
         Sample x_{t-1} from the model at the given timestep.
 
         :param model: The model to sample from.
-        :param x: The current tensor at x_{t-1}.
+        :param x: The current tensor is at x_{t-1}.
         :param t: The value of t, starting at 0 for the first diffusion step.
         :param clip_denoised: If True, clip the x_start prediction to [-1, 1].
         :param denoised_fn: If not None, a function which applies to the
@@ -983,7 +980,7 @@ def get_named_beta_schedule(schedule_name, num_diffusion_timesteps):
 
     The beta schedule library consists of beta schedules which remain similar
     in the limit of num_diffusion_timesteps.
-    Beta schedules may be added, but should not be removed or changed once
+    Beta schedules may be added but should not be removed or changed once
     they are committed to maintain backwards compatibility.
     """
     if schedule_name == "linear":
@@ -1053,7 +1050,7 @@ def betas_for_alpha_bar(num_diffusion_timesteps, alpha_bar, max_beta=0.999):
 
 def normal_kl(mean1, logvar1, mean2, logvar2):
     """
-    Compute the KL divergence between two gaussians.
+    Compute the KL divergence between two Gaussians.
 
     Shapes are automatically broadcasted, so batches can be compared to
     scalars, among other use cases.
@@ -1082,7 +1079,7 @@ def normal_kl(mean1, logvar1, mean2, logvar2):
 
 
 def approx_standard_normal_cdf(x):
-    """A fast approximation the standard normal of the cumulative distribution function."""
+    """A fast approximation of the standard normal of the cumulative distribution function."""
     return 0.5 * (1.0 + th.tanh(np.sqrt(2.0 / np.pi) * (x + 0.044715 * th.pow(x, 3))))
 
 
@@ -1093,7 +1090,7 @@ def discretized_gaussian_log_likelihood(x, *, means, log_scales):
 
     :param x: The target images. It is assumed that this was uint8 values,
               rescaled to the range [-1, 1].
-    :param means: The Gaussian mean Tensor.
+    :param means: The Gaussian Mean Tensor.
     :param log_scales: The Gaussian log stddev Tensor.
     :return: A tensor like x of log probabilities (in nats).
     """

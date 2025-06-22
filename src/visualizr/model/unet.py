@@ -226,7 +226,7 @@ class BeatGANsUNetModel(nn.Module):
                     ich = input_block_chans[level].pop()
                 except IndexError:
                     # this happens only when num_res_block > num_enc_res_block
-                    # we will not have enough lateral (skip) connecions for all decoder blocks
+                    # we will not have enough lateral (skip) connections for all decoder blocks
                     ich = 0
                 # print('pop:', ich)
                 layers = [

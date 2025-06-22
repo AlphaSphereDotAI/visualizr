@@ -151,7 +151,7 @@ class ResBlock(TimestepBlock):
                 conf.dims, conf.out_channels, conf.out_channels, 3, padding=1
             )
             if conf.use_zero_module:
-                # zere out the weights
+                # zero out the weights,
                 # it seems to help training
                 conv = zero_module(conv)
 
@@ -174,7 +174,7 @@ class ResBlock(TimestepBlock):
         # SKIP LAYERS
         #############################
         if conf.out_channels == conf.channels:
-            # cannot be used with gatedconv; also gatedconv is alsways used as the first block
+            # cannot be used with gatedconv; also gatedconv is always used as the first block
             self.skip_connection = nn.Identity()
         else:
             if conf.use_conv:
@@ -231,7 +231,7 @@ class ResBlock(TimestepBlock):
             h = self.in_layers(x)
 
         if self.conf.use_condition:
-            # it's possible that the network may not receieve the time emb
+            # it's possible that the network may not receive the time emb
             # this happens with autoenc and setting the time_at
             if emb is not None:
                 emb_out = self.emb_layers(emb).type(h.dtype)
@@ -298,7 +298,7 @@ def apply_conditions(
         # time first
         scale_shifts = [emb, cond]
     else:
-        # "cond" is not used with single cond mode
+        # "cond" is not used with a single cond mode
         scale_shifts = [emb]
 
     # support scale, shift or shift only
@@ -322,7 +322,7 @@ def apply_conditions(
         # a list
         biases = scale_bias
 
-    # default, the scale and shift are applied after the group norm but BEFORE SiLU
+    # by default, the scale and shift are applied after the group norm but BEFORE SiLU
     pre_layers, post_layers = layers[0], layers[1:]
 
     # spilt the post-layer to be able to scale up or down before conv
@@ -465,7 +465,7 @@ def count_flops_attn(model, _x, y):
     """
     b, c, *spatial = y[0].shape
     num_spatial = int(np.prod(spatial))
-    # We perform two matmuls with the same number of ops.
+    # We perform two matmul with the same number of ops.
     # The first computes the weight matrix, the second computes
     # the combination of the value vectors.
     matmul_ops = 2 * b * (num_spatial**2) * c
@@ -474,7 +474,7 @@ def count_flops_attn(model, _x, y):
 
 class QKVAttentionLegacy(nn.Module):
     """
-    A module which performs QKV attention. Matches legacy QKVAttention + input/ouput heads shaping
+    A module which performs QKV attention. Matches legacy QKVAttention + input/output heads shaping
     """
 
     def __init__(self, n_heads):

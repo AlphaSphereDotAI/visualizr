@@ -296,7 +296,6 @@ class LitModel(pl.LightningModule):
         n = len(x)
         rank = self.global_rank
         world_size = get_world_size()
-        # print(f'rank: {rank}/{world_size}')
         per_rank = n // world_size
         return x[rank * per_rank : (rank + 1) * per_rank]
 

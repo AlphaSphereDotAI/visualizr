@@ -19,8 +19,7 @@ class FusedLeakyReLU(nn.Module):
         self.scale = scale
 
     def forward(self, input):
-        out = fused_leaky_relu(input, self.bias, self.negative_slope, self.scale)
-        return out
+        return fused_leaky_relu(input, self.bias, self.negative_slope, self.scale)
 
 
 def upfirdn2d_native(
@@ -357,7 +356,7 @@ class Encoder(nn.Module):
         # image encoder
         self.net_app = EncoderApp(size, dim, weighted_sum)
 
-        # decouping network
+        # decoupling network
         self.net_decouping = DecouplingModel(dim, dim, dim)
 
         # part of the motion encoder

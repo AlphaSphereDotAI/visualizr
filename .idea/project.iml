@@ -4,6 +4,12 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
+      <excludeFolder url="file://$MODULE_DIR$/.trunk/actions" />
+      <excludeFolder url="file://$MODULE_DIR$/.trunk/logs" />
+      <excludeFolder url="file://$MODULE_DIR$/.trunk/notifications" />
+      <excludeFolder url="file://$MODULE_DIR$/.trunk/out" />
+      <excludeFolder url="file://$MODULE_DIR$/.trunk/plugins" />
+      <excludeFolder url="file://$MODULE_DIR$/.trunk/tools" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

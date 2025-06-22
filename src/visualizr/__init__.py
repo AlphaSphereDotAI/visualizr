@@ -1,5 +1,4 @@
 from datetime import datetime
-from os import getenv
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -9,9 +8,6 @@ from torch import cuda
 
 load_dotenv()
 
-DEBUG: bool = getenv(key="DEBUG", default="True").lower() == "true"
-SERVER_NAME: str = getenv(key="GRADIO_SERVER_NAME", default="localhost")
-SERVER_PORT: int = int(getenv(key="GRADIO_SERVER_PORT", default="8080"))
 CURRENT_DATE: str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
 BASE_DIR: Path = Path.cwd()

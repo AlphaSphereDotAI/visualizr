@@ -32,7 +32,7 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
         self.conf = conf
 
         # having only time, cond
-        self.time_embed = TimeStyleSeperateEmbed(
+        self.time_embed = TimeStyleSeparateEmbed(
             time_channels=conf.model_channels,
             time_out_channels=conf.embed_channels,
         )
@@ -267,7 +267,7 @@ class EmbedReturn(NamedTuple):
     style: Tensor = None
 
 
-class TimeStyleSeperateEmbed(nn.Module):
+class TimeStyleSeparateEmbed(nn.Module):
     # embed-only style
     def __init__(self, time_channels, time_out_channels):
         super().__init__()

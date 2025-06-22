@@ -3,7 +3,7 @@
     <option name="args">
       <list />
     </option>
-    <option name="checkSync" value="false" />
+    <option name="checkSync" value="true" />
     <option name="env">
       <map />
     </option>

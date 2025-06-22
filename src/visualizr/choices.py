@@ -6,7 +6,7 @@ from torch import nn
 class TrainMode(Enum):
     # manipulate mode = training the classifier
     manipulate = "manipulate"
-    # default trainin mode!
+    # default training mode!
     diffusion = "diffusion"
     # default latent training mode!
     # fitting the DDPM to a given latent

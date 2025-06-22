@@ -17,9 +17,9 @@ def space_timesteps(num_timesteps, section_counts):
     given the number of timesteps we want to take from equally sized portions
     of the original process.
 
-    For example, if there are 300 timesteps and the section counts are [10,15,20]
-    then the first 100 timesteps are strided to be 10 timesteps, the second 100
-    are strided to be 15 timesteps, and the final 100 are strided to be 20.
+    For example, if there are 300 timesteps and the section counts are [10,15,20],
+    then the first 100 timesteps are stridden to be 10 timesteps, the second 100
+    are stridden to be 15 timesteps, and the final 100 are stridden to be 20.
 
     If the stride is a string starting with "ddim", then the fixed striding
     from the DDIM paper is used, and only one section is allowed.
@@ -88,7 +88,7 @@ class SpacedDiffusionBeatGans(GaussianDiffusionBeatGans):
         self.timestep_map = []
         self.original_num_steps = len(conf.betas)
 
-        base_diffusion = GaussianDiffusionBeatGans(conf)  # pylint: disable=missing-kwoa
+        base_diffusion = GaussianDiffusionBeatGans(conf)
         last_alpha_cumprod = 1.0
         new_betas = []
         for i, alpha_cumprod in enumerate(base_diffusion.alphas_cumprod):

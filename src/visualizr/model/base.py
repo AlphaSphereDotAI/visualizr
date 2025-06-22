@@ -9,7 +9,7 @@ class BaseModule(torch.nn.Module):
     @property
     def nparams(self):
         """
-        Returns number of trainable parameters of the module.
+        Returns the number of trainable parameters of the module.
         """
         num_params = 0
         for name, param in self.named_parameters():
