@@ -79,14 +79,13 @@ class BeatGANsUNetConfig(BaseConfig):
     attn_checkpoint: bool = False
 
     def make_model(self):
-        """
-        """
+        """ """
         return BeatGANsUNetModel(self)
 
 
 class BeatGANsUNetModel(nn.Module):
-    """
-    """
+    """ """
+
     def __init__(self, conf: BeatGANsUNetConfig):
         super().__init__()
         self.conf = conf
@@ -379,8 +378,7 @@ class BeatGANsEncoderConfig(BaseConfig):
     pool: str = "adaptivenonzero"
 
     def make_model(self):
-        """
-        """
+        """ """
         return BeatGANsEncoderModel(self)
 
 
