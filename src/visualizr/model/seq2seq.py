@@ -62,15 +62,15 @@ class DiffusionPredictor(BaseModule):
         )
 
     def initialize_layers(
-            self,
-            conf,
-            mfcc_dim=39,
-            hubert_dim=1024,
-            speech_layers=4,
-            speech_dim=512,
-            decoder_dim=1024,
-            motion_start_dim=512,
-            HAL_layers=25,
+        self,
+        conf,
+        mfcc_dim=39,
+        hubert_dim=1024,
+        speech_layers=4,
+        speech_dim=512,
+        decoder_dim=1024,
+        motion_start_dim=512,
+        HAL_layers=25,
     ):
         """ """
         self.conf = conf
@@ -120,16 +120,16 @@ class DiffusionPredictor(BaseModule):
         self.out_proj = nn.Linear(decoder_dim, conf.motion_dim)
 
     def forward(
-            self,
-            initial_code,
-            direction_code,
-            seq_input_vector,
-            face_location,
-            face_scale,
-            yaw_pitch_roll,
-            noisy_x,
-            t_emb,
-            control_flag=False,
+        self,
+        initial_code,
+        direction_code,
+        seq_input_vector,
+        face_location,
+        face_scale,
+        yaw_pitch_roll,
+        noisy_x,
+        t_emb,
+        control_flag=False,
     ):
         """ """
         x = None
@@ -138,7 +138,7 @@ class DiffusionPredictor(BaseModule):
         elif self.infer_type.startswith("hubert"):
             norm_weights = F.softmax(self.weights, dim=-1)
             weighted_feature = (
-                    norm_weights.unsqueeze(0).unsqueeze(-1).unsqueeze(-1) * seq_input_vector
+                norm_weights.unsqueeze(0).unsqueeze(-1).unsqueeze(-1) * seq_input_vector
             ).sum(dim=1)
             x = self.down_sample1(weighted_feature.transpose(1, 2)).transpose(1, 2)
             x, _ = self.speech_encoder(x, masks=None)
@@ -169,7 +169,7 @@ class DiffusionPredictor(BaseModule):
         return self.down_sample2(x).transpose(1, 2)
 
     def adjust_features(
-            self, x, face_location, face_scale, yaw_pitch_roll, control_flag
+        self, x, face_location, face_scale, yaw_pitch_roll, control_flag
     ):
         """ """
         predicted_location, predicted_scale = 0, 0
