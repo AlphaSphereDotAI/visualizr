@@ -15,19 +15,19 @@ class LatentDataLoader(object):
     """ """
 
     def __init__(
-        self,
-        window_size,
-        frame_jpgs,
-        lmd_feats_prefix,
-        audio_prefix,
-        raw_audio_prefix,
-        motion_latents_prefix,
-        pose_prefix,
-        db_name,
-        video_fps=25,
-        audio_hz=50,
-        size=256,
-        mfcc_mode=False,
+            self,
+            window_size,
+            frame_jpgs,
+            lmd_feats_prefix,
+            audio_prefix,
+            raw_audio_prefix,
+            motion_latents_prefix,
+            pose_prefix,
+            db_name,
+            video_fps=25,
+            audio_hz=50,
+            size=256,
+            mfcc_mode=False,
     ):
         self.window_size = window_size
         self.lmd_feats_prefix = lmd_feats_prefix
@@ -76,7 +76,7 @@ class LatentDataLoader(object):
 
                 item_dict["yaw_pitch_roll"] = np.load(item_dict["yaw_pitch_roll_path"])
                 item_dict["yaw_pitch_roll"] = (
-                    np.clip(item_dict["yaw_pitch_roll"], -90, 90) / 90.0
+                        np.clip(item_dict["yaw_pitch_roll"], -90, 90) / 90.0
                 )
 
                 if not os.path.exists(item_dict["wav_path"]):
@@ -147,8 +147,8 @@ class LatentDataLoader(object):
 
                     item_dict["frame_count"] = min_len
                     item_dict["hubert_obj"] = item_dict["hubert_obj"][
-                        :, : min_len * 2, :
-                    ]
+                                              :, : min_len * 2, :
+                                              ]
 
                 if min_len < self.window_size * self.video_fps + 5:
                     continue
@@ -186,7 +186,7 @@ class LatentDataLoader(object):
             if upper_face:
                 # Ensure that the coordinates are parsed as integers
                 for coord_pair in self.get_multiple_ranges(
-                    coords, [(0, 3), (14, 27), (36, 48)]
+                        coords, [(0, 3), (14, 27), (36, 48)]
                 ):  # 28个
                     x, y = coord_pair.split("_")
                     lmd_obj.append((int(x) / 512, int(y) / 512))
