@@ -157,9 +157,7 @@ class EqualLinear(nn.Module):
             out = linear(input, self.weight * self.scale)
             out = fused_leaky_relu(out, self.bias * self.lr_mul)
         else:
-            out = linear(
-                input, self.weight * self.scale, bias=self.bias * self.lr_mul
-            )
+            out = linear(input, self.weight * self.scale, bias=self.bias * self.lr_mul)
 
         return out
 

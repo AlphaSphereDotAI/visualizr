@@ -443,7 +443,7 @@ class GaussianDiffusionBeatGans:
         x. This uses the conditioning strategy from Sohl-Dickstein et al. (2015).
         """
         gradient = cond_fn(x, self._scale_timesteps(t), **model_kwargs)
-        return (            p_mean_var["mean"].float() + p_mean_var["variance"] * gradient.float()        )
+        return p_mean_var["mean"].float() + p_mean_var["variance"] * gradient.float()
 
     def condition_score(self, cond_fn, p_mean_var, x, t, model_kwargs=None):
         """

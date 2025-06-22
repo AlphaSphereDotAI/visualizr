@@ -16,7 +16,7 @@ def main() -> None:
         show_api=True,
         enable_monitoring=True,
         show_error=True,
-        app_kwargs={"docs_url": "/docs"}
+        app_kwargs={"docs_url": "/docs"},
     )
 
 

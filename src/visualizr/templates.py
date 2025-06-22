@@ -26,7 +26,7 @@ def ddpm(conf: TrainConfig = TrainConfig()):
     return conf
 
 
-def autoenc_base(conf : TrainConfig = TrainConfig()):
+def autoenc_base(conf: TrainConfig = TrainConfig()):
     """base configuration for all Diff-AE models."""
     conf.batch_size = 32
     conf.beatgans_gen_type = GenerativeType.ddim

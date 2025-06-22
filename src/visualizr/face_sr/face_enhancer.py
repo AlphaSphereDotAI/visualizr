@@ -48,7 +48,7 @@ def enhancer_generator_no_len(images, method="gfpgan", bg_upsampler="realesrgan"
     if method not in ["gfpgan", "RestoreFormer", "codeformer"]:
         raise ValueError(f"Wrong model version {method}.")
     logger.info("face enhancer....")
-    
+
     # handle video to images
     if not isinstance(images, list) and os.path.isfile(images):
         images = load_video_to_cv2(images)

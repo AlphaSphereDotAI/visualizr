@@ -279,7 +279,7 @@ class TrainConfig(BaseConfig):
         num_worker: bool = None,
         drop_last: bool = True,
         batch_size: int = None,
-        parallel: bool = False
+        parallel: bool = False,
     ):
         sampler: Optional[DistributedSampler] = None
         if parallel and distributed.is_initialized():
