@@ -4,6 +4,9 @@ on:
     branches:
       - main
   pull_request:
+    branches:
+      - main
+  workflow_dispatch:
 permissions: read-all
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}
@@ -68,3 +71,26 @@ jobs:
           activate-environment: true
       - name: Install the project
         run: uv sync --frozen --no-install-project
+  qodana:
+    name: Qodana
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      checks: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: Qodana Scan
+        uses: JetBrains/qodana-action@v2025.1
+        with:
+          pr-mode: false
+          args: --baseline,qodana.sarif.json,--apply-fixes
+          push-fixes: pull-request
+          upload-result: true
+        env:
+          QODANA_TOKEN: ${{ secrets.QODANA_TOKEN_439778457 }}
+          QODANA_ENDPOINT: "https://qodana.cloud"
