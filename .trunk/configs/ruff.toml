@@ -1,13 +1,13 @@
 exclude = [
-	".git",
-	".ipynb_checkpoints",
-	".mypy_cache",
-	".pytest_cache",
-	".ruff_cache",
-	".venv",
-	".vscode",
-	"__pypackages__",
-	"dist",
+    ".git",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "dist",
 ]
 
 indent-width = 4
