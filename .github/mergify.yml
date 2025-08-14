@@ -12,8 +12,8 @@ pull_request_rules:
     actions:
       comment:
         message: >
-          Thank you for your contribution @{{author}}! Your pull request has
-          been merged.
+          Thank you for your contribution @{{author}}! Your pull request has been merged.
+
   - name: Comment if there is a conflict
     conditions:
       - conflict
@@ -41,19 +41,18 @@ pull_request_rules:
           - merge-queued
   - name: Notify when a PR is removed from the queue
     description: >
-      Notify the PR author when its pull request is removed from the merge
-      queue.
+      Notify the PR author when its pull request is removed from the merge queue.
+
     conditions:
       - queue-dequeue-reason != none
       - queue-dequeue-reason != pr-merged
     actions:
       comment:
         message: >
-          Hey @{{author}}, your pull request has been dequeued due to the
-          following reason: {{queue_dequeue_reason}}.
+          Hey @{{author}}, your pull request has been dequeued due to the following reason: {{queue_dequeue_reason}}.
 
-          Sorry about that, but you can requeue the PR by using `@mergifyio
-          requeue` if you think this was a mistake.
+          Sorry about that, but you can requeue the PR by using `@mergifyio requeue` if you think this was a mistake.
+
 queue_rules:
   - name: default
     update_method: merge
@@ -63,12 +62,13 @@ queue_rules:
       - and:
           - "check-success = DeepSource: Secrets"
           - "check-success = DeepSource: Python"
+          - "check-success = DeepSource: Transformers"
+          - "check-success = DeepSource: pyproject.toml"
+          - "check-success = DeepSource: Docker"
           - check-success = CodeFactor
           - check-success = GitGuardian Security Checks
-          - check-success = SonarCloud Code Analysis
+          - check-success = SonarCloud
           - check-success = Trunk Check
-          - check-success = Check Dependency Compatibility
           - check-success = CodeRabbit
-      - or:
-          - check-success = pre-commit.ci - push
-          - check-success = pre-commit.ci - pr
+          - check-success = Test Image / API Test
+          - check-success = CodeQL
