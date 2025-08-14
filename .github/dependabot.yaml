@@ -4,10 +4,12 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    versioning-strategy: increase
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
       interval: "weekly"
+    versioning-strategy: increase
   - package-ecosystem: "docker"
     directory: "/"
     schedule:

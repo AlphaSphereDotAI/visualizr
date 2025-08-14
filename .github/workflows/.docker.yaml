@@ -1,0 +1,182 @@
+name: Docker Image
+on:
+  workflow_call:
+    inputs:
+      is_test:
+        type: boolean
+        required: true
+        description: Test Mode
+      registry:
+        type: string
+        required: true
+        description: Registry
+permissions:
+  contents: read
+  packages: write
+  attestations: write
+  id-token: write
+jobs:
+  check_dockerfile:
+    name: Validate Dockerfile
+    runs-on: ubuntu-latest
+    if: ${{ inputs.is_test }}
+    environment:
+      name: code_quality
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      - name: Log in to the ghcr.io Registry
+        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3
+        with:
+          registry: ghcr.io
+          username: mh0386
+          password: ${{ secrets.GH_TOKEN }}
+      - name: Validate build configuration
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6
+        with:
+          call: check
+  build_image:
+    name: Build and push Docker image to ${{ inputs.registry }}
+    needs: check_dockerfile
+    if: ${{ always() && ( inputs.is_test == true || inputs.is_test == false ) }}
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.tag.outputs.TAG }}
+    environment:
+      name: docker_image
+      url: ${{inputs.registry}}/${{github.repository}}
+    steps:
+      - name: Free Disk Space
+        if: github.event_name != 'pull_request'
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      - name: Log in to ${{ inputs.registry }} Registry
+        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3
+        with:
+          registry: ${{ inputs.registry }}
+          username: mh0386
+          password: ${{ inputs.registry == 'ghcr.io' && secrets.GH_TOKEN || inputs.registry == 'docker.io' && secrets.TOKEN_KEY_DOCKER }}
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@c1e51972afc2121e065aed6d45c65596fe445f3f # v5
+        with:
+          images: ${{ inputs.registry }}/${{ github.repository }}
+          tags: |
+            type=raw,value=latest,enable=${{ github.event_name == 'push' && contains(github.ref, 'refs/tags/') }}
+            type=ref,event=pr,prefix={{sha}}-pr-
+            type=ref,event=tag
+            type=ref,event=branch
+      - name: Build and Push to ${{ inputs.registry }}
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6
+        id: push
+        with:
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2
+        with:
+          subject-name: ${{ inputs.registry }}/${{ github.repository }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+      - name: Update Docker Hub Description
+        if: ${{ inputs.registry == 'docker.io' }}
+        uses: peter-evans/dockerhub-description@432a30c9e07499fd01da9f8a49f0faf9e0ca5b77 # v4.0.2
+        with:
+          username: mh0386
+          password: ${{ secrets.TOKEN_KEY_DOCKER }}
+          repository: ${{ github.repository }}
+          short-description: ${{ github.event.repository.description }}
+          enable-url-completion: true
+      - name: Export tag for Testing and Scanning
+        id: tag
+        run: echo "TAG=$(echo "${{ steps.meta.outputs.tags }}" | tail -n 1)" >> $GITHUB_OUTPUT
+  docker_scout:
+    name: Docker Scout (${{ matrix.commands }})
+    needs: build_image
+    if: ${{ always() && ( inputs.is_test == true || inputs.is_test == false ) }}
+    runs-on: ubuntu-latest
+    environment:
+      name: docker_image
+    strategy:
+      fail-fast: false
+      matrix:
+        commands:
+          - quickview
+          - cves
+          - recommendations
+    steps:
+      - name: Login to the Container registry
+        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3
+        with:
+          registry: ghcr.io
+          username: MH0386
+          password: ${{ secrets.GH_TOKEN }}
+      - name: Docker Scout
+        uses: docker/scout-action@f8c776824083494ab0d56b8105ba2ca85c86e4de # v1
+        continue-on-error: true
+        with:
+          command: ${{ matrix.commands }}
+          dockerhub-user: mh0386
+          dockerhub-password: ${{ secrets.TOKEN_KEY_DOCKER }}
+          image: ${{ needs.build_image.outputs.image_tag }}
+          github-token: ${{ secrets.GH_TOKEN }}
+  api_test:
+    name: API Test
+    needs: build_image
+    runs-on: ubuntu-latest
+    if: ${{ always() && inputs.is_test }}
+    environment:
+      name: api_test
+    services:
+      visualizr:
+        image: ${{ needs.build_image.outputs.image_tag }}
+        ports:
+          - 7860:7860
+        env:
+          FASTEMBED_CACHE_PATH: "/home/nonroot/fastembed" # TODO
+        options: >-
+          --health-cmd "curl -o /dev/null -f -s -w 'Status: %{http_code}, Time: %{time_total}s' http://localhost:7860/" --health-interval 10s
+          --health-timeout 10s --health-start-period 20s --health-retries 15
+    steps:
+      - name: Echo URL
+        run: echo "Visualizr available on localhost:${{ job.services.visualizr.ports['7860'] }}"
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@d9e0f98d3fc6adb07d1e3d37f3043649ddad06a1 # v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+          activate-environment: true
+      - name: Install the project
+        run: uv sync --frozen
+      - name: Test
+        env:
+          VISUALIZR_URL: http://localhost:${{ job.services.visualizr.ports['7860'] }}/
+          MERGIFY_TOKEN: ${{ secrets.MERGIFY_TOKEN }}
+        uses: pavelzw/pytest-action@510c5e90c360a185039bea56ce8b3e7e51a16507 # v2
+  clean:
+    name: Cleaning GHCR
+    needs: api_test
+    if: ${{ always() && ( inputs.is_test == true || inputs.is_test == false ) && inputs.registry == 'ghcr.io' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: docker_image
+    steps:
+      - name: GHCR Cleaning
+        uses: snok/container-retention-policy@4f22ef80902ad409ed55a99dc5133cc1250a0d03 # v3.0.0
+        with:
+          account: ${{ github.repository_owner }}
+          token: ${{ secrets.GH_TOKEN }}
+          image-names: ${{ github.event.repository.name }}
+          image-tags: "!latest !*.*.*"
+          cut-off: 1s
