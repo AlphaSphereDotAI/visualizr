@@ -33,7 +33,7 @@ requires = ["uv_build"]
 [dependency-groups]
 dev = [
 	"huggingface-hub[cli,hf-transfer]>=0.33.0",
-	"ruff>=0.12.0",
+	"ruff>=0.12.9",
 	"ty>=0.0.1a10",
 	"watchfiles>=1.0.5",
 ]
