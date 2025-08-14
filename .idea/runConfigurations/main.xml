@@ -7,12 +7,12 @@
     <option name="env">
       <map />
     </option>
-    <option name="runType" value="SCRIPT" />
-    <option name="scriptOrModule" value="D:\Development\chatacter\backend\VideoGenerator\src\visualizr\__main__.py" />
+    <option name="runType" value="MODULE" />
+    <option name="scriptOrModule" value="visualizr" />
     <option name="uvArgs">
       <list />
     </option>
-    <option name="uvSdkKey" value="uv (VideoGenerator)" />
+    <option name="uvSdkKey" value="uv (visualizr)" />
     <method v="2" />
   </configuration>
 </component>
