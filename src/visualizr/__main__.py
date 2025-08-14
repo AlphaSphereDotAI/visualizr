@@ -5,7 +5,7 @@ from visualizr.gui import app_block
 
 
 def main() -> None:
-    """Launch the Gradio voice generation web application."""
+    """Launch the Gradio voice generation web app."""
     app: Blocks = app_block()
     app.queue(api_open=True).launch(
         server_name=SERVER_NAME,
