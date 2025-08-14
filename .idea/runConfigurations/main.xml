@@ -12,7 +12,7 @@
     <option name="uvArgs">
       <list />
     </option>
-    <option name="uvSdkKey" value="uv (VideoGenerator)" />
+    <option name="uvSdkKey" value="uv (visualizr)" />
     <method v="2" />
   </configuration>
 </component>
