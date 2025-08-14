@@ -23,6 +23,6 @@ rules:
   line-length:
     level: warning
     allow-non-breakable-inline-mappings: true
-    max: 120
+    max: 140
   truthy: disable
   key-duplicates: enable
