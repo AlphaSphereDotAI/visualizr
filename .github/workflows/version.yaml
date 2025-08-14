@@ -1,0 +1,44 @@
+name: Version
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - pyproject.toml
+      - uv.lock
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+permissions: read-all
+jobs:
+  version:
+    name: Versioning
+    runs-on: ubuntu-latest
+    if: github.actor == 'renovate[bot]'
+    permissions:
+      contents: write
+    environment:
+      name: code_quality
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+          fetch-depth: 0
+      - name: Install uv
+        uses: astral-sh/setup-uv@d9e0f98d3fc6adb07d1e3d37f3043649ddad06a1 # v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+          activate-environment: true
+      - name: Increase the patch version
+        run: uv version --bump patch
+      - name: Read version from pyproject.toml
+        id: read_version
+        run: |
+          VERSION=$(grep -E '^version\s*=' pyproject.toml | head -n 1 | cut -d '=' -f 2 | tr -d ' "')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+      - name: Commit updated count
+        uses: stefanzweifel/git-auto-commit-action@778341af668090896ca464160c2def5d1d1a3eb0 # v6
+        with:
+          commit_message: "Tag: ${{ steps.read_version.outputs.version }}"
+          tagging_message: ${{ steps.read_version.outputs.version }}
