@@ -1,0 +1,82 @@
+name: Release
+on:
+  release:
+    types:
+      - published
+permissions: read-all
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+jobs:
+  pypi:
+    name: Upload Python Package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    environment:
+      name: pypi
+      url: https://pypi.org/project/${{github.event.repository.name}}/${{github.event.release.tag_name}}
+    steps:
+      - name: Retrieve release distributions
+        uses: robinraju/release-downloader@daf26c55d821e836577a15f77d86ddc078948b05 # v1
+        with:
+          tag: ${{ github.event.release.tag_name }}
+          out-file-path: dist/
+          fileName: "*"
+      - name: Publish release distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/
+  huggingface:
+    name: Upload ${{github.event.repository.name}} to HuggingFace Space
+    runs-on: ubuntu-latest
+    env:
+      HF_HUB_ENABLE_HF_TRANSFER: "1"
+      UV_FROZEN: "1"
+      UV_LINK_MODE: "copy"
+    environment:
+      name: huggingface
+      url: https://huggingface.co/spaces/${{github.repository}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@d9e0f98d3fc6adb07d1e3d37f3043649ddad06a1 # v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+          activate-environment: true
+      - name: Install cli
+        run: uv tool install huggingface-hub[cli,hf-transfer]
+      - name: Remove Unnecessary Files
+        run: |
+          echo "*" > .gitignore
+          echo "!.gitignore" >> .gitignore
+          echo "!README.md" >> .gitignore
+          echo "!Dockerfile" >> .gitignore
+      - name: Add to git credentials
+        run: git config --global credential.helper store
+      - name: Login to HuggingFace Hub
+        run: huggingface-cli login --add-to-git-credential --token ${{ secrets.HF_TOKEN }}
+      - name: Check if logged in
+        run: huggingface-cli whoami
+      - name: Upload
+        run: huggingface-cli upload ${{ github.repository }} . . --repo-type space
+  image:
+    name: Release Image
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    strategy:
+      matrix:
+        registry:
+          - ghcr.io
+          - docker.io
+    uses: ./.github/workflows/.docker.yaml
+    with:
+      is_test: false
+      registry: ${{ matrix.registry }}
+    secrets: inherit
