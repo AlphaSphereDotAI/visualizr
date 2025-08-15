@@ -26,7 +26,9 @@ def app_block() -> Blocks:
             with Column():
                 uploaded_img: Image = Image(type="filepath", label="Reference Image")
                 uploaded_audio = Audio(
-                    type="filepath", label="Input Audio", show_download_button=True
+                    type="filepath",
+                    label="Input Audio",
+                    show_download_button=True,
                 )
             with Column():
                 output_video_256 = Video(label="Generated Video (256)")
@@ -68,7 +70,9 @@ def app_block() -> Blocks:
                 value=DefaultValues().pose_roll,
             )
             face_location = Slider(
-                label="face_location", maximum=1, value=DefaultValues().face_location
+                label="face_location",
+                maximum=1,
+                value=DefaultValues().face_location,
             )
             face_scale = Slider(
                 label="face_scale", maximum=1, value=DefaultValues().face_scale

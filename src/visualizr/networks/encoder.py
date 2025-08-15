@@ -102,7 +102,13 @@ class ScaledLeakyReLU(nn.Module):
 
 class EqualConv2d(nn.Module):
     def __init__(
-        self, in_channel, out_channel, kernel_size, stride=1, padding=0, bias=True
+        self,
+        in_channel,
+        out_channel,
+        kernel_size,
+        stride=1,
+        padding=0,
+        bias=True,
     ):
         super().__init__()
 
@@ -137,7 +143,13 @@ class EqualConv2d(nn.Module):
 
 class EqualLinear(nn.Module):
     def __init__(
-        self, in_dim, out_dim, bias=True, bias_init=0, lr_mul=1, activation=None
+        self,
+        in_dim,
+        out_dim,
+        bias=True,
+        bias_init=0,
+        lr_mul=1,
+        activation=None,
     ):
         super().__init__()
 
@@ -226,7 +238,12 @@ class ResBlock(nn.Module):
         self.conv2 = ConvLayer(in_channel, out_channel, 3, downsample=True)
 
         self.skip = ConvLayer(
-            in_channel, out_channel, 1, downsample=True, activate=False, bias=False
+            in_channel,
+            out_channel,
+            1,
+            downsample=True,
+            activate=False,
+            bias=False,
         )
 
     def forward(self, input):

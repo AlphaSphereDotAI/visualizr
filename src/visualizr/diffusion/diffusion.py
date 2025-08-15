@@ -116,7 +116,10 @@ class SpacedDiffusionBeatGans(GaussianDiffusionBeatGans):
         if isinstance(model, _WrappedModel):
             return model
         return _WrappedModel(
-            model, self.timestep_map, self.rescale_timesteps, self.original_num_steps
+            model,
+            self.timestep_map,
+            self.rescale_timesteps,
+            self.original_num_steps,
         )
 
     def _scale_timesteps(self, t):

@@ -144,7 +144,13 @@ class Blur(nn.Module):
 
 class EqualConv2d(nn.Module):
     def __init__(
-        self, in_channel, out_channel, kernel_size, stride=1, padding=0, bias=True
+        self,
+        in_channel,
+        out_channel,
+        kernel_size,
+        stride=1,
+        padding=0,
+        bias=True,
     ):
         super().__init__()
 
@@ -179,7 +185,13 @@ class EqualConv2d(nn.Module):
 
 class EqualLinear(nn.Module):
     def __init__(
-        self, in_dim, out_dim, bias=True, bias_init=0, lr_mul=1, activation=None
+        self,
+        in_dim,
+        out_dim,
+        bias=True,
+        bias_init=0,
+        lr_mul=1,
+        activation=None,
     ):
         super().__init__()
 
@@ -287,16 +299,26 @@ class ModulatedConv2d(nn.Module):
             weight = weight * demod.view(batch, self.out_channel, 1, 1, 1)
 
         weight = weight.view(
-            batch * self.out_channel, in_channel, self.kernel_size, self.kernel_size
+            batch * self.out_channel,
+            in_channel,
+            self.kernel_size,
+            self.kernel_size,
         )
 
         if self.upsample:
             input = input.view(1, batch * in_channel, height, width)
             weight = weight.view(
-                batch, self.out_channel, in_channel, self.kernel_size, self.kernel_size
+                batch,
+                self.out_channel,
+                in_channel,
+                self.kernel_size,
+                self.kernel_size,
             )
             weight = weight.transpose(1, 2).reshape(
-                batch * in_channel, self.out_channel, self.kernel_size, self.kernel_size
+                batch * in_channel,
+                self.out_channel,
+                self.kernel_size,
+                self.kernel_size,
             )
             out = F.conv_transpose2d(input, weight, padding=0, stride=2, groups=batch)
             _, _, height, width = out.shape
@@ -546,7 +568,11 @@ class Synthesis(nn.Module):
 
         self.input = ConstantInput(self.channels[4])
         self.conv1 = StyledConv(
-            self.channels[4], self.channels[4], 3, style_dim, blur_kernel=blur_kernel
+            self.channels[4],
+            self.channels[4],
+            3,
+            style_dim,
+            blur_kernel=blur_kernel,
         )
         self.to_rgb1 = ToRGB(self.channels[4], style_dim, upsample=False)
 
@@ -575,7 +601,11 @@ class Synthesis(nn.Module):
             )
             self.convs.append(
                 StyledConv(
-                    out_channel, out_channel, 3, style_dim, blur_kernel=blur_kernel
+                    out_channel,
+                    out_channel,
+                    3,
+                    style_dim,
+                    blur_kernel=blur_kernel,
                 )
             )
             self.to_rgbs.append(ToRGB(out_channel, style_dim))
@@ -600,7 +630,11 @@ class Synthesis(nn.Module):
 
         i = 1
         for conv1, conv2, to_rgb, to_flow, feat in zip(
-            self.convs[::2], self.convs[1::2], self.to_rgbs, self.to_flows, feats
+            self.convs[::2],
+            self.convs[1::2],
+            self.to_rgbs,
+            self.to_flows,
+            feats,
         ):
             out = conv1(out, latent[:, i])
             out = conv2(out, latent[:, i + 1])

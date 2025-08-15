@@ -8,7 +8,11 @@ services:
       - visualizr_venv:/venv
     restart: on-failure:3
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:7860"]
+      test:
+        - "CMD"
+        - "curl"
+        - "-f"
+        - "http://localhost:7860"
       interval: 1m30s
       timeout: 10s
       retries: 5
@@ -20,7 +24,8 @@ services:
           devices:
             - driver: nvidia
               count: all
-              capabilities: [gpu]
+              capabilities:
+                - gpu
 volumes:
   visualizr_venv:
     name: Python Environment for Visualizr

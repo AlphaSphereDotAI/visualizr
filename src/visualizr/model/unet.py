@@ -269,7 +269,10 @@ class BeatGANsUNetModel(nn.Module):
                         ).make_model()
                         if conf.resblock_updown
                         else Upsample(
-                            ch, conf.conv_resample, dims=conf.dims, out_channels=out_ch
+                            ch,
+                            conf.conv_resample,
+                            dims=conf.dims,
+                            out_channels=out_ch,
                         )
                     )
                     ds //= 2
@@ -456,7 +459,10 @@ class BeatGANsEncoderModel(nn.Module):
                         ).make_model()
                         if conf.resblock_updown
                         else Downsample(
-                            ch, conf.conv_resample, dims=conf.dims, out_channels=out_ch
+                            ch,
+                            conf.conv_resample,
+                            dims=conf.dims,
+                            out_channels=out_ch,
                         )
                     )
                 )

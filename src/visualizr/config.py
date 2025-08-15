@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from os import path
-from typing import Tuple, Optional
+from typing import Tuple
 
 from torch import distributed
 from torch.multiprocessing import get_context
@@ -23,9 +23,16 @@ from visualizr.choices import (
 from visualizr.config_base import BaseConfig
 from visualizr.dataset import LatentDataLoader
 from visualizr.diffusion.base import get_named_beta_schedule
-from visualizr.diffusion.diffusion import SpacedDiffusionBeatGansConfig, space_timesteps
+from visualizr.diffusion.diffusion import (
+    SpacedDiffusionBeatGansConfig,
+    space_timesteps,
+)
 from visualizr.diffusion.resample import UniformSampler
-from visualizr.model import BeatGANsAutoencConfig, BeatGANsUNetConfig, ModelConfig
+from visualizr.model import (
+    BeatGANsAutoencConfig,
+    BeatGANsUNetConfig,
+    ModelConfig,
+)
 from visualizr.model.blocks import ScaleAt
 from visualizr.model.latentnet import LatentNetType, MLPSkipNetConfig
 
@@ -280,7 +287,7 @@ class TrainConfig(BaseConfig):
         batch_size: int = None,
         parallel: bool = False,
     ):
-        sampler: Optional[DistributedSampler] = None
+        sampler: DistributedSampler | None = None
         if parallel and distributed.is_initialized():
             # drop last to make sure that there are no added special indexes
             sampler = DistributedSampler(dataset, shuffle=shuffle, drop_last=True)

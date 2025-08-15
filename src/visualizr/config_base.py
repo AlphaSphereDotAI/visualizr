@@ -1,10 +1,11 @@
-from json import dumps, load, dump
 from copy import deepcopy
 from dataclasses import dataclass
 from functools import lru_cache
+from json import dump, dumps, load
 from pathlib import Path
 from typing import Any
-from visualizr import logger
+
+from visualizr.settings import logger
 
 
 @dataclass

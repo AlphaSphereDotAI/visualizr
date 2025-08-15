@@ -214,7 +214,13 @@ class DiffusionPredictor(BaseModule):
             .repeat(1, x.size(1), 1)
         )
         return torch.cat(
-            (x, direction_code_feature, init_code_proj, noisy_feature, t_emb_feature),
+            (
+                x,
+                direction_code_feature,
+                init_code_proj,
+                noisy_feature,
+                t_emb_feature,
+            ),
             dim=-1,
         )
 

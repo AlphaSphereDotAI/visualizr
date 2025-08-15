@@ -85,13 +85,20 @@ class LinearAttention(BaseModule):
         b, c, h, w = x.shape
         qkv = self.to_qkv(x)
         q, k, v = rearrange(
-            qkv, "b (qkv heads c) h w -> qkv b heads c (h w)", heads=self.heads, qkv=3
+            qkv,
+            "b (qkv heads c) h w -> qkv b heads c (h w)",
+            heads=self.heads,
+            qkv=3,
         )
         k = k.softmax(dim=-1)
         context = torch.einsum("bhdn,bhen->bhde", k, v)
         out = torch.einsum("bhde,bhdn->bhen", context, q)
         out = rearrange(
-            out, "b heads c (h w) -> b (heads c) h w", heads=self.heads, h=h, w=w
+            out,
+            "b heads c (h w) -> b (heads c) h w",
+            heads=self.heads,
+            h=h,
+            w=w,
         )
         return self.to_out(out)
 
@@ -148,10 +155,15 @@ class GradLogPEstimator2d(BaseModule):
             )
         self.time_pos_emb = SinusoidalPosEmb(dim)
         self.mlp = torch.nn.Sequential(
-            torch.nn.Linear(dim, dim * 4), Mish(), torch.nn.Linear(dim * 4, dim)
+            torch.nn.Linear(dim, dim * 4),
+            Mish(),
+            torch.nn.Linear(dim * 4, dim),
         )
 
-        dims = [2 + (1 if n_spks > 1 else 0), *map(lambda m: dim * m, dim_mults)]
+        dims = [
+            2 + (1 if n_spks > 1 else 0),
+            *map(lambda m: dim * m, dim_mults),
+        ]
         in_out = list(zip(dims[:-1], dims[1:]))
         self.downs = torch.nn.ModuleList([])
         self.ups = torch.nn.ModuleList([])
@@ -292,7 +304,10 @@ class Diffusion(BaseModule):
                 dxt_det = 0.5 * (mu - xt) - self.estimator(xt, mask, mu, t, spk)
                 dxt_det = dxt_det * noise_t * h
                 dxt_stoc = torch.randn(
-                    z.shape, dtype=z.dtype, device=z.device, requires_grad=False
+                    z.shape,
+                    dtype=z.dtype,
+                    device=z.device,
+                    requires_grad=False,
                 )
                 dxt_stoc = dxt_stoc * torch.sqrt(noise_t * h)
                 dxt = dxt_det + dxt_stoc

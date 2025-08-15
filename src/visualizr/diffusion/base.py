@@ -291,10 +291,20 @@ class GaussianDiffusionBeatGans:
             == posterior_log_variance_clipped.shape[0]
             == x_start.shape[0]
         )
-        return posterior_mean, posterior_variance, posterior_log_variance_clipped
+        return (
+            posterior_mean,
+            posterior_variance,
+            posterior_log_variance_clipped,
+        )
 
     def p_mean_variance(
-        self, model, x, t, clip_denoised=True, denoised_fn=None, model_kwargs=None
+        self,
+        model,
+        x,
+        t,
+        clip_denoised=True,
+        denoised_fn=None,
+        model_kwargs=None,
     ):
         """
         Apply the model to get p(x_{t-1} | x_t), as well as a prediction of
@@ -345,7 +355,10 @@ class GaussianDiffusionBeatGans:
             )
         model_output = model_forward
 
-        if self.model_var_type in [ModelVarType.fixed_large, ModelVarType.fixed_small]:
+        if self.model_var_type in [
+            ModelVarType.fixed_large,
+            ModelVarType.fixed_small,
+        ]:
             model_variance, model_log_variance = {
                 # for fixedlarge, we set the initial (log-)variance like so
                 # to get a better decoder log likelihood.
@@ -406,7 +419,9 @@ class GaussianDiffusionBeatGans:
         return (  # (xprev - coef2*x_t) / coef1
             _extract_into_tensor(1.0 / self.posterior_mean_coef1, t, x_t.shape) * xprev
             - _extract_into_tensor(
-                self.posterior_mean_coef2 / self.posterior_mean_coef1, t, x_t.shape
+                self.posterior_mean_coef2 / self.posterior_mean_coef1,
+                t,
+                x_t.shape,
             )
             * x_t
         )
@@ -850,7 +865,13 @@ class GaussianDiffusionBeatGans:
                 img = out["sample"]
 
     def _vb_terms_bpd(
-        self, model: Model, x_start, x_t, t, clip_denoised=True, model_kwargs=None
+        self,
+        model: Model,
+        x_start,
+        x_t,
+        t,
+        clip_denoised=True,
+        model_kwargs=None,
     ):
         """
         Get a term for the variational lower-bound.
@@ -866,10 +887,17 @@ class GaussianDiffusionBeatGans:
             x_start=x_start, x_t=x_t, t=t
         )
         out = self.p_mean_variance(
-            model, x_t, t, clip_denoised=clip_denoised, model_kwargs=model_kwargs
+            model,
+            x_t,
+            t,
+            clip_denoised=clip_denoised,
+            model_kwargs=model_kwargs,
         )
         kl = normal_kl(
-            true_mean, true_log_variance_clipped, out["mean"], out["log_variance"]
+            true_mean,
+            true_log_variance_clipped,
+            out["mean"],
+            out["log_variance"],
         )
         kl = mean_flat(kl) / np.log(2.0)
 
@@ -1118,7 +1146,11 @@ def discretized_gaussian_log_likelihood(x, *, means, log_scales):
     log_probs = th.where(
         x < -0.999,
         log_cdf_plus,
-        th.where(x > 0.999, log_one_minus_cdf_min, th.log(cdf_delta.clamp(min=1e-12))),
+        th.where(
+            x > 0.999,
+            log_one_minus_cdf_min,
+            th.log(cdf_delta.clamp(min=1e-12)),
+        ),
     )
     assert log_probs.shape == x.shape
     return log_probs

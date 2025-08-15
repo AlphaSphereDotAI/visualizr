@@ -87,7 +87,11 @@ class LatentDataLoader(object):
                 if self.mfcc_mode:
                     wav, sr = librosa.load(item_dict["wav_path"], sr=16000)
                     input_values = python_speech_features.mfcc(
-                        signal=wav, samplerate=sr, numcep=13, winlen=0.025, winstep=0.01
+                        signal=wav,
+                        samplerate=sr,
+                        numcep=13,
+                        winlen=0.025,
+                        winstep=0.01,
                     )
                     d_mfcc_feat = python_speech_features.base.delta(input_values, 1)
                     d_mfcc_feat2 = python_speech_features.base.delta(input_values, 2)
@@ -105,10 +109,16 @@ class LatentDataLoader(object):
                 )
 
                 motion_start_path = os.path.join(
-                    motion_latents_prefix, db_name, "motions", clip_name + ".npy"
+                    motion_latents_prefix,
+                    db_name,
+                    "motions",
+                    clip_name + ".npy",
                 )
                 motion_direction_path = os.path.join(
-                    motion_latents_prefix, db_name, "directions", clip_name + ".npy"
+                    motion_latents_prefix,
+                    db_name,
+                    "directions",
+                    clip_name + ".npy",
                 )
 
                 if not os.path.exists(motion_start_path):

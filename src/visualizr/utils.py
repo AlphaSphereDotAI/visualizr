@@ -10,9 +10,9 @@ import gradio as gr
 import librosa
 import numpy as np
 import python_speech_features
-import spaces
 import torch
-from gradio import Markdown
+from gradio import Markdown, Video
+from huggingface_hub import snapshot_download
 from moviepy.editor import (
     AudioFileClip,
     ImageClip,
@@ -24,19 +24,18 @@ from torch import Tensor
 from torchvision.transforms import ToPILImage
 from tqdm import tqdm
 
-from visualizr import (
-    FRAMES_RESULT_SAVED_PATH,
-    MOTION_DIM,
-    RESULTS_DIR,
-    STAGE_1_CHECKPOINT_PATH,
-    TMP_MP4,
-    logger,
-    model_mapping,
-)
 from visualizr.config import TrainConfig
 from visualizr.experiment import LitModel
 from visualizr.LIA_Model import LIA_Model
+from visualizr.settings import Checkpoint, Settings, logger
 from visualizr.templates import ffhq256_autoenc
+
+snapshot_download(
+    repo_id=Settings.model.repo_id,
+    local_dir=Settings.directory.checkpoint,
+    repo_type="model",
+    rev="main",
+)
 
 
 def check_package_installed(package_name: str) -> bool:
@@ -77,8 +76,10 @@ def saved_image(img_tensor: Tensor, img_path: str) -> None:
 
 def load_stage_1_model() -> LIA_Model:
     logger.info("Loading stage 1 model... ")
-    lia: LIA_Model = LIA_Model(motion_dim=MOTION_DIM, fusion_type="weighted_sum")
-    lia.load_lightning_model(STAGE_1_CHECKPOINT_PATH)
+    lia: LIA_Model = LIA_Model(
+        motion_dim=Settings.model.motion_dim, fusion_type="weighted_sum"
+    )
+    lia.load_lightning_model(Settings.directory.checkpoint_stage_1)
     lia.to("cuda")
     return lia
 
@@ -108,7 +109,7 @@ def init_conf(
     conf.seed = seed
     conf.decoder_layers = 2
     conf.infer_type = infer_type
-    conf.motion_dim = MOTION_DIM
+    conf.motion_dim = Settings.model.motion_dim
     logger.info(f"infer_type: {infer_type}")
     match infer_type:
         case "mfcc_full_control":
@@ -134,6 +135,28 @@ def init_conf(
     return conf
 
 
+def get_checkpoint_stage_2_path(
+    infer_type: Literal[
+        "mfcc_full_control",
+        "mfcc_pose_only",
+        "hubert_pose_only",
+        "hubert_audio_only",
+        "hubert_full_control",
+    ],
+) -> Path:
+    match infer_type:
+        case "mfcc_full_control":
+            return Checkpoint.mfcc_full_control
+        case "mfcc_pose_only":
+            return Checkpoint.mfcc_pose_only
+        case "hubert_pose_only":
+            return Checkpoint.hubert_pose_only
+        case "hubert_audio_only":
+            return Checkpoint.hubert_audio_only
+        case "hubert_full_control":
+            return Checkpoint.hubert_full_control
+
+
 def main(
     infer_type: Literal[
         "mfcc_full_control",
@@ -143,7 +166,7 @@ def main(
         "hubert_full_control",
     ],
     image_path: str,
-    test_audio_path: str,
+    audio_path: str,
     face_sr: bool,
     pose_yaw: float,
     pose_pitch: float,
@@ -152,26 +175,27 @@ def main(
     face_scale: float,
     step_t: int,
     seed: int,
-    stage2_checkpoint_path: str,
 ):
     frame_end = None
     audio_driven = None
     if not os.path.exists(image_path):
         logger.exception(f"{image_path} does not exist!")
         sys.exit(0)
-    if not os.path.exists(test_audio_path):
-        logger.exception(f"{test_audio_path} does not exist!")
+    if not os.path.exists(audio_path):
+        logger.exception(f"{audio_path} does not exist!")
         sys.exit(0)
 
     image_name: str = Path(image_path).stem
-    audio_name: str = Path(test_audio_path).stem
+    audio_name: str = Path(audio_path).stem
 
-    predicted_video_256_path: Path = RESULTS_DIR / f"{image_name}-{audio_name}.mp4"
-    predicted_video_512_path: Path = RESULTS_DIR / f"{image_name}-{audio_name}_SR.mp4"
+    predicted_video_256_path: Path = (
+        Settings.directory.results / f"{image_name}-{audio_name}.mp4"
+    )
+    predicted_video_512_path: Path = (
+        Settings.directory.results / f"{image_name}-{audio_name}_SR.mp4"
+    )
 
-    # ======Loading Stage 1 model=========
     lia: LIA_Model = load_stage_1_model()
-    # ============================
 
     conf: TrainConfig = init_conf(infer_type, seed)
 
@@ -180,14 +204,11 @@ def main(
         img_source, img_source, img_source, img_source
     )
 
-    # ======Loading Stage 2 model=========
-    model = load_stage_2_model(conf, stage2_checkpoint_path)
-    # =================================
+    model = load_stage_2_model(conf, get_checkpoint_stage_2_path(infer_type))
 
-    # ======Audio Input=========
     if conf.infer_type.startswith("mfcc"):
         # MFCC features
-        wav, sr = librosa.load(test_audio_path, sr=16000)
+        wav, sr = librosa.load(audio_path, sr=16000)
         input_values = python_speech_features.mfcc(
             signal=wav, samplerate=sr, numcep=13, winlen=0.025, winstep=0.01
         )
@@ -197,10 +218,11 @@ def main(
             (input_values, d_mfcc_feat, d_mfcc_feat2)
         )
         frame_start, frame_end = 0, int(audio_driven_obj.shape[0] / 4)
+        # The video frame is fixed to 25 hz, and the audio is fixed to 100 hz.
         audio_start, audio_end = (
             int(frame_start * 4),
             int(frame_end * 4),
-        )  # The video frame is fixed to 25 hz, and the audio is fixed to 100 hz
+        )
 
         audio_driven = (
             torch.Tensor(audio_driven_obj[audio_start:audio_end, :])
@@ -236,7 +258,7 @@ def main(
         audio_model.eval()
 
         # hubert model forward pass
-        audio, sr = librosa.load(test_audio_path, sr=16000)
+        audio, sr = librosa.load(audio_path, sr=16000)
         input_values = feature_extractor(
             audio,
             sampling_rate=16000,
@@ -273,10 +295,9 @@ def main(
             .float()
             .to("cuda")
         )
-    # ============================
 
     # Diffusion Noise
-    noisy_t = torch.randn((1, frame_end, MOTION_DIM)).to("cuda")
+    noisy_t = torch.randn((1, frame_end, Settings.model.motion_dim)).to("cuda")
 
     # ======Inputs for Attribute Control=========
     yaw_signal = torch.zeros(1, frame_end, 1).to("cuda") + pose_yaw
@@ -320,7 +341,8 @@ def main(
         ori_img_recon = ori_img_recon.clamp(-1, 1)
         wav_pred = (ori_img_recon.detach() + 1) / 2
         saved_image(
-            wav_pred, os.path.join(FRAMES_RESULT_SAVED_PATH, f"{pred_index:06d}.png")
+            wav_pred,
+            os.path.join(Settings.directory.frames, f"{pred_index:06d}.png"),
         )
     # ==============================================
 
@@ -329,12 +351,12 @@ def main(
     logger.info(f"Saving video at {predicted_video_256_path}")
 
     frames_to_video(
-        str(FRAMES_RESULT_SAVED_PATH),
-        test_audio_path,
+        str(Settings.directory.frames),
+        audio_path,
         str(predicted_video_256_path),
     )
 
-    shutil.rmtree(FRAMES_RESULT_SAVED_PATH)
+    shutil.rmtree(Settings.directory.frames)
 
     # Enhancer
     if face_sr and check_package_installed("gfpgan"):
@@ -344,27 +366,28 @@ def main(
 
         # Super-resolution
         mimsave(
-            predicted_video_512_path / TMP_MP4,
+            predicted_video_512_path / Settings.directory.tmp_extension,
             enhancer_list(predicted_video_256_path, bg_upsampler=None),
             fps=25.0,
         )
 
         # Merge audio and video
-        video_clip = VideoFileClip(predicted_video_512_path / TMP_MP4)
+        video_clip = VideoFileClip(
+            predicted_video_512_path / Settings.directory.tmp_extension
+        )
         audio_clip = AudioFileClip(predicted_video_256_path)
         final_clip = video_clip.set_audio(audio_clip)
         final_clip.write_videofile(
             predicted_video_512_path, codec="libx264", audio_codec="aac"
         )
 
-        os.remove(predicted_video_512_path / TMP_MP4)
+        os.remove(predicted_video_512_path / Settings.directory.tmp_extension)
 
     if face_sr:
         return predicted_video_256_path, predicted_video_512_path
     return predicted_video_256_path, predicted_video_256_path
 
 
-@spaces.GPU(duration=300)
 def generate_video(
     uploaded_img: str,
     uploaded_audio: str,
@@ -383,11 +406,15 @@ def generate_video(
     step_t: int,
     face_sr: bool,
     seed: int,
-):
+) -> tuple[Video | None, Video | None, Markdown]:
     if not uploaded_img or not uploaded_audio:
-        return None, Markdown(
-            "Error: Input image or audio file is empty. "
-            + "Please check and upload both files."
+        return (
+            None,
+            None,
+            Markdown(
+                "Error: Input image or audio file is empty. "
+                + "Please check and upload both files."
+            ),
         )
     try:
         output_256_video_path, output_512_video_path = main(
@@ -402,16 +429,15 @@ def generate_video(
             face_scale,
             step_t,
             seed,
-            model_mapping.get(
-                infer_type,
-                "default_checkpoint.ckpt",
-            ),
         )
-
         if not os.path.exists(output_256_video_path):
-            return None, gr.Markdown(
-                "Error: Video generation failed. "
-                + "Please check your inputs and try again."
+            return (
+                None,
+                None,
+                gr.Markdown(
+                    "Error: Video generation failed. "
+                    + "Please check your inputs and try again."
+                ),
             )
         if output_256_video_path == output_512_video_path:
             return (

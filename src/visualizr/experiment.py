@@ -52,7 +52,8 @@ class LitModel(pl.LightningModule):
 
         # initial variables for consistent sampling
         self.register_buffer(
-            "x_T", torch.randn(conf.sample_size, 3, conf.img_size, conf.img_size)
+            "x_T",
+            torch.randn(conf.sample_size, 3, conf.img_size, conf.img_size),
         )
 
     def render(
@@ -330,7 +331,10 @@ def train(conf: TrainConfig, gpus, nodes=1, mode: str = "train"):
     if not os.path.exists(conf.logdir):
         os.makedirs(conf.logdir)
     checkpoint = ModelCheckpoint(
-        dirpath=f"{conf.logdir}", save_last=True, save_top_k=-1, every_n_epochs=10
+        dirpath=f"{conf.logdir}",
+        save_last=True,
+        save_top_k=-1,
+        every_n_epochs=10,
     )
     checkpoint_path = f"{conf.logdir}/last.ckpt"
     logger.info("ckpt path:", checkpoint_path)
