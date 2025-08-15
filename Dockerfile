@@ -1,4 +1,4 @@
-FROM python:3.10@sha256:33f72df2ad8c9f777bf0adb35b9d89c5d62935cee2af1f9c3224fb6f7da1dc6b AS builder
+FROM python:3.10@sha256:c69e40390fbbcbe98785d0bec0e93a9308850c6727edba2293bba4c79bdaffb5 AS builder
 
 SHELL ["/bin/bash", "-c"]
 
