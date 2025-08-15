@@ -6,9 +6,9 @@ import torch
 from torch import nn
 from torch.nn import init
 
-from visualizr.choices import Activation
-from visualizr.config_base import BaseConfig
-from visualizr.model.nn import timestep_embedding
+from visualizr.anitalker.choices import Activation
+from visualizr.anitalker.config_base import BaseConfig
+from visualizr.anitalker.model.nn import timestep_embedding
 
 
 class LatentNetType(Enum):

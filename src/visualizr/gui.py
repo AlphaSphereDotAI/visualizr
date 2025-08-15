@@ -14,8 +14,8 @@ from gradio import (
     Video,
 )
 
+from visualizr.anitalker.utils import generate_video
 from visualizr.settings import Settings
-from visualizr.utils import generate_video
 
 
 def app_block() -> Blocks:

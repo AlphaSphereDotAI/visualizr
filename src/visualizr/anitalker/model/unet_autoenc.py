@@ -4,11 +4,11 @@ from typing import NamedTuple, Tuple
 import torch
 from torch import Tensor, nn
 
-from visualizr.model import BeatGANsUNetConfig, BeatGANsUNetModel
-from visualizr.model.blocks import ResBlock
-from visualizr.model.latentnet import MLPSkipNetConfig
-from visualizr.model.nn import linear, timestep_embedding
-from visualizr.model.unet import BeatGANsEncoderConfig
+from visualizr.anitalker.model import BeatGANsUNetConfig, BeatGANsUNetModel
+from visualizr.anitalker.model.blocks import ResBlock
+from visualizr.anitalker.model.latentnet import MLPSkipNetConfig
+from visualizr.anitalker.model.nn import linear, timestep_embedding
+from visualizr.anitalker.model.unet import BeatGANsEncoderConfig
 
 
 @dataclass

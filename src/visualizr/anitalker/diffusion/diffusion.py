@@ -4,11 +4,11 @@ from typing import Tuple
 import numpy as np
 from torch import tensor
 
-from visualizr.diffusion.base import (
+from visualizr.anitalker.diffusion.base import (
     GaussianDiffusionBeatGans,
     GaussianDiffusionBeatGansConfig,
 )
-from visualizr.model import Model
+from visualizr.anitalker.model import Model
 
 
 def space_timesteps(num_timesteps, section_counts):

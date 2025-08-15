@@ -1,5 +1,5 @@
-from visualizr.choices import TrainMode
-from visualizr.config import TrainConfig
+from visualizr.anitalker.choices import TrainMode
+from visualizr.anitalker.config import TrainConfig
 
 
 def render_condition(

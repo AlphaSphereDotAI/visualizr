@@ -1,5 +1,5 @@
-from visualizr.choices import GenerativeType, ModelName
-from visualizr.config import PretrainConfig, TrainConfig
+from visualizr.anitalker.choices import GenerativeType, ModelName
+from visualizr.anitalker.config import PretrainConfig, TrainConfig
 
 
 def ddpm():

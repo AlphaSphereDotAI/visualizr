@@ -1,6 +1,7 @@
 """This module contains the settings for the Visualizr app."""
 
 from pathlib import Path
+from sys import exit
 from typing import Literal
 
 from dotenv import load_dotenv
@@ -10,6 +11,7 @@ from pydantic import (
     DirectoryPath,
     Field,
     FilePath,
+    model_validator,
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from torch.cuda import is_available
@@ -78,12 +80,9 @@ class ModelSettings(BaseModel):
     seed: int = 0
     motion_dim: int = 20
 
-    image_path: str
-    audio_path: str
-    hubert_path: str
-    result_path: str = "./outputs/"
-    stage_1_checkpoint_path: str = "ckpts/stage1.ckpt"
-    stage_2_checkpoint_path: str
+    image_path: FilePath = Field(default=None)
+    audio_path: FilePath = Field(default=None)
+
     control_flag: bool = True
     pose_driven_path: str = "not_supported_in_this_mode"
     image_size: int = 256
@@ -93,9 +92,19 @@ class ModelSettings(BaseModel):
 
     repo_id: str = "taocode/anitalker_ckpts"
 
+    @model_validator(mode="after")
+    def check_image_path(self) -> "ModelSettings":
+        if self.image_path and not self.image_path.exists():
+            logger.error("Image path does not exist.")
+            exit(0)
+        if self.audio_path and not self.audio_path.exists():
+            logger.error("Audio path does not exist.")
+            exit(0)
+        return self
+
 
 class Settings(BaseSettings):
-    """Configuration for the Chattr app."""
+    """Configuration for the Visualizr app."""
 
     model_config = SettingsConfigDict(
         env_nested_delimiter="__",

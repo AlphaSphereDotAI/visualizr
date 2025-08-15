@@ -9,13 +9,13 @@ class BaseModule(torch.nn.Module):
     @property
     def nparams(self):
         """
-        Returns number of trainable parameters of the module.
+        Returns the number of trainable parameters of the module.
         """
-        num_params = 0
-        for name, param in self.named_parameters():
-            if param.requires_grad:
-                num_params += np.prod(param.detach().cpu().numpy().shape)
-        return num_params
+        return sum(
+            np.prod(param.detach().cpu().numpy().shape)
+            for name, param in self.named_parameters()
+            if param.requires_grad
+        )
 
     def relocate_input(self, x: list):
         """

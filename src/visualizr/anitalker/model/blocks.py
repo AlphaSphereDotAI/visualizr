@@ -9,8 +9,8 @@ import torch as th
 import torch.nn.functional as F
 from torch import nn
 
-from visualizr.config_base import BaseConfig
-from visualizr.model.nn import (
+from visualizr.anitalker.config_base import BaseConfig
+from visualizr.anitalker.model.nn import (
     avg_pool_nd,
     conv_nd,
     linear,

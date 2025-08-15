@@ -7,7 +7,7 @@ from torch.multiprocessing import get_context
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 
-from visualizr.choices import (
+from visualizr.anitalker.choices import (
     Activation,
     GenerativeType,
     LossType,
@@ -20,21 +20,19 @@ from visualizr.choices import (
     OptimizerType,
     TrainMode,
 )
-from visualizr.config_base import BaseConfig
-from visualizr.dataset import LatentDataLoader
-from visualizr.diffusion.base import get_named_beta_schedule
-from visualizr.diffusion.diffusion import (
-    SpacedDiffusionBeatGansConfig,
-    space_timesteps,
-)
-from visualizr.diffusion.resample import UniformSampler
-from visualizr.model import (
+from visualizr.anitalker.config_base import BaseConfig
+from visualizr.anitalker.dataset import LatentDataLoader
+from visualizr.anitalker.diffusion import SpacedDiffusionBeatGansConfig
+from visualizr.anitalker.diffusion.base import get_named_beta_schedule
+from visualizr.anitalker.diffusion.diffusion import space_timesteps
+from visualizr.anitalker.diffusion.resample import UniformSampler
+from visualizr.anitalker.model import (
     BeatGANsAutoencConfig,
     BeatGANsUNetConfig,
     ModelConfig,
 )
-from visualizr.model.blocks import ScaleAt
-from visualizr.model.latentnet import LatentNetType, MLPSkipNetConfig
+from visualizr.anitalker.model.blocks import ScaleAt
+from visualizr.anitalker.model.latentnet import LatentNetType, MLPSkipNetConfig
 
 
 @dataclass

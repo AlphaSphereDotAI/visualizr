@@ -6,16 +6,16 @@ import numpy as np
 import torch as th
 from torch.cuda.amp import autocast
 
-from visualizr.choices import (
+from visualizr.anitalker.choices import (
     GenerativeType,
     LossType,
     ModelMeanType,
     ModelType,
     ModelVarType,
 )
-from visualizr.config_base import BaseConfig
-from visualizr.model import Model
-from visualizr.model.nn import mean_flat
+from visualizr.anitalker.config_base import BaseConfig
+from visualizr.anitalker.model import Model
+from visualizr.anitalker.model.nn import mean_flat
 
 
 @dataclass
@@ -44,7 +44,7 @@ class GaussianDiffusionBeatGans:
     :param model_var_type: A ModelVarType determining how variance is output.
     :param loss_type: A LossType determining the loss function to use.
     :param rescale_timesteps: If True, pass floating point timesteps into the
-                              model so that they are always scaled like in the
+                              model so that they're always scaled like in the
                               original paper (0 to 1000).
     """
 
@@ -69,7 +69,7 @@ class GaussianDiffusionBeatGans:
         self.alphas_cumprod_next = np.append(self.alphas_cumprod[1:], 0.0)
         assert self.alphas_cumprod_prev.shape == (self.num_timesteps,)
 
-        # calculations for diffusion q(x_t | x_{t-1}) and others
+        # calculations for diffusion and others.
         self.sqrt_alphas_cumprod = np.sqrt(self.alphas_cumprod)
         self.sqrt_one_minus_alphas_cumprod = np.sqrt(1.0 - self.alphas_cumprod)
         self.log_one_minus_alphas_cumprod = np.log(1.0 - self.alphas_cumprod)

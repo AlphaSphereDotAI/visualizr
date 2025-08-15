@@ -3,7 +3,7 @@ import math
 import torch
 from einops import rearrange
 
-from visualizr.model.base import BaseModule
+from visualizr.anitalker.model.base import BaseModule
 
 
 class Mish(BaseModule):

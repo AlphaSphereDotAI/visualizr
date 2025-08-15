@@ -1,6 +1,6 @@
 from typing import Union
 
-from visualizr.diffusion.diffusion import (
+from visualizr.anitalker.diffusion.diffusion import (
     SpacedDiffusionBeatGans,
     SpacedDiffusionBeatGansConfig,
 )
