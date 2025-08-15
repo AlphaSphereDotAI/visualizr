@@ -14,7 +14,7 @@ from gradio import (
     Video,
 )
 
-from visualizr.settings import DefaultValues
+from visualizr.settings import Settings
 from visualizr.utils import generate_video
 
 
@@ -50,35 +50,35 @@ def app_block() -> Blocks:
                 value="hubert_audio_only",
             )
             face_sr = Checkbox(label="Enable Face Super-Resolution (512*512)")
-            seed = Number(label="Seed", value=DefaultValues().seed)
+            seed = Number(label="Seed", value=Settings.model.seed)
             pose_yaw = Slider(
                 label="pose_yaw",
                 minimum=-1,
                 maximum=1,
-                value=DefaultValues().pose_yaw,
+                value=Settings.model.pose_yaw,
             )
             pose_pitch = Slider(
                 label="pose_pitch",
                 minimum=-1,
                 maximum=1,
-                value=DefaultValues().pose_pitch,
+                value=Settings.model.pose_pitch,
             )
             pose_roll = Slider(
                 label="pose_roll",
                 minimum=-1,
                 maximum=1,
-                value=DefaultValues().pose_roll,
+                value=Settings.model.pose_roll,
             )
             face_location = Slider(
                 label="face_location",
                 maximum=1,
-                value=DefaultValues().face_location,
+                value=Settings.model.face_location,
             )
             face_scale = Slider(
-                label="face_scale", maximum=1, value=DefaultValues().face_scale
+                label="face_scale", maximum=1, value=Settings.model.face_scale
             )
             step_t = Slider(
-                label="step_T", minimum=1, step=1, value=DefaultValues().step_T
+                label="step_T", minimum=1, step=1, value=Settings.model.step_T
             )
 
         generate_button.click(
