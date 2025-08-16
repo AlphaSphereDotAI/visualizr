@@ -8,25 +8,25 @@ import librosa
 import numpy as np
 import python_speech_features
 import torch
-from gradio import Video, Markdown
+from gradio import Markdown, Video
 from huggingface_hub import snapshot_download
 from imageio import mimsave
+from moviepy import AudioFileClip, VideoFileClip
 from torch import Tensor
 from tqdm import tqdm
 
-from visualizr.anitalker.LIA_Model import LIA_Model
 from visualizr.anitalker.config import TrainConfig
 from visualizr.anitalker.experiment import LitModel
 from visualizr.anitalker.face_sr.face_enhancer import enhancer_list
+from visualizr.anitalker.LIA_Model import LIA_Model
 from visualizr.anitalker.templates import ffhq256_autoenc
 from visualizr.anitalker.utils import (
-    img_preprocessing,
     check_package_installed,
-    saved_image,
     frames_to_video,
+    img_preprocessing,
+    saved_image,
 )
 from visualizr.settings import Settings, logger
-from moviepy import AudioFileClip, VideoFileClip
 
 
 class Model:
