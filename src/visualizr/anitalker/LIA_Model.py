@@ -1,6 +1,7 @@
 from torch import load, nn
 
-from visualizr.anitalker.networks import Encoder, Synthesis
+from visualizr.anitalker.networks.encoder import Encoder
+from visualizr.anitalker.networks.styledecoder import Synthesis
 from visualizr.settings import logger
 
 

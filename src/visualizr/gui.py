@@ -1,5 +1,4 @@
 from gradio import (
-    Accordion,
     Audio,
     Blocks,
     Button,
@@ -11,33 +10,35 @@ from gradio import (
     Number,
     Row,
     Slider,
+    Tab,
     Video,
 )
 
-from visualizr.anitalker.utils import generate_video
-from visualizr.settings import Settings
+from visualizr.model.runner import model, settings
 
 
 def app_block() -> Blocks:
-    """Create the Gradio interface for the voice generation web application."""
+    """Create the Gradio interface for the voice generation web app."""
     with Blocks() as app:
-        Markdown(value="# AniTalker")
-        with Row():
-            with Column():
-                uploaded_img: Image = Image(type="filepath", label="Reference Image")
-                uploaded_audio = Audio(
-                    type="filepath",
-                    label="Input Audio",
-                    show_download_button=True,
-                )
-            with Column():
-                output_video_256 = Video(label="Generated Video (256)")
-                output_video_512 = Video(label="Generated Video (512)")
-                output_message = Markdown()
+        with Tab("AniTalker"):
+            with Row():
+                with Column():
+                    uploaded_img: Image = Image(
+                        type="filepath",
+                        label="Reference Image",
+                    )
+                    uploaded_audio = Audio(
+                        type="filepath",
+                        label="Input Audio",
+                        show_download_button=True,
+                    )
+                with Column():
+                    output_video_256 = Video(label="Generated Video (256)")
+                    output_video_512 = Video(label="Generated Video (512)")
+                    output_message = Markdown()
+            generate_button = Button(value="Generate Video", variant="primary")
 
-        generate_button = Button(value="Generate Video")
-
-        with Accordion(label="Configuration"):
+        with Tab("Configuration"):
             infer_type = Dropdown(
                 label="Inference Type",
                 choices=[
@@ -50,40 +51,48 @@ def app_block() -> Blocks:
                 value="hubert_audio_only",
             )
             face_sr = Checkbox(label="Enable Face Super-Resolution (512*512)")
-            seed = Number(label="Seed", value=Settings.model.seed)
+            seed = Number(
+                label="Seed",
+                value=settings.model.seed,
+            )
             pose_yaw = Slider(
                 label="pose_yaw",
                 minimum=-1,
                 maximum=1,
-                value=Settings.model.pose_yaw,
+                value=settings.model.pose_yaw,
             )
             pose_pitch = Slider(
                 label="pose_pitch",
                 minimum=-1,
                 maximum=1,
-                value=Settings.model.pose_pitch,
+                value=settings.model.pose_pitch,
             )
             pose_roll = Slider(
                 label="pose_roll",
                 minimum=-1,
                 maximum=1,
-                value=Settings.model.pose_roll,
+                value=settings.model.pose_roll,
             )
             face_location = Slider(
                 label="face_location",
                 maximum=1,
-                value=Settings.model.face_location,
+                value=settings.model.face_location,
             )
             face_scale = Slider(
-                label="face_scale", maximum=1, value=Settings.model.face_scale
+                label="face_scale",
+                maximum=1,
+                value=settings.model.face_scale,
             )
             step_t = Slider(
-                label="step_T", minimum=1, step=1, value=Settings.model.step_T
+                label="step_T",
+                minimum=1,
+                step=1,
+                value=settings.model.step_t,
             )
 
         generate_button.click(
-            fn=generate_video,
-            inputs=[
+            model,
+            [
                 uploaded_img,
                 uploaded_audio,
                 infer_type,
@@ -96,6 +105,10 @@ def app_block() -> Blocks:
                 face_sr,
                 seed,
             ],
-            outputs=[output_video_256, output_video_512, output_message],
+            [
+                output_video_256,
+                output_video_512,
+                output_message,
+            ],
         )
         return app

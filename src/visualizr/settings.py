@@ -91,6 +91,14 @@ class ModelSettings(BaseModel):
     decoder_layers: int = 2
 
     repo_id: str = "taocode/anitalker_ckpts"
+    infer_type: Literal[
+        "mfcc_full_control",
+        "mfcc_pose_only",
+        "hubert_pose_only",
+        "hubert_audio_only",
+        "hubert_full_control",
+    ] = Field(default="mfcc_full_control")
+    face_sr: bool = False
 
     @model_validator(mode="after")
     def check_image_path(self) -> "ModelSettings":
