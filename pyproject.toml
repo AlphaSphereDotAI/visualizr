@@ -5,37 +5,34 @@ version = "0.1.0"
 readme = "README.md"
 requires-python = ">=3.10.0, <3.11"
 dependencies = [
-    "espnet>=202301",
-    "gradio[mcp]>=5.34.0",
-    "huggingface-hub[hf-xet]>=0.33.0",
+    "espnet>=202207",
+    "gradio[mcp]>=5.42.0",
+    "huggingface-hub[hf-xet]>=0.34.4",
     "loguru>=0.7.3",
-    "moviepy>=1.0.3",
-    "numpy>=1.26.4,<2.0.0",
+    "moviepy>=2.2.1",
+    "numpy>=1.26.3,<2.0.0",
     "python-speech-features>=0.6",
     "pytorch-lightning>=2.3.3",
     "realesrgan>=0.3.0",
-    "torch==2.0.0+cu118",
-    "torchaudio==2.0.0+cu118",
-    "torchvision==0.15.0+cu118",
-    "transformers>=4.52.2",
+    "torch>=2.0.0,<2.1.0",
+    "torchaudio>=2.0.2,<2.1.0",
+    "torchvision>=0.15.2,<0.15.3",
+    "transformers>=4.55.2",
 ]
 
 [project.scripts]
 visualizr = "visualizr.__main__:main"
 
-[build-system]
-build-backend = "uv_build"
-requires = ["uv_build"]
-
-[dependency-groups]
-dev = ["ruff>=0.12.0", "ty>=0.0.1a18"]
-
-[tool.uv.sources]
-torch = [{ index = "pytorch-cu118" }]
-torchaudio = [{ index = "pytorch-cu118" }]
-torchvision = [{ index = "pytorch-cu118" }]
-
 [[tool.uv.index]]
 explicit = true
 name = "pytorch-cu118"
 url = "https://download.pytorch.org/whl/cu118"
+
+[build-system]
+build-backend = "uv_build"
+requires = ["uv_build"]
+
+#[tool.uv.sources]
+#torch = [{ index = "pytorch-cu118" }]
+#torchaudio = [{ index = "pytorch-cu118" }]
+#torchvision = [{ index = "pytorch-cu118" }]
