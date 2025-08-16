@@ -7,7 +7,7 @@ requires-python = ">=3.10.0, <3.11"
 dependencies = [
     "espnet>=202301",
     "gradio[mcp]>=5.34.0",
-    "huggingface-hub[hf-xet]>=0.33.0",
+    "huggingface-hub[hf-xet]>=0.34.4",
     "loguru>=0.7.3",
     "moviepy>=1.0.3",
     "numpy>=1.26.4,<2.0.0",
