@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.10.0, <3.11"
 dependencies = [
     "espnet>=202301",
-    "gradio[mcp]>=5.34.0",
+    "gradio[mcp]>=5.42.0",
     "huggingface-hub[hf-xet]>=0.33.0",
     "loguru>=0.7.3",
     "moviepy>=1.0.3",
