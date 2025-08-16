@@ -169,7 +169,7 @@ jobs:
     needs:
       - api_test
       - docker_scout
-    if: ${{  && ( inputs.is_test == true || inputs.is_test == false ) && inputs.registry == 'ghcr.io' }}
+    if: ${{ always() && !cancelled() && ( inputs.is_test == true || inputs.is_test == false ) && inputs.registry == 'ghcr.io' }}
     runs-on: ubuntu-latest
     environment:
       name: docker_image
