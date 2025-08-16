@@ -3,6 +3,9 @@ FROM cgr.dev/chainguard/wolfi-base:latest@sha256:1fd981aa0bcefd8da87ce55a9ae9078
 COPY --from=ghcr.io/astral-sh/uv:latest@sha256:b05b3d61eb2b264ed785265b71155738a0d3d382ea0699e048d4b36f90b88788 \
      /uv /uvx /usr/bin/
 
+# skipcq: DOK-DL3018
+RUN apk add --no-cache git build-base
+
 USER nonroot
 
 RUN --mount=type=cache,target=/root/.cache/uv \
