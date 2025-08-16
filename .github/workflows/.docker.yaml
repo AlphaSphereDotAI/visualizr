@@ -166,7 +166,7 @@ jobs:
         uses: pavelzw/pytest-action@510c5e90c360a185039bea56ce8b3e7e51a16507 # v2
   clean:
     name: Cleaning GHCR
-    needs: api_test
+    needs: [api_test,docker_scout ]
     if: ${{ always() && ( inputs.is_test == true || inputs.is_test == false ) && inputs.registry == 'ghcr.io' }}
     runs-on: ubuntu-latest
     environment:
