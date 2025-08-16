@@ -15,8 +15,8 @@ runtimes:
     - python@3.10.8
 lint:
   enabled:
-    - ty@0.0.1-alpha.17
-    - trufflehog-git@3.90.3
+    - ty@0.0.1-alpha.18
+    - trufflehog-git@3.90.5
     - pre-commit-hooks@5.0.0
     - trivy@0.64.1
     - yamlfmt@0.17.2
@@ -28,7 +28,7 @@ lint:
     - hadolint@2.12.1-beta
     - markdownlint@0.45.0
     - oxipng@9.1.5
-    - renovate@41.66.2
+    - renovate@41.74.0
     - ruff@0.12.7:
         commands:
           - lint
@@ -37,7 +37,7 @@ lint:
         commands:
           - lint
           - format
-    - trufflehog@3.90.3
+    - trufflehog@3.90.5
     - yamllint@1.37.1
   disabled:
     - prettier
