@@ -3,7 +3,7 @@ name = "visualizr"
 description = "Video Generator part of the Chatacter Backend"
 version = "0.1.0"
 readme = "README.md"
-requires-python = ">=3.10.0, <3.11"
+requires-python = ">=3.13.7, <3.14"
 dependencies = [
     "espnet>=202301",
     "gradio[mcp]>=5.34.0",
