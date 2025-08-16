@@ -7,12 +7,12 @@ from requests import Response, head
 
 def test_app() -> None:
     """
-    Test the reachability of Chattr.
+    Test the reachability of Visualizr.
 
     Returns:
         None
     """
     response: Response = head(
-        getenv("CHATTR_URL", "http://localhost:7860/"), timeout=30
+        getenv("VISUALIZR_URL", "http://localhost:7860/"), timeout=30
     )
     assert response.status_code == 200
