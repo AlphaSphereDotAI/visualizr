@@ -14,6 +14,7 @@ from imageio import mimsave
 from moviepy import AudioFileClip, VideoFileClip
 from torch import Tensor
 from tqdm import tqdm
+from transformers import HubertModel, Wav2Vec2FeatureExtractor
 
 from visualizr.anitalker.config import TrainConfig
 from visualizr.anitalker.experiment import LitModel
@@ -175,9 +176,6 @@ class Model:
             )
 
             start_time = time()
-
-            # load hubert model
-            from transformers import HubertModel, Wav2Vec2FeatureExtractor
 
             audio_model = HubertModel.from_pretrained(hubert_model_path).to("cuda")
             feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained(
