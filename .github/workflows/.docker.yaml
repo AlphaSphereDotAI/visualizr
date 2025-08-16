@@ -38,7 +38,7 @@ jobs:
   build_image:
     name: Build and push Docker image to ${{ inputs.registry }}
     needs: check_dockerfile
-    if: ${{ always() && ( inputs.is_test == true || inputs.is_test == false ) }}
+    if: ${{ always() && !cancelled() && ( inputs.is_test == true || inputs.is_test == false ) }}
     runs-on: ubuntu-latest
     outputs:
       image_tag: ${{ steps.tag.outputs.TAG }}
@@ -102,7 +102,7 @@ jobs:
   docker_scout:
     name: Docker Scout (${{ matrix.commands }})
     needs: build_image
-    if: ${{ always() && ( inputs.is_test == true || inputs.is_test == false ) }}
+    if: ${{ always() && !cancelled() && ( inputs.is_test == true || inputs.is_test == false ) }}
     runs-on: ubuntu-latest
     environment:
       name: docker_image
@@ -133,7 +133,7 @@ jobs:
     name: API Test
     needs: build_image
     runs-on: ubuntu-latest
-    if: ${{ always() && inputs.is_test }}
+    if: ${{ always() && !cancelled() && inputs.is_test }}
     environment:
       name: api_test
     services:
@@ -169,7 +169,7 @@ jobs:
     needs:
       - api_test
       - docker_scout
-    if: ${{ always() && ( inputs.is_test == true || inputs.is_test == false ) && inputs.registry == 'ghcr.io' }}
+    if: ${{  && ( inputs.is_test == true || inputs.is_test == false ) && inputs.registry == 'ghcr.io' }}
     runs-on: ubuntu-latest
     environment:
       name: docker_image
