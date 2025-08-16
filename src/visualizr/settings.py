@@ -70,6 +70,26 @@ class DirectorySettings(BaseModel):
     #     return self
 
 
+class Checkpoint(BaseModel):
+    mfcc_pose_only: FilePath = Field(
+        default_factory=lambda: Path.cwd() / "ckpts" / "stage2_pose_only_mfcc.ckpt"
+    )
+    mfcc_full_control: FilePath = Field(
+        default_factory=lambda: Path.cwd()
+        / "ckpts"
+        / "stage2_more_controllable_mfcc.ckpt"
+    )
+    hubert_audio_only: FilePath = Field(
+        default_factory=lambda: Path.cwd() / "ckpts" / "stage2_audio_only_hubert.ckpt"
+    )
+    hubert_pose_only: FilePath = Field(
+        default_factory=lambda: Path.cwd() / "ckpts" / "stage2_pose_only_hubert.ckpt"
+    )
+    hubert_full_control: FilePath = Field(
+        default_factory=lambda: Path.cwd() / "ckpts" / "stage2_full_control_hubert.ckpt"
+    )
+
+
 class ModelSettings(BaseModel):
     pose_yaw: float = 0.0
     pose_pitch: float = 0.0
@@ -99,6 +119,7 @@ class ModelSettings(BaseModel):
         "hubert_full_control",
     ] = Field(default="mfcc_full_control")
     face_sr: bool = False
+    checkpoint: Checkpoint = Checkpoint()
 
     @model_validator(mode="after")
     def check_image_path(self) -> "ModelSettings":
@@ -122,26 +143,6 @@ class Settings(BaseSettings):
     )
     directory: DirectorySettings = DirectorySettings()
     model: ModelSettings = ModelSettings()
-
-
-class Checkpoint(BaseModel):
-    mfcc_pose_only: FilePath = Field(
-        default_factory=lambda: Path.cwd() / "ckpts" / "stage2_pose_only_mfcc.ckpt"
-    )
-    mfcc_full_control: FilePath = Field(
-        default_factory=lambda: Path.cwd()
-        / "ckpts"
-        / "stage2_more_controllable_mfcc.ckpt"
-    )
-    hubert_audio_only: FilePath = Field(
-        default_factory=lambda: Path.cwd() / "ckpts" / "stage2_audio_only_hubert.ckpt"
-    )
-    hubert_pose_only: FilePath = Field(
-        default_factory=lambda: Path.cwd() / "ckpts" / "stage2_pose_only_hubert.ckpt"
-    )
-    hubert_full_control: FilePath = Field(
-        default_factory=lambda: Path.cwd() / "ckpts" / "stage2_full_control_hubert.ckpt"
-    )
 
 
 if __name__ == "__main__":
