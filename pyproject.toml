@@ -5,17 +5,17 @@ version = "0.1.0"
 readme = "README.md"
 requires-python = ">=3.10.0, <3.11"
 dependencies = [
-    "espnet>=202412",
+    "espnet>=202301",
     "gradio[mcp]>=5.34.0",
     "huggingface-hub[hf-xet]>=0.33.0",
     "loguru>=0.7.3",
     "moviepy>=1.0.3",
     "python-speech-features>=0.6",
-    "pytorch-lightning>=2.5.1.post0",
+    "pytorch-lightning>=2.3.3",
     "realesrgan>=0.3.0",
-    "torch>=2.6.0",
-    "torchaudio>=2.6.0",
-    "torchvision>=0.21.0",
+    "torch==2.0.0+cu118",
+    "torchaudio==2.0.0+cu118",
+    "torchvision==0.15.0+cu118",
     "transformers>=4.52.2",
 ]
 
@@ -30,17 +30,11 @@ requires = ["uv_build"]
 dev = ["ruff>=0.12.0", "ty>=0.0.1a10"]
 
 [tool.uv.sources]
-torch = [
-    { index = "pytorch-cu124", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
-]
-torchaudio = [
-    { index = "pytorch-cu124", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
-]
-torchvision = [
-    { index = "pytorch-cu124", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
-]
+torch = [{ index = "pytorch-cu118" }]
+torchaudio = [{ index = "pytorch-cu118" }]
+torchvision = [{ index = "pytorch-cu118" }]
 
 [[tool.uv.index]]
 explicit = true
-name = "pytorch-cu124"
-url = "https://download.pytorch.org/whl/cu124"
+name = "pytorch-cu118"
+url = "https://download.pytorch.org/whl/cu118"
