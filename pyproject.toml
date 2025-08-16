@@ -28,7 +28,7 @@ build-backend = "uv_build"
 requires = ["uv_build"]
 
 [dependency-groups]
-dev = ["ruff>=0.12.0", "ty>=0.0.1a18"]
+dev = ["ruff>=0.12.9", "ty>=0.0.1a18"]
 
 [tool.uv.sources]
 torch = [{ index = "pytorch-cu118" }]
