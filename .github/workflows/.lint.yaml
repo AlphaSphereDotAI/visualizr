@@ -60,6 +60,6 @@ jobs:
         with:
           arguments: --output sarif --output-file trunk-results.sarif
       - name: Upload Trunk Results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@df559355d593797519d70b90fc8edd5db049e7a2 # v3
         with:
           sarif_file: trunk-results.sarif
