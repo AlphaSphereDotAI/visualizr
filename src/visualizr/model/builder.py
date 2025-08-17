@@ -267,8 +267,7 @@ class Model:
             ori_img_recon = ori_img_recon.clamp(-1, 1)
             wav_pred = (ori_img_recon.detach() + 1) / 2
             saved_image(
-                wav_pred,
-                path.join(self.settings.directory.frames, f"{pred_index:06d}.png"),
+                wav_pred, self.settings.directory.frames / f"{pred_index:06d}.png"
             )
         # ==============================================
 
@@ -277,9 +276,7 @@ class Model:
         logger.info(f"Saving video at {predicted_video_256_path}")
 
         frames_to_video(
-            str(self.settings.directory.frames),
-            audio_path,
-            str(predicted_video_256_path),
+            self.settings.directory.frames, audio_path, predicted_video_256_path
         )
 
         rmtree(self.settings.directory.frames)
