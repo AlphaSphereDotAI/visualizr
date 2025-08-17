@@ -1,6 +1,5 @@
 from os import path, remove
 from pathlib import Path
-from shutil import rmtree
 from sys import exit
 from time import time
 from typing import Literal, Optional
@@ -27,6 +26,7 @@ from visualizr.anitalker.utils import (
     check_package_installed,
     frames_to_video,
     img_preprocessing,
+    remove_frames,
     saved_image,
 )
 from visualizr.settings import Settings, logger
@@ -279,7 +279,7 @@ class Model:
             self.settings.directory.frames, audio_path, predicted_video_256_path
         )
 
-        rmtree(self.settings.directory.frames)
+        remove_frames(self.settings.directory.frames)
 
         # Enhancer
         if face_sr and check_package_installed("gfpgan"):
