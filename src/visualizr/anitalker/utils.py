@@ -3,7 +3,7 @@ from importlib.util import find_spec
 
 import numpy as np
 import torch
-from moviepy import (
+from moviepy.editor import (
     AudioFileClip,
     ImageClip,
     concatenate_videoclips,
