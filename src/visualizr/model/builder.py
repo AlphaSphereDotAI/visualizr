@@ -325,12 +325,14 @@ class Model:
         lia: LIA_Model = LIA_Model(
             motion_dim=self.settings.model.motion_dim, fusion_type="weighted_sum"
         )
-        lia.load_lightning_model(self.settings.directory.checkpoint_stage_1)
+        lia.load_lightning_model(self.settings.model.checkpoint.stage_1)
         lia.to("cuda")
         return lia
 
     def _load_stage_2_model(
-        self, conf: TrainConfig, stage2_checkpoint_path: str
+        self,
+        conf: TrainConfig,
+        stage2_checkpoint_path: str,
     ) -> LitModel:
         logger.info("Loading stage 2 model")
         model = LitModel(conf)
