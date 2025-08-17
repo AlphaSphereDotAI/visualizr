@@ -11,6 +11,8 @@ from PIL import Image
 from torch import Tensor, from_numpy
 from torchvision.transforms import ToPILImage
 
+from visualizr.settings import logger
+
 
 def check_package_installed(package_name: str) -> bool:
     return find_spec(package_name) is not None
@@ -51,3 +53,13 @@ def saved_image(img_tensor: Tensor, img_path: Path) -> None:
     pil_image_converter: ToPILImage = ToPILImage()
     img = pil_image_converter(img_tensor.detach().cpu().squeeze(0))
     img.save(img_path)
+
+
+def remove_frames(frames_path: Path):
+    for frame in frames_path.iterdir():
+        try:
+            frame.unlink()
+            logger.info(f"Deleted {frame}")
+        except OSError:
+            logger.exception(f"Error while deleting file {frame}")
+            continue
