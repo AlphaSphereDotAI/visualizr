@@ -267,8 +267,7 @@ class Model:
             ori_img_recon = ori_img_recon.clamp(-1, 1)
             wav_pred = (ori_img_recon.detach() + 1) / 2
             saved_image(
-                wav_pred,
-                path.join(self.settings.directory.frames, f"{pred_index:06d}.png"),
+                wav_pred, self.settings.directory.frames / f"{pred_index:06d}.png"
             )
         # ==============================================
 
@@ -277,9 +276,7 @@ class Model:
         logger.info(f"Saving video at {predicted_video_256_path}")
 
         frames_to_video(
-            str(self.settings.directory.frames),
-            audio_path,
-            str(predicted_video_256_path),
+            self.settings.directory.frames, audio_path, predicted_video_256_path
         )
 
         rmtree(self.settings.directory.frames)
@@ -328,12 +325,14 @@ class Model:
         lia: LIA_Model = LIA_Model(
             motion_dim=self.settings.model.motion_dim, fusion_type="weighted_sum"
         )
-        lia.load_lightning_model(self.settings.directory.checkpoint_stage_1)
+        lia.load_lightning_model(self.settings.model.checkpoint.stage_1)
         lia.to("cuda")
         return lia
 
     def _load_stage_2_model(
-        self, conf: TrainConfig, stage2_checkpoint_path: str
+        self,
+        conf: TrainConfig,
+        stage2_checkpoint_path: str,
     ) -> LitModel:
         logger.info("Loading stage 2 model")
         model = LitModel(conf)
