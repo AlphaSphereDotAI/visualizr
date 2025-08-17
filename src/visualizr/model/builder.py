@@ -6,12 +6,13 @@ from typing import Literal
 
 import librosa
 import numpy as np
-import python_speech_features
 import torch
 from gradio import Markdown, Video
 from huggingface_hub import snapshot_download
 from imageio import mimsave
 from moviepy import AudioFileClip, VideoFileClip
+from python_speech_features import mfcc
+from python_speech_features.base import delta
 from torch import Tensor
 from tqdm import tqdm
 from transformers import HubertModel, Wav2Vec2FeatureExtractor
@@ -137,11 +138,11 @@ class Model:
         if conf.infer_type.startswith("mfcc"):
             # MFCC features
             wav, sr = librosa.load(audio_path, sr=16000)
-            input_values = python_speech_features.mfcc(
+            input_values = mfcc(
                 signal=wav, samplerate=sr, numcep=13, winlen=0.025, winstep=0.01
             )
-            d_mfcc_feat = python_speech_features.base.delta(input_values, 1)
-            d_mfcc_feat2 = python_speech_features.base.delta(input_values, 2)
+            d_mfcc_feat = delta(input_values, 1)
+            d_mfcc_feat2 = delta(input_values, 2)
             audio_driven_obj: np.ndarray = np.hstack(
                 (input_values, d_mfcc_feat, d_mfcc_feat2)
             )
