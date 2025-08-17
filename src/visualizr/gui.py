@@ -23,11 +23,11 @@ def app_block() -> Blocks:
         with Tab("AniTalker"):
             with Row():
                 with Column():
-                    uploaded_img: Image = Image(
+                    image_path: Image = Image(
                         type="filepath",
                         label="Reference Image",
                     )
-                    uploaded_audio = Audio(
+                    audio_path = Audio(
                         type="filepath",
                         label="Input Audio",
                         show_download_button=True,
@@ -93,8 +93,8 @@ def app_block() -> Blocks:
         generate_button.click(
             model,
             [
-                uploaded_img,
-                uploaded_audio,
+                image_path,
+                audio_path,
                 infer_type,
                 pose_yaw,
                 pose_pitch,
