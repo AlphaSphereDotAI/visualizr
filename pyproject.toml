@@ -1,9 +1,16 @@
 [project]
 name = "visualizr"
-description = "Video Generator part of the Chatacter Backend"
 version = "0.1.0"
+description = "Video Generator part of the Chatacter Backend"
 readme = "README.md"
+authors = [
+    { name = "Mohamed Hisham Abdelzaher", email = "mohamed.hisham.abdelzaher@gmail.com" },
+]
+maintainers = [
+    { name = "Mohamed Hisham Abdelzaher", email = "mohamed.hisham.abdelzaher@gmail.com" },
+]
 requires-python = ">=3.10,<3.11"
+keywords = ["anitalker", "video"]
 dependencies = [
     "espnet>=202207",
     "gradio[mcp]>=5.42.0",
@@ -29,6 +36,7 @@ requires = ["uv_build"]
 #Documentation = "https://readthedocs.org"
 Repository = "https://github.com/AlphaSphereDotAI/visualizr.git"
 Issues = "https://github.com/AlphaSphereDotAI/visualizr/issues"
+Twitter = "https://x.com/AlphaSphereAI"
 
 [project.scripts]
 visualizr = "visualizr.__main__:main"
