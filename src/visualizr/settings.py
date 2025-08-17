@@ -32,9 +32,6 @@ class DirectorySettings(BaseModel):
         default_factory=lambda: Path.cwd() / "results" / "frames"
     )
     checkpoint: DirectoryPath = Field(default_factory=lambda: Path.cwd() / "ckpts")
-    checkpoint_stage_1: DirectoryPath = Field(
-        default_factory=lambda: Path.cwd() / "ckpts" / "stage1.ckpt"
-    )
     log: DirectoryPath = Field(default_factory=lambda: Path.cwd() / "logs")
     assets: DirectoryPath = Field(default_factory=lambda: Path.cwd() / "assets")
     image: DirectoryPath = Field(
@@ -48,29 +45,35 @@ class DirectorySettings(BaseModel):
     )
     tmp_extension: FilePath = Field(default=".tmp.mp4")
 
-    # @model_validator(mode="after")
-    # def create_missing_dirs(self) -> "DirectorySettings":
-    #     """
-    #     Ensure that all specified directories exist, creating them if necessary.
-    #     This method checks and creates any missing directories defined in the DirectorySettings.
-    #
-    #     Returns:
-    #         Self: The validated DirectorySettings instance.
-    #     """
-    #     for directory in [
-    #         self.base,
-    #         self.assets,
-    #         self.log,
-    #         self.image,
-    #         self.audio,
-    #         self.video,
-    #     ]:
-    #         directory.mkdir(exist_ok=True)
-    #         logger.info(f"Created directory: {directory}")
-    #     return self
+    @model_validator(mode="after")
+    def create_missing_dirs(self) -> "DirectorySettings":
+        """
+        Ensure that all specified directories exist, creating them if necessary.
+        This method checks and creates any missing directories defined in the DirectorySettings.
+
+        Returns:
+            Self: The validated DirectorySettings instance.
+        """
+        for directory in [
+            self.base,
+            self.results,
+            self.frames,
+            self.checkpoint,
+            self.assets,
+            self.log,
+            self.image,
+            self.audio,
+            self.video,
+        ]:
+            directory.mkdir(exist_ok=True)
+            logger.info(f"Created directory: {directory}")
+        return self
 
 
 class Checkpoint(BaseModel):
+    stage_1: FilePath = Field(
+        default_factory=lambda: Path.cwd() / "ckpts" / "stage1.ckpt"
+    )
     mfcc_pose_only: FilePath = Field(
         default_factory=lambda: Path.cwd() / "ckpts" / "stage2_pose_only_mfcc.ckpt"
     )
