@@ -57,9 +57,3 @@ jobs:
         run: uv sync --frozen
       - name: Trunk Code Quality
         uses: trunk-io/trunk-action@75699af9e26881e564e9d832ef7dc3af25ec031b # v1
-        with:
-          arguments: --output sarif --output-file trunk-results.sarif
-      - name: Upload Trunk Results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: trunk-results.sarif
