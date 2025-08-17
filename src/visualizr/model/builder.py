@@ -1,8 +1,9 @@
-import os
+from os import path, remove
 from pathlib import Path
 from shutil import rmtree
+from sys import exit
 from time import time
-from typing import Literal
+from typing import Literal, Optional
 
 import librosa
 import numpy as np
@@ -10,7 +11,7 @@ import torch
 from gradio import Markdown, Video
 from huggingface_hub import snapshot_download
 from imageio import mimsave
-from moviepy import AudioFileClip, VideoFileClip
+from moviepy.editor import AudioFileClip, VideoFileClip
 from python_speech_features import mfcc
 from python_speech_features.base import delta
 from torch import Tensor
@@ -103,12 +104,10 @@ class Model:
                     + "Please check and upload both files."
                 ),
             )
-        frame_end = None
-        audio_driven = None
-        if not os.path.exists(image_path):
+        if not Path(image_path).exists():
             logger.exception(f"{image_path} does not exist!")
             exit(0)
-        if not os.path.exists(audio_path):
+        if not Path(audio_path).exists():
             logger.exception(f"{audio_path} does not exist!")
             exit(0)
 
@@ -135,26 +134,25 @@ class Model:
             conf, self._get_checkpoint_stage_2_path(infer_type)
         )
 
+        frame_end: int = 0
+        audio_driven: Optional[Tensor] = None
+
         if conf.infer_type.startswith("mfcc"):
             # MFCC features
             wav, sr = librosa.load(audio_path, sr=16000)
-            input_values = mfcc(
-                signal=wav, samplerate=sr, numcep=13, winlen=0.025, winstep=0.01
-            )
+            input_values = mfcc(wav, sr)
             d_mfcc_feat = delta(input_values, 1)
             d_mfcc_feat2 = delta(input_values, 2)
             audio_driven_obj: np.ndarray = np.hstack(
                 (input_values, d_mfcc_feat, d_mfcc_feat2)
             )
-            frame_start, frame_end = 0, int(audio_driven_obj.shape[0] / 4)
+            frame_start: int = 0
+            frame_end: int = int(audio_driven_obj.shape[0] / 4)
             # The video frame is fixed to 25 hz, and the audio is fixed to 100 hz.
-            audio_start, audio_end = (
-                int(frame_start * 4),
-                int(frame_end * 4),
-            )
-
-            audio_driven = (
-                torch.Tensor(audio_driven_obj[audio_start:audio_end, :])
+            audio_start: int = int(frame_start * 4)
+            audio_end: int = int(frame_end * 4)
+            audio_driven: Tensor = (
+                Tensor(audio_driven_obj[audio_start:audio_end, :])
                 .unsqueeze(0)
                 .float()
                 .to("cuda")
@@ -166,7 +164,7 @@ class Model:
                 logger.exception("Please install transformers module first.")
                 exit(0)
             hubert_model_path = "ckpts/chinese-hubert-large"
-            if not os.path.exists(hubert_model_path):
+            if not Path(hubert_model_path).exists():
                 logger.exception(
                     "Please download the hubert weight into the ckpts path first."
                 )
@@ -270,7 +268,7 @@ class Model:
             wav_pred = (ori_img_recon.detach() + 1) / 2
             saved_image(
                 wav_pred,
-                os.path.join(self.settings.directory.frames, f"{pred_index:06d}.png"),
+                path.join(self.settings.directory.frames, f"{pred_index:06d}.png"),
             )
         # ==============================================
 
@@ -303,8 +301,8 @@ class Model:
             final_clip.write_videofile(
                 predicted_video_512_path, codec="libx264", audio_codec="aac"
             )
-            os.remove(predicted_video_512_path / self.settings.directory.tmp_extension)
-        if not os.path.exists(predicted_video_256_path):
+            remove(predicted_video_512_path / self.settings.directory.tmp_extension)
+        if not path.exists(predicted_video_256_path):
             return (
                 None,
                 None,
