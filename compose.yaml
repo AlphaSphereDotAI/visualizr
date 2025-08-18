@@ -5,7 +5,7 @@ services:
     ports:
       - "7860:7860"
     volumes:
-      - visualizr_venv:/venv
+      - checkpoint:/home/nonroot/ckpts
     restart: on-failure:3
     healthcheck:
       test:
@@ -27,5 +27,5 @@ services:
               capabilities:
                 - gpu
 volumes:
-  visualizr_venv:
-    name: Python Environment for Visualizr
+  checkpoint:
+    name: checkpoint of AniTalker
