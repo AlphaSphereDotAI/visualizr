@@ -19,7 +19,7 @@ ENV GRADIO_SERVER_PORT=7860 \
     PATH=/home/nonroot/.local/bin:$PATH
 
 # skipcq: DOK-DL3018
-RUN apk add --no-cache curl mesa-gl
+RUN apk add --no-cache curl mesa-gl glib
 
 USER nonroot
 
