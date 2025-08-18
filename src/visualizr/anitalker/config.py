@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from os import path
-from typing import Tuple
+from typing import Literal, Tuple
 
 from torch import distributed
 from torch.multiprocessing import get_context
@@ -43,6 +43,13 @@ class PretrainConfig(BaseConfig):
 
 @dataclass
 class TrainConfig(BaseConfig):
+    infer_type: Literal[
+        "mfcc_full_control",
+        "mfcc_pose_only",
+        "hubert_pose_only",
+        "hubert_audio_only",
+        "hubert_full_control",
+    ]
     # random seed
     seed: int = 0
     train_mode: TrainMode = TrainMode.diffusion
@@ -129,7 +136,7 @@ class TrainConfig(BaseConfig):
     net_latent_use_norm: bool = False
     net_latent_time_last_act: bool = False
     net_num_res_blocks: int = 2
-    # number of resblocks for the UNET
+    # number of ResBlocks for the UNET
     net_num_input_res_blocks: int = None
     net_enc_num_cls: int = None
     num_workers: int = 4

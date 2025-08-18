@@ -1,19 +1,34 @@
 <component name="ProjectDictionaryState">
   <dictionary name="project">
     <words>
+      <w>adamw</w>
+      <w>allneg</w>
       <w>alphaspheredotai</w>
       <w>anitalker</w>
+      <w>autoenc</w>
+      <w>beatgans</w>
       <w>buildx</w>
+      <w>celeba</w>
+      <w>celebahq</w>
+      <w>cfewshot</w>
+      <w>cfewshotallneg</w>
       <w>chatacter</w>
       <w>ckpts</w>
       <w>cumprod</w>
       <w>cves</w>
+      <w>ddim</w>
+      <w>fewshot</w>
       <w>ghcr</w>
+      <w>hstack</w>
       <w>jlumbroso</w>
+      <w>latentdiffusion</w>
+      <w>lrelu</w>
       <w>markdownlint</w>
       <w>mergify</w>
       <w>pavelzw</w>
+      <w>randn</w>
       <w>recipm</w>
+      <w>silu</w>
       <w>taocode</w>
     </words>
   </dictionary>

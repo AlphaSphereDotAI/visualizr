@@ -4,16 +4,31 @@ from sys import exit
 from time import time
 from typing import Literal, Optional
 
-import librosa
-import numpy as np
-import torch
 from gradio import Markdown, Video
 from huggingface_hub import snapshot_download
 from imageio import mimsave
+from librosa import load as librosa_load
 from moviepy.editor import AudioFileClip, VideoFileClip
+from numpy import array as np_array
+from numpy import hstack as np_hstack
+from numpy import (
+    ndarray,
+)
+from numpy import pad as np_pad
+from numpy import squeeze as np_squeeze
 from python_speech_features import mfcc
 from python_speech_features.base import delta
-from torch import Tensor
+from torch import (
+    Tensor,
+)
+from torch import cat as torch_cat
+from torch import clamp as torch_clamp
+from torch import load as torch_load
+from torch import (
+    no_grad,
+)
+from torch import randn as torch_randn
+from torch import zeros as torch_zeros
 from tqdm import tqdm
 from transformers import HubertModel, Wav2Vec2FeatureExtractor
 
@@ -84,8 +99,8 @@ class Model:
             "hubert_audio_only",
             "hubert_full_control",
         ],
-        image_path: str,
-        audio_path: str,
+        image_path: Path,
+        audio_path: Path,
         face_sr: bool,
         pose_yaw: float,
         pose_pitch: float,
@@ -95,24 +110,15 @@ class Model:
         step_t: int,
         seed: int,
     ) -> tuple[Video | None, Video | None, Markdown]:
-        if not image_path or not audio_path:
-            return (
-                None,
-                None,
-                Markdown(
-                    "Error: Input image or audio file is empty. "
-                    + "Please check and upload both files."
-                ),
-            )
-        if not Path(image_path).exists():
+        if not image_path.exists():
             logger.exception(f"{image_path} does not exist!")
             exit(0)
-        if not Path(audio_path).exists():
+        if not audio_path.exists():
             logger.exception(f"{audio_path} does not exist!")
             exit(0)
 
-        image_name: str = Path(image_path).stem
-        audio_name: str = Path(audio_path).stem
+        image_name: str = image_path.stem
+        audio_name: str = audio_path.stem
 
         predicted_video_256_path: Path = (
             self.settings.directory.results / f"{image_name}-{audio_name}.mp4"
@@ -139,11 +145,11 @@ class Model:
 
         if conf.infer_type.startswith("mfcc"):
             # MFCC features
-            wav, sr = librosa.load(audio_path, sr=16000)
+            wav, sr = librosa_load(audio_path, sr=16000)
             input_values = mfcc(wav, sr)
             d_mfcc_feat = delta(input_values, 1)
             d_mfcc_feat2 = delta(input_values, 2)
-            audio_driven_obj: np.ndarray = np.hstack(
+            audio_driven_obj: ndarray = np_hstack(
                 (input_values, d_mfcc_feat, d_mfcc_feat2)
             )
             frame_start: int = 0
@@ -180,11 +186,11 @@ class Model:
             feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained(
                 hubert_model_path
             )
-            audio_model.feature_extractor._freeze_parameters()  # skipcq: PYL-W0212
+            audio_model.feature_extractor._freeze_parameters()
             audio_model.eval()
 
             # hubert model forward pass
-            audio, sr = librosa.load(audio_path, sr=16000)
+            audio, sr = librosa_load(audio_path, sr=16000)
             input_values = feature_extractor(
                 audio,
                 sampling_rate=16000,
@@ -194,15 +200,16 @@ class Model:
             ).input_values
             input_values = input_values.to("cuda")
             ws_feats = []
-            with torch.no_grad():
+            with no_grad():
                 outputs = audio_model(input_values, output_hidden_states=True)
-                for i in range(len(outputs.hidden_states)):
-                    ws_feats.append(outputs.hidden_states[i].detach().cpu().numpy())
-                ws_feat_obj = np.array(ws_feats)
-                ws_feat_obj = np.squeeze(ws_feat_obj, 1)
-                ws_feat_obj = np.pad(
-                    ws_feat_obj, ((0, 0), (0, 1), (0, 0)), "edge"
-                )  # align the audio length with the video frame
+                ws_feats.extend(
+                    outputs.hidden_states[i].detach().cpu().numpy()
+                    for i in range(len(outputs.hidden_states))
+                )
+                ws_feat_obj = np_array(ws_feats)
+                ws_feat_obj = np_squeeze(ws_feat_obj, 1)
+                # align the audio length with the video frame
+                ws_feat_obj = np_pad(ws_feat_obj, ((0, 0), (0, 1), (0, 0)), "edge")
 
             execution_time = time() - start_time
             logger.info(f"Extraction Audio Feature: {execution_time:.2f} Seconds")
@@ -210,31 +217,32 @@ class Model:
             audio_driven_obj = ws_feat_obj
 
             frame_start, frame_end = 0, int(audio_driven_obj.shape[1] / 2)
+            # The video frame is fixed to 25 hz, and the audio is fixed to 50 hz.
             audio_start, audio_end = (
                 int(frame_start * 2),
                 int(frame_end * 2),
-            )  # The video frame is fixed to 25 hz, and the audio is fixed to 50 hz
+            )
 
             audio_driven = (
-                torch.Tensor(audio_driven_obj[:, audio_start:audio_end, :])
+                Tensor(audio_driven_obj[:, audio_start:audio_end, :])
                 .unsqueeze(0)
                 .float()
                 .to("cuda")
             )
 
         # Diffusion Noise
-        noisy_t = torch.randn((1, frame_end, self.settings.model.motion_dim)).to("cuda")
+        noisy_t = torch_randn((1, frame_end, self.settings.model.motion_dim)).to("cuda")
 
         # ======Inputs for Attribute Control=========
-        yaw_signal = torch.zeros(1, frame_end, 1).to("cuda") + pose_yaw
-        pitch_signal = torch.zeros(1, frame_end, 1).to("cuda") + pose_pitch
-        roll_signal = torch.zeros(1, frame_end, 1).to("cuda") + pose_roll
-        pose_signal = torch.cat((yaw_signal, pitch_signal, roll_signal), dim=-1)
+        yaw_signal = torch_zeros(1, frame_end, 1).to("cuda") + pose_yaw
+        pitch_signal = torch_zeros(1, frame_end, 1).to("cuda") + pose_pitch
+        roll_signal = torch_zeros(1, frame_end, 1).to("cuda") + pose_roll
+        pose_signal = torch_cat((yaw_signal, pitch_signal, roll_signal), dim=-1)
 
-        pose_signal = torch.clamp(pose_signal, -1, 1)
+        pose_signal = torch_clamp(pose_signal, -1, 1)
 
-        face_location_signal = torch.zeros(1, frame_end, 1).to("cuda") + face_location
-        face_scale_tensor = torch.zeros(1, frame_end, 1).to("cuda") + face_scale
+        face_location_signal = torch_zeros(1, frame_end, 1).to("cuda") + face_location
+        face_scale_tensor = torch_zeros(1, frame_end, 1).to("cuda") + face_scale
         # ===========================================
         start_time = time()
         # ======Diffusion De-nosing Process=========
@@ -261,7 +269,7 @@ class Model:
         for pred_index in tqdm(range(generated_directions.shape[1])):
             ori_img_recon = lia.render(
                 one_shot_lia_start,
-                torch.Tensor(generated_directions[:, pred_index, :]).to("cuda"),
+                Tensor(generated_directions[:, pred_index, :]).to("cuda"),
                 feats,
             )
             ori_img_recon = ori_img_recon.clamp(-1, 1)
@@ -332,11 +340,11 @@ class Model:
     def _load_stage_2_model(
         self,
         conf: TrainConfig,
-        stage2_checkpoint_path: str,
+        stage_2_checkpoint_path: Path,
     ) -> LitModel:
         logger.info("Loading stage 2 model")
         model = LitModel(conf)
-        state = torch.load(stage2_checkpoint_path, "cpu")
+        state = torch_load(stage_2_checkpoint_path, "cpu")
         model.load_state_dict(state)
         model.ema_model.eval()
         model.ema_model.to("cuda")

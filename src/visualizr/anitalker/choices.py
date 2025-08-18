@@ -6,10 +6,10 @@ from torch import nn
 class TrainMode(Enum):
     # manipulate mode = training the classifier
     manipulate = "manipulate"
-    # default trainin mode!
+    # default training mode!
     diffusion = "diffusion"
-    # default latent training mode!
-    # fitting the a DDPM to a given latent
+    # Default latent training mode.
+    # Fitting a DDPM to a given latent.
     latent_diffusion = "latentdiffusion"
 
     def is_manipulate(self):
@@ -41,8 +41,8 @@ class TrainMode(Enum):
         """
         whether training in this mode requires the latent variables to be available?
         """
-        # this will precalculate all the latents before hand
-        # and the dataset will be all the predicted latents
+        # this will precalculate all the latents beforehand,
+        # and the dataset will be all the predicted latents.
         return self in [
             TrainMode.latent_diffusion,
             TrainMode.manipulate,
@@ -50,9 +50,7 @@ class TrainMode(Enum):
 
 
 class ManipulateMode(Enum):
-    """
-    how to train the classifier to manipulate
-    """
+    """how to train the classifier to manipulate."""
 
     # train on whole celeba attr dataset
     celebahq_all = "celebahq_all"
@@ -114,9 +112,7 @@ class ModelName(Enum):
 
 
 class ModelMeanType(Enum):
-    """
-    Which type of output the model predicts.
-    """
+    """Which type of output the model predicts."""
 
     eps = "eps"  # the model predicts epsilon
 
@@ -125,7 +121,7 @@ class ModelVarType(Enum):
     """
     What is used as the model's output variance.
 
-    The LEARNED_RANGE option has been added to allow the model to predict
+    The `LEARNED_RANGE` option has been added to allow the model to predict
     values between FIXED_SMALL and FIXED_LARGE, making its job easier.
     """
 
@@ -136,14 +132,13 @@ class ModelVarType(Enum):
 
 
 class LossType(Enum):
-    mse = "mse"  # use raw MSE loss (and KL when learning variances)
+    # use raw MSE loss and KL when learning variances
+    mse = "mse"
     l1 = "l1"
 
 
 class GenerativeType(Enum):
-    """
-    How's a sample generated
-    """
+    """where how a sample is generated."""
 
     ddpm = "ddpm"
     ddim = "ddim"
@@ -152,6 +147,11 @@ class GenerativeType(Enum):
 class OptimizerType(Enum):
     adam = "adam"
     adamw = "adamw"
+
+
+class ManipulateLossType(Enum):
+    bce = "bce"
+    mse = "mse"
 
 
 class Activation(Enum):
@@ -174,8 +174,3 @@ class Activation(Enum):
             return nn.Tanh()
         else:
             raise NotImplementedError()
-
-
-class ManipulateLossType(Enum):
-    bce = "bce"
-    mse = "mse"
