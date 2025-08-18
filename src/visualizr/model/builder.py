@@ -9,26 +9,24 @@ from huggingface_hub import snapshot_download
 from imageio import mimsave
 from librosa import load as librosa_load
 from moviepy.editor import AudioFileClip, VideoFileClip
-from numpy import array as np_array
-from numpy import hstack as np_hstack
 from numpy import (
     ndarray,
+    array as np_array,
+    hstack as np_hstack,
+    pad as np_pad,
+    squeeze as np_squeeze,
 )
-from numpy import pad as np_pad
-from numpy import squeeze as np_squeeze
 from python_speech_features import mfcc
 from python_speech_features.base import delta
 from torch import (
-    Tensor,
-)
-from torch import cat as torch_cat
-from torch import clamp as torch_clamp
-from torch import load as torch_load
-from torch import (
     no_grad,
+    Tensor,
+    cat as torch_cat,
+    clamp as torch_clamp,
+    load as torch_load,
+    randn as torch_randn,
+    zeros as torch_zeros,
 )
-from torch import randn as torch_randn
-from torch import zeros as torch_zeros
 from tqdm import tqdm
 from transformers import HubertModel, Wav2Vec2FeatureExtractor
 
