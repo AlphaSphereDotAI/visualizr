@@ -28,7 +28,7 @@ lint:
     - hadolint@2.12.1-beta
     - markdownlint@0.45.0
     - oxipng@9.1.5
-    - renovate@41.74.0
+    - renovate@41.76.0
     - ruff@0.12.7:
         commands:
           - lint
