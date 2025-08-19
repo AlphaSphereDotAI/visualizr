@@ -1,6 +1,6 @@
 from enum import Enum
 
-from torch.nn import Identity, ReLU, LeakyReLU, SiLU, Tanh
+from torch.nn import Identity, LeakyReLU, ReLU, SiLU, Tanh
 
 
 class TrainMode(Enum):

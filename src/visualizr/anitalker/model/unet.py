@@ -1,9 +1,9 @@
 from dataclasses import dataclass
-from typing import NamedTuple, Tuple, Optional
+from typing import NamedTuple, Optional, Tuple
 
 import torch as th
-from torch.nn.functional import interpolate
 from torch import nn
+from torch.nn.functional import interpolate
 
 from visualizr.anitalker.config_base import BaseConfig
 from visualizr.anitalker.model.blocks import (

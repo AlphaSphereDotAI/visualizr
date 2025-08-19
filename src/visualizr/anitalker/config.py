@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from os import path
-from typing import Literal, Tuple, Optional
+from typing import Literal, Optional, Tuple
 
 from torch import distributed
 from torch.multiprocessing import get_context

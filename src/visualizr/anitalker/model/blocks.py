@@ -7,8 +7,8 @@ from typing import Optional
 
 import numpy as np
 import torch as th
-from torch.nn.functional import interpolate
 from torch import nn
+from torch.nn.functional import interpolate
 
 from visualizr.anitalker.config_base import BaseConfig
 from visualizr.anitalker.model.nn import (
