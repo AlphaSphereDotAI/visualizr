@@ -15,7 +15,6 @@ dependencies = [
     "loguru>=0.7.3",
     "moviepy>=1.0.3,<1.1.0",
     "numpy>=1.26.3,<2.0.0",
-    "opencv-python-headless>=4.11.0.86",
     "python-speech-features>=0.6",
     "pytorch-lightning>=2.3.3",
     "realesrgan>=0.3.0",
@@ -23,6 +22,11 @@ dependencies = [
     "torchaudio>=2.8.0,<2.8.1",
     "torchvision>=0.16.2,<0.16.3",
     "transformers>=4.19.2,<4.20.0",
+]
+classifiers = [
+    'Environment :: GPU :: NVIDIA CUDA :: 11.8',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.10',
 ]
 
 [build-system]
@@ -50,4 +54,4 @@ name = "pytorch-cu118"
 url = "https://download.pytorch.org/whl/cu118"
 
 [dependency-groups]
-dev = ["pytest-emoji>=0.2.0", "pytest-md>=0.2.0", "pytest-mergify>=2025.8.5.1"]
+dev = ["pytest-emoji>=0.2.0", "pytest-md>=0.2.0", "pytest-mergify==2025.8.1.1"]
