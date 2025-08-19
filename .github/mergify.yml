@@ -14,13 +14,6 @@ pull_request_rules:
       - files = .trunk/trunk.yaml
     actions:
       merge:
-  - name: Merge pull request when GitHub actions are updated
-    conditions:
-      - author = renovate[bot]
-      - head = renovate/**
-      - files = .github/workflows/**
-    actions:
-      merge:
   - name: Comment when a pull request is merged
     conditions:
       - merged
