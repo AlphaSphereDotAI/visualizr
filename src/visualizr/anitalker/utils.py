@@ -34,15 +34,15 @@ def frames_to_video(
     )
 
 
-def load_image(filename: str, size: int) -> ndarray:
-    img: Image.Image = Image.open(filename).convert("RGB")
+def load_image(img_path: Path, size: int) -> ndarray:
+    img: Image.Image = Image.open(img_path).convert("RGB")
     img_resized: Image.Image = img.resize((size, size))
     img_np: ndarray = asarray(img_resized)
     img_transposed: ndarray = transpose(img_np, (2, 0, 1))  # 3 x 256 x 256
     return img_transposed / 255.0
 
 
-def img_preprocessing(img_path: str, size: int) -> Tensor:
+def img_preprocessing(img_path: Path, size: int) -> Tensor:
     img_np: ndarray = load_image(img_path, size)  # [0, 1]
     img: Tensor = from_numpy(img_np).unsqueeze(0).float()  # [0, 1]
     normalized_image: Tensor = (img - 0.5) * 2.0  # [-1, 1]

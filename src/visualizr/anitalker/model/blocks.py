@@ -3,11 +3,12 @@ from abc import abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 from numbers import Number
+from typing import Optional
 
 import numpy as np
 import torch as th
-import torch.nn.functional as F
 from torch import nn
+from torch.nn.functional import interpolate
 
 from visualizr.anitalker.config_base import BaseConfig
 from visualizr.anitalker.model.nn import (
@@ -25,15 +26,11 @@ class ScaleAt(Enum):
 
 
 class TimestepBlock(nn.Module):
-    """
-    Any module where forward() takes timestep embeddings as a second argument.
-    """
+    """Any module where forward() takes timestep embeddings as a second argument."""
 
     @abstractmethod
     def forward(self, x, emb=None, cond=None, lateral=None):
-        """
-        Apply the module to `x` given `emb` timestep embeddings.
-        """
+        """Apply the module to `x` given `emb` timestep embeddings."""
 
 
 class TimestepEmbedSequential(nn.Sequential, TimestepBlock):
@@ -56,26 +53,26 @@ class ResBlockConfig(BaseConfig):
     channels: int
     emb_channels: int
     dropout: float
-    out_channels: int = None
-    # condition the resblock with time (and encoder's output)
+    out_channels: Optional[int] = None
+    # condition the resblock with time and encoder's output
     use_condition: bool = True
-    # whether to use 3x3 conv for skip path when the channels aren't matched
+    # whether to use 3×3 conv for a skip path when the channels aren't matched.
     use_conv: bool = False
-    # dimension of conv (always 2 = 2d)
+    # dimension of conv (always 2 = 2D)
     dims: int = 2
     # gradient checkpoint
     use_checkpoint: bool = False
     up: bool = False
     down: bool = False
-    # whether to condition with both time & encoder's output
+    # whether to condition with both time and encoder's output
     two_cond: bool = False
     # number of encoders' output channels
-    cond_emb_channels: int = None
+    cond_emb_channels: Optional[int] = None
     # suggest: False
     has_lateral: bool = False
-    lateral_channels: int = None
-    # whether to init the convolution with zero weights
-    # this is default from BeatGANs and seems to help learning
+    lateral_channels: Optional[int] = None
+    # if to init the convolution with zero weights,
+    # this is defaulted from BeatGANs and seems to help learning.
     use_zero_module: bool = True
 
     def __post_init__(self):
@@ -90,16 +87,17 @@ class ResBlock(TimestepBlock):
     """
     A residual block that can optionally change the number of channels.
 
-    total layers:
+    Total layers:
         in_layers
-        - norm
-        - act
-        - conv
+            norm
+            act
+            conv
         out_layers
-        - norm
-        - (modulation)
-        - act
-        - conv
+            norm
+            (modulation)
+            act
+            conv
+
     """
 
     def __init__(self, conf: ResBlockConfig):
@@ -132,7 +130,7 @@ class ResBlock(TimestepBlock):
         # OUT LAYERS CONDITIONS
         #############################
         if conf.use_condition:
-            # condition layers for the out_layers
+            # condition layers for the `out_layers`
             self.emb_layers = nn.Sequential(
                 nn.SiLU(),
                 linear(conf.emb_channels, 2 * conf.out_channels),
@@ -151,8 +149,7 @@ class ResBlock(TimestepBlock):
                 conf.dims, conf.out_channels, conf.out_channels, 3, padding=1
             )
             if conf.use_zero_module:
-                # zere out the weights
-                # it seems to help training
+                # zero out the weights, it seems to help training
                 conv = zero_module(conv)
 
             # construct the layers
@@ -174,7 +171,7 @@ class ResBlock(TimestepBlock):
         # SKIP LAYERS
         #############################
         if conf.out_channels == conf.channels:
-            # cannot be used with gatedconv, also gatedconv is alsways used as the first block
+            # can't be used with `gatedconv`, also `gatedconv` is always used as the first block.
             self.skip_connection = nn.Identity()
         else:
             if conf.use_conv:
@@ -213,11 +210,11 @@ class ResBlock(TimestepBlock):
     ):
         """
         Args:
-            lateral: required if "has_lateral" and non-gated, with gated, it can be supplied optionally
+            lateral: required if `has_lateral` and non-gated, with gated, it can be supplied optionally.
         """
         if self.conf.has_lateral:
             # lateral may be supplied even if it doesn't require
-            # the model will take the lateral only if "has_lateral"
+            # the model will take the lateral only if `has_lateral`
             assert lateral is not None
             x = th.cat([x, lateral], dim=1)
 
@@ -231,23 +228,17 @@ class ResBlock(TimestepBlock):
             h = self.in_layers(x)
 
         if self.conf.use_condition:
-            # it's possible that the network may not receieve the time emb
+            # it's possible that the network may not receive the time emb
             # this happens with autoenc and setting the time_at
-            if emb is not None:
-                emb_out = self.emb_layers(emb).type(h.dtype)
-            else:
-                emb_out = None
-
+            emb_out = self.emb_layers(emb).type(h.dtype) if emb is not None else None
             if self.conf.two_cond:
                 # it's possible that the network is two_cond
-                # but it doesn't get the second condition
+                # but it doesn't get the second condition,
                 # in which case, we ignore the second condition
-                # and treat as if the network has one condition
-                if cond is None:
-                    cond_out = None
-                else:
-                    cond_out = self.cond_emb_layers(cond).type(h.dtype)
-
+                # and treat as if the network has one condition.
+                cond_out = (
+                    None if cond is None else self.cond_emb_layers(cond).type(h.dtype)
+                )
                 if cond_out is not None:
                     while len(cond_out.shape) < len(h.shape):
                         cond_out = cond_out[..., None]
@@ -260,9 +251,7 @@ class ResBlock(TimestepBlock):
                 emb=emb_out,
                 cond=cond_out,
                 layers=self.out_layers,
-                scale_bias=1,
                 in_channels=self.conf.out_channels,
-                up_down_layer=None,
             )
 
         return self.skip_connection(x) + h
@@ -298,7 +287,7 @@ def apply_conditions(
         # time first
         scale_shifts = [emb, cond]
     else:
-        # "cond" is not used with single cond mode
+        # `cond` is not used with a single cond mode.
         scale_shifts = [emb]
 
     # support scale, shift or shift only
@@ -307,32 +296,28 @@ def apply_conditions(
             # special case: the condition is not provided
             a = None
             b = None
+        elif each.shape[1] == in_channels * 2:
+            a, b = th.chunk(each, 2, dim=1)
         else:
-            if each.shape[1] == in_channels * 2:
-                a, b = th.chunk(each, 2, dim=1)
-            else:
-                a = each
-                b = None
+            a = each
+            b = None
         scale_shifts[i] = (a, b)
 
     # condition scale bias could be a list
     if isinstance(scale_bias, Number):
         biases = [scale_bias] * len(scale_shifts)
-    else:
-        # a list
-        biases = scale_bias
 
-    # default, the scale & shift are applied after the group norm but BEFORE SiLU
+    # by default, the scale and shift are applied after the group norm but BEFORE `SiLU`.
     pre_layers, post_layers = layers[0], layers[1:]
 
-    # spilt the post layer to be able to scale up or down before conv
-    # post layers will contain only the conv
+    # spilt the post-layer to be able to scale up or down before conv
+    # post-layers will contain only the conv
     mid_layers, post_layers = post_layers[:-2], post_layers[-2:]
 
     h = pre_layers(h)
-    # scale and shift for each condition
+    # `scale` and `shift` for each condition
     for i, (scale, shift) in enumerate(scale_shifts):
-        # if scale is None, it indicates that the condition is not provided
+        # if `scale` is None, it indicates that the condition is not provided.
         if scale is not None:
             h = h * (biases[i] + scale)
             if shift is not None:
@@ -350,9 +335,9 @@ class Upsample(nn.Module):
     """
     An upsampling layer with an optional convolution.
 
-    :param channels: channels in the inputs and outputs.
-    :param use_conv: a bool determining if a convolution is applied.
-    :param dims: determines if the signal is 1D, 2D, or 3D. If 3D, then
+    :param channels: Channels in the inputs and outputs.
+    :param use_conv: A bool determining if a convolution is applied.
+    :param dims: Determines if the signal is 1D, 2D, or 3D. If 3D, then
                  upsampling occurs in the inner-two dimensions.
     """
 
@@ -368,11 +353,9 @@ class Upsample(nn.Module):
     def forward(self, x):
         assert x.shape[1] == self.channels
         if self.dims == 3:
-            x = F.interpolate(
-                x, (x.shape[2], x.shape[3] * 2, x.shape[4] * 2), mode="nearest"
-            )
+            x = interpolate(x, (x.shape[2], x.shape[3] * 2, x.shape[4] * 2))
         else:
-            x = F.interpolate(x, scale_factor=2, mode="nearest")
+            x = interpolate(x, scale_factor=2)
         if self.use_conv:
             x = self.conv(x)
         return x
@@ -382,9 +365,9 @@ class Downsample(nn.Module):
     """
     A downsampling layer with an optional convolution.
 
-    :param channels: channels in the inputs and outputs.
-    :param use_conv: a bool determining if a convolution is applied.
-    :param dims: determines if the signal is 1D, 2D, or 3D. If 3D, then
+    :param channels: Channels in the inputs and outputs.
+    :param use_conv: A bool determining if a convolution is applied.
+    :param dims: Determines if the signal is 1D, 2D, or 3D. If 3D, then
                  downsampling occurs in the inner-two dimensions.
     """
 
@@ -462,15 +445,17 @@ def count_flops_attn(model, _x, y):
     A counter for the `thop` package to count the operations in an
     attention operation.
     Meant to be used like:
+    ```
         macs, params = thop.profile(
             model,
             inputs=(inputs, timestamps),
             custom_ops={QKVAttention: QKVAttention.count_flops},
         )
+    ```
     """
     b, c, *spatial = y[0].shape
     num_spatial = int(np.prod(spatial))
-    # We perform two matmuls with the same number of ops.
+    # We perform two matmul with the same number of ops.
     # The first computes the weight matrix, the second computes
     # the combination of the value vectors.
     matmul_ops = 2 * b * (num_spatial**2) * c
@@ -478,9 +463,7 @@ def count_flops_attn(model, _x, y):
 
 
 class QKVAttentionLegacy(nn.Module):
-    """
-    A module which performs QKV attention. Matches legacy QKVAttention + input/ouput heads shaping
-    """
+    """A module, which performs QKV attention. Matches legacy QKVAttention + input/output heads shaping."""
 
     def __init__(self, n_heads):
         super().__init__()
@@ -490,17 +473,16 @@ class QKVAttentionLegacy(nn.Module):
         """
         Apply QKV attention.
 
-        :param qkv: an [N x (H * 3 * C) x T] tensor of Qs, Ks, and Vs.
-        :return: an [N x (H * C) x T] tensor after attention.
+        :param qkv: An `[N x (H × 3 × C) x T]` tensor of Qs, Ks, and Vs.
+        :return: an `[N x (H × C) x T]` tensor after attention.
         """
         bs, width, length = qkv.shape
         assert width % (3 * self.n_heads) == 0
         ch = width // (3 * self.n_heads)
         q, k, v = qkv.reshape(bs * self.n_heads, ch * 3, length).split(ch, dim=1)
         scale = 1 / math.sqrt(math.sqrt(ch))
-        weight = th.einsum(
-            "bct,bcs->bts", q * scale, k * scale
-        )  # More stable with f16 than dividing afterwards
+        # More stable with f16 than dividing afterward
+        weight = th.einsum("bct,bcs->bts", q * scale, k * scale)
         weight = th.softmax(weight.float(), dim=-1).type(weight.dtype)
         a = th.einsum("bts,bcs->bct", weight, v)
         return a.reshape(bs, -1, length)
@@ -511,9 +493,7 @@ class QKVAttentionLegacy(nn.Module):
 
 
 class QKVAttention(nn.Module):
-    """
-    A module which performs QKV attention and splits in a different order.
-    """
+    """A module, which performs QKV attention and splits in a different order."""
 
     def __init__(self, n_heads):
         super().__init__()
@@ -523,8 +503,8 @@ class QKVAttention(nn.Module):
         """
         Apply QKV attention.
 
-        :param qkv: an [N x (3 * H * C) x T] tensor of Qs, Ks, and Vs.
-        :return: an [N x (H * C) x T] tensor after attention.
+        :param qkv: An `[N x (3 × H × C) x T]` tensor of Qs, Ks, and Vs.
+        :return: An `[N x (H × C) x T]` tensor after attention.
         """
         bs, width, length = qkv.shape
         assert width % (3 * self.n_heads) == 0
@@ -535,7 +515,7 @@ class QKVAttention(nn.Module):
             "bct,bcs->bts",
             (q * scale).view(bs * self.n_heads, ch, length),
             (k * scale).view(bs * self.n_heads, ch, length),
-        )  # More stable with f16 than dividing afterwards
+        )  # More stable with f16 than dividing afterward
         weight = th.softmax(weight.float(), dim=-1).type(weight.dtype)
         a = th.einsum("bts,bcs->bct", weight, v.reshape(bs * self.n_heads, ch, length))
         return a.reshape(bs, -1, length)
@@ -570,7 +550,7 @@ class AttentionPool2d(nn.Module):
         b, c, *_spatial = x.shape
         x = x.reshape(b, c, -1)  # NC(HW)
         x = th.cat([x.mean(dim=-1, keepdim=True), x], dim=-1)  # NC(HW+1)
-        x = x + self.positional_embedding[None, :, :].to(x.dtype)  # NC(HW+1)
+        x += self.positional_embedding[None, :, :].to(x.dtype)  # NC(HW+1)
         x = self.qkv_proj(x)
         x = self.attention(x)
         x = self.c_proj(x)
