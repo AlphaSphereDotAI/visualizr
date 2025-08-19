@@ -198,15 +198,13 @@ class TrainConfig(BaseConfig):
     def _make_diffusion_conf(self, t: int):
         if self.diffusion_type != "beatgans":
             raise NotImplementedError()
-        # can use T < self.T for evaluation
+        # can use t < `self.t` for evaluation
         # follows the guided-diffusion repo conventions
-        # t's are evenly spaced
+        # `t` is evenly spaced.
         if self.beatgans_gen_type == GenerativeType.ddpm:
             section_counts = [t]
         elif self.beatgans_gen_type == GenerativeType.ddim:
             section_counts = f"ddim{t}"
-        else:
-            raise NotImplementedError()
         return SpacedDiffusionBeatGansConfig(
             gen_type=self.beatgans_gen_type,
             model_type=self.model_type,
@@ -222,15 +220,13 @@ class TrainConfig(BaseConfig):
         )
 
     def _make_latent_diffusion_conf(self, t: int):
-        # can use T < self.T for evaluation
+        # can use `t` < `self.t` for evaluation
         # follows the guided-diffusion repo conventions
-        # t's are evenly spaced
+        # `t` is evenly spaced.
         if self.latent_gen_type == GenerativeType.ddpm:
             section_counts = [t]
         elif self.latent_gen_type == GenerativeType.ddim:
             section_counts = f"ddim{t}"
-        else:
-            raise NotImplementedError()
         return SpacedDiffusionBeatGansConfig(
             train_pred_xstart_detach=self.train_pred_xstart_detach,
             gen_type=self.latent_gen_type,

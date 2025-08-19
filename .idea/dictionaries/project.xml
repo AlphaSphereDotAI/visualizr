@@ -25,11 +25,13 @@
       <w>lrelu</w>
       <w>markdownlint</w>
       <w>mergify</w>
+      <w>mergifyio</w>
       <w>pavelzw</w>
       <w>randn</w>
       <w>recipm</w>
       <w>silu</w>
       <w>taocode</w>
+      <w>xstart</w>
     </words>
   </dictionary>
 </component>
