@@ -161,7 +161,6 @@ class GaussianDiffusionBeatGans:
             if self.loss_type == LossType.mse:
                 if self.model_mean_type == ModelMeanType.eps:
                     direction_loss = mean_flat((target - predicted_direction) ** 2)
-                    # import pdb;pdb.set_trace()
                     location_loss = mean_flat(
                         (face_location.unsqueeze(-1) - predicted_location) ** 2
                     )
@@ -171,17 +170,12 @@ class GaussianDiffusionBeatGans:
                     terms["mse"] = (
                         direction_loss + location_loss + scale_loss + pose_loss
                     )
-
-                else:
-                    raise NotImplementedError()
             elif self.loss_type == LossType.l1:
                 # (n, c, h, w) => (n, )
                 terms["mse"] = mean_flat((target - predicted_direction).abs())
-            else:
-                raise NotImplementedError()
 
             if "vb" in terms:
-                # if learning the variance also use the vlb loss
+                # if learning the variance, also use the vlb loss
                 terms["loss"] = terms["mse"] + terms["vb"]
             else:
                 terms["loss"] = terms["mse"]
@@ -229,8 +223,6 @@ class GaussianDiffusionBeatGans:
                 model_kwargs=model_kwargs,
                 progress=progress,
             )
-        else:
-            raise NotImplementedError()
 
     def q_mean_variance(self, x_start, t):
         """
@@ -377,9 +369,7 @@ class GaussianDiffusionBeatGans:
         def process_xstart(x):
             if denoised_fn is not None:
                 x = denoised_fn(x)
-            if clip_denoised:
-                return x.clamp(-1, 1)
-            return x
+            return x.clamp(-1, 1) if clip_denoised else x
 
         if self.model_mean_type in [
             ModelMeanType.eps,
@@ -388,8 +378,6 @@ class GaussianDiffusionBeatGans:
                 pred_xstart = process_xstart(
                     self._predict_xstart_from_eps(x_t=x, t=t, eps=model_output)
                 )
-            else:
-                raise NotImplementedError()
             model_mean, _, _ = self.q_posterior_mean_variance(
                 x_start=pred_xstart, x_t=x, t=t
             )
@@ -463,10 +451,7 @@ class GaussianDiffusionBeatGans:
         This uses the conditioning strategy from Sohl-Dickstein et al. (2015).
         """
         gradient = cond_fn(x, self._scale_timesteps(t), **model_kwargs)
-        new_mean = (
-            p_mean_var["mean"].float() + p_mean_var["variance"] * gradient.float()
-        )
-        return new_mean
+        return p_mean_var["mean"].float() + p_mean_var["variance"] * gradient.float()
 
     def condition_score(self, cond_fn, p_mean_var, x, t, model_kwargs=None):
         """
@@ -620,7 +605,6 @@ class GaussianDiffusionBeatGans:
             indices = tqdm(indices)
 
         for i in indices:
-            # t = th.tensor([i] * shape[0], device=device)
             t = th.tensor([i] * len(img), device=device)
             with th.no_grad():
                 out = self.p_sample(
@@ -841,24 +825,13 @@ class GaussianDiffusionBeatGans:
             indices = tqdm(indices)
 
         for i in indices:
-            if isinstance(model_kwargs, list):
-                # index dependent model kwargs
-                # (T-1, ..., 0)
-                _kwargs = model_kwargs[i]
-            else:
-                _kwargs = model_kwargs
-
+            _kwargs = (
+                model_kwargs[i] if isinstance(model_kwargs, list) else model_kwargs
+            )
             t = th.tensor([i] * len(img), device=device)
             with th.no_grad():
                 out = self.ddim_sample(
-                    model,
-                    img,
-                    t,
-                    clip_denoised=clip_denoised,
-                    denoised_fn=denoised_fn,
-                    cond_fn=cond_fn,
-                    model_kwargs=_kwargs,
-                    eta=eta,
+                    model, img, t, clip_denoised, denoised_fn, cond_fn, _kwargs, eta
                 )
                 out["t"] = t
                 yield out

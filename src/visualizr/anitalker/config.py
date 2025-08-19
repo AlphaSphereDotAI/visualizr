@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from os import path
-from typing import Literal, Tuple
+from typing import Literal, Tuple, Optional
 
 from torch import distributed
 from torch.multiprocessing import get_context
@@ -58,21 +58,21 @@ class TrainConfig(BaseConfig):
     train_interpolate_prob: float = 0
     train_interpolate_img: bool = False
     manipulate_mode: ManipulateMode = ManipulateMode.celebahq_all
-    manipulate_cls: str = None
-    manipulate_shots: int = None
+    manipulate_cls: Optional[str] = None
+    manipulate_shots: Optional[int] = None
     manipulate_loss: ManipulateLossType = ManipulateLossType.bce
     manipulate_znormalize: bool = False
     manipulate_seed: int = 0
     accum_batches: int = 1
     autoenc_mid_attn: bool = True
     batch_size: int = 16
-    batch_size_eval: int = None
+    batch_size_eval: Optional[int] = None
     beatgans_gen_type: GenerativeType = GenerativeType.ddim
     beatgans_loss_type: LossType = LossType.mse
     beatgans_model_mean_type: ModelMeanType = ModelMeanType.eps
     beatgans_model_var_type: ModelVarType = ModelVarType.fixed_large
     beatgans_rescale_timesteps: bool = False
-    latent_infer_path: str = None
+    latent_infer_path: Optional[str] = None
     latent_znormalize: bool = False
     latent_gen_type: GenerativeType = GenerativeType.ddim
     latent_loss_type: LossType = LossType.mse
@@ -84,8 +84,8 @@ class TrainConfig(BaseConfig):
     latent_beta_scheduler: str = "linear"
     beta_scheduler: str = "linear"
     data_name: str = ""
-    data_val_name: str = None
-    diffusion_type: str = None
+    data_val_name: Optional[str] = None
+    diffusion_type: Optional[str] = None
     dropout: float = 0.1
     ema_decay: float = 0.9999
     eval_num_images: int = 5_000
@@ -99,11 +99,11 @@ class TrainConfig(BaseConfig):
     optimizer: OptimizerType = OptimizerType.adam
     weight_decay: float = 0
     model_conf: ModelConfig = None
-    model_name: ModelName = None
-    model_type: ModelType = None
-    net_attn: Tuple[int] = None
+    model_name: Optional[ModelName] = None
+    model_type: Optional[ModelType] = None
+    net_attn: Optional[Tuple[int]] = None
     net_beatgans_attn_head: int = 1
-    # not necessarily the same as the the number of style channels
+    # not necessarily the same as the number of style channels
     net_beatgans_embed_channels: int = 512
     net_resblock_updown: bool = True
     net_enc_use_time: bool = False
@@ -112,33 +112,33 @@ class TrainConfig(BaseConfig):
     net_beatgans_resnet_two_cond: bool = False
     net_beatgans_resnet_use_zero_module: bool = True
     net_beatgans_resnet_scale_at: ScaleAt = ScaleAt.after_norm
-    net_beatgans_resnet_cond_channels: int = None
-    net_ch_mult: Tuple[int] = None
+    net_beatgans_resnet_cond_channels: Optional[int] = None
+    net_ch_mult: Optional[Tuple[int]] = None
     net_ch: int = 64
-    net_enc_attn: Tuple[int] = None
-    net_enc_k: int = None
+    net_enc_attn: Optional[Tuple[int]] = None
+    net_enc_k: Optional[int] = None
     # number of resblocks for the encoder (half-unet)
     net_enc_num_res_blocks: int = 2
-    net_enc_channel_mult: Tuple[int] = None
+    net_enc_channel_mult: Optional[Tuple[int]] = None
     net_enc_grad_checkpoint: bool = False
     net_autoenc_stochastic: bool = False
     net_latent_activation: Activation = Activation.silu
     net_latent_channel_mult: Tuple[int] = (1, 2, 4)
     net_latent_condition_bias: float = 0
     net_latent_dropout: float = 0
-    net_latent_layers: int = None
+    net_latent_layers: Optional[int] = None
     net_latent_net_last_act: Activation = Activation.none
     net_latent_net_type: LatentNetType = LatentNetType.none
     net_latent_num_hid_channels: int = 1024
     net_latent_num_time_layers: int = 2
-    net_latent_skip_layers: Tuple[int] = None
+    net_latent_skip_layers: Optional[Tuple[int]] = None
     net_latent_time_emb_channels: int = 64
     net_latent_use_norm: bool = False
     net_latent_time_last_act: bool = False
     net_num_res_blocks: int = 2
     # number of ResBlocks for the UNET
-    net_num_input_res_blocks: int = None
-    net_enc_num_cls: int = None
+    net_num_input_res_blocks: Optional[int] = None
+    net_enc_num_cls: Optional[int] = None
     num_workers: int = 4
     parallel: bool = False
     postfix: str = ""
@@ -151,17 +151,26 @@ class TrainConfig(BaseConfig):
     T: int = 1_000
     total_samples: int = 10_000_000
     warmup: int = 0
-    pretrain: PretrainConfig = None
-    continue_from: PretrainConfig = None
-    eval_programs: Tuple[str] = None
-    # if present load the checkpoint from this path instead
-    eval_path: str = None
+    pretrain: Optional[PretrainConfig] = None
+    continue_from: Optional[PretrainConfig] = None
+    eval_programs: Optional[Tuple[str]] = None
+    # if present, load the checkpoint from this path instead
+    eval_path: Optional[str] = None
     base_dir: str = "checkpoints"
     use_cache_dataset: bool = False
     data_cache_dir: str = path.expanduser("~/cache")
     work_cache_dir: str = path.expanduser("~/mycache")
     # to be overridden
     name: str = ""
+    audio_hz = None
+    db_name = None
+    pose_prefix = None
+    motion_latents_prefix = None
+    raw_audio_prefix = None
+    audio_prefix = None
+    frame_jpgs = None
+    lmd_feats_prefix = None
+    window_size = None
 
     def __post_init__(self):
         self.batch_size_eval = self.batch_size_eval or self.batch_size
@@ -182,7 +191,7 @@ class TrainConfig(BaseConfig):
     @property
     def fid_cache(self):
         # we try to use the local dirs to reduce the load over network drives
-        # hopefully, this would reduce the disconnection problems with sshfs
+        # hopefully, this would reduce the disconnection problems with sshfs.
         return f"{self.work_cache_dir}/eval_images/{self.data_name}_size{self.img_size}_{self.eval_num_images}"
 
     @property
@@ -192,7 +201,7 @@ class TrainConfig(BaseConfig):
     @property
     def generate_dir(self):
         # we try to use the local dirs to reduce the load over network drives
-        # hopefully, this would reduce the disconnection problems with sshfs
+        # hopefully, this would reduce the disconnection problems with sshfs.
         return f"{self.work_cache_dir}/gen_images/{self.name}"
 
     def _make_diffusion_conf(self, t: int):
@@ -266,7 +275,7 @@ class TrainConfig(BaseConfig):
         # latent can have different eval T
         return self._make_latent_diffusion_conf(self.latent_T_eval)
 
-    def make_dataset(self, path=None, **kwargs):
+    def make_dataset(self):
         return LatentDataLoader(
             self.window_size,
             self.frame_jpgs,
@@ -290,7 +299,7 @@ class TrainConfig(BaseConfig):
     ):
         sampler: DistributedSampler | None = None
         if parallel and distributed.is_initialized():
-            # drop last to make sure that there are no added special indexes
+            # drop last to make sure that there are no added special indexes.
             sampler = DistributedSampler(dataset, shuffle=shuffle, drop_last=True)
         return DataLoader(
             dataset,
@@ -357,9 +366,6 @@ class TrainConfig(BaseConfig):
                     num_time_layers=self.net_latent_num_time_layers,
                     time_last_act=self.net_latent_time_last_act,
                 )
-            else:
-                raise NotImplementedError()
-
             self.model_conf = cls(
                 attention_resolutions=self.net_attn,
                 channel_mult=self.net_ch_mult,

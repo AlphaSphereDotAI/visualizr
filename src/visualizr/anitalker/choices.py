@@ -1,6 +1,6 @@
 from enum import Enum
 
-from torch import nn
+from torch.nn import Identity, ReLU, LeakyReLU, SiLU, Tanh
 
 
 class TrainMode(Enum):
@@ -163,14 +163,12 @@ class Activation(Enum):
 
     def get_act(self):
         if self == Activation.none:
-            return nn.Identity()
+            return Identity()
         elif self == Activation.relu:
-            return nn.ReLU()
+            return ReLU()
         elif self == Activation.lrelu:
-            return nn.LeakyReLU(negative_slope=0.2)
+            return LeakyReLU(negative_slope=0.2)
         elif self == Activation.silu:
-            return nn.SiLU()
+            return SiLU()
         elif self == Activation.tanh:
-            return nn.Tanh()
-        else:
-            raise NotImplementedError()
+            return Tanh()
