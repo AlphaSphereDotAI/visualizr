@@ -1,14 +1,11 @@
-from os import path, remove
 from pathlib import Path
-from sys import exit
+from sys import exit as sys_exit
 from time import time
 from typing import Literal, Optional
 
 from gradio import Markdown, Video
 from huggingface_hub import snapshot_download
-from imageio import mimsave
 from librosa import load as librosa_load
-from moviepy.editor import AudioFileClip, VideoFileClip
 from numpy import (
     ndarray,
     array as np_array,
@@ -23,24 +20,23 @@ from torch import (
     Tensor,
     cat as torch_cat,
     clamp as torch_clamp,
-    load as torch_load,
     randn as torch_randn,
     zeros as torch_zeros,
 )
 from tqdm import tqdm
 from transformers import HubertModel, Wav2Vec2FeatureExtractor
 
-from visualizr.anitalker.config import TrainConfig
-from visualizr.anitalker.experiment import LitModel
-from visualizr.anitalker.face_sr.face_enhancer import enhancer_list
 from visualizr.anitalker.LIA_Model import LIA_Model
-from visualizr.anitalker.templates import ffhq256_autoenc
+from visualizr.anitalker.config import TrainConfig
 from visualizr.anitalker.utils import (
     check_package_installed,
     frames_to_video,
     img_preprocessing,
     remove_frames,
     saved_image,
+    load_stage_2_model,
+    init_configuration,
+    super_resolution,
 )
 from visualizr.settings import Settings, logger
 
@@ -108,35 +104,53 @@ class Model:
         step_t: int,
         seed: int,
     ) -> tuple[Video | None, Video | None, Markdown]:
-        if not image_path.exists():
-            logger.exception(f"{image_path} does not exist!")
-            exit(0)
-        if not audio_path.exists():
-            logger.exception(f"{audio_path} does not exist!")
-            exit(0)
-
-        image_name: str = image_path.stem
-        audio_name: str = audio_path.stem
+        if (
+            image_path is None
+            or not isinstance(image_path, Path)
+            or not image_path.exists()
+        ):
+            logger.error(f"{image_path} does not exist or is invalid!")
+            return (
+                None,
+                None,
+                Markdown(
+                    f"Error: image_path '{image_path}' does not exist or is invalid."
+                ),
+            )
+        if (
+            audio_path is None
+            or not isinstance(audio_path, Path)
+            or not audio_path.exists()
+        ):
+            logger.error(f"{audio_path} does not exist or is invalid!")
+            return (
+                None,
+                None,
+                Markdown(
+                    f"Error: audio_path '{audio_path}' does not exist or is invalid."
+                ),
+            )
 
         predicted_video_256_path: Path = (
-            self.settings.directory.results / f"{image_name}-{audio_name}.mp4"
+            self.settings.directory.results / f"{image_path.stem}-{audio_path.stem}.mp4"
         )
         predicted_video_512_path: Path = (
-            self.settings.directory.results / f"{image_name}-{audio_name}_SR.mp4"
+            self.settings.directory.results
+            / f"{image_path.stem}-{audio_path.stem}_SR.mp4"
         )
 
         lia: LIA_Model = self._load_stage_1_model()
 
-        conf: TrainConfig = self._init_conf(infer_type, seed)
+        conf: TrainConfig = init_configuration(
+            infer_type, seed, 2, self.settings.model.motion_dim
+        )
 
         img_source: Tensor = img_preprocessing(image_path, 256).to("cuda")
         one_shot_lia_start, one_shot_lia_direction, feats = (
             lia.get_start_direction_code(img_source, img_source, img_source, img_source)
         )
 
-        model = self._load_stage_2_model(
-            conf, self._get_checkpoint_stage_2_path(infer_type)
-        )
+        model = load_stage_2_model(conf, self._get_checkpoint_stage_2_path(infer_type))
 
         frame_end: int = 0
         audio_driven: Optional[Tensor] = None
@@ -166,13 +180,13 @@ class Model:
             # Hubert features
             if not check_package_installed("transformers"):
                 logger.exception("Please install transformers module first.")
-                exit(0)
+                sys_exit(0)
             hubert_model_path = "ckpts/chinese-hubert-large"
             if not Path(hubert_model_path).exists():
                 logger.exception(
                     "Please download the hubert weight into the ckpts path first."
                 )
-                exit(0)
+                sys_exit(0)
             logger.info(
                 "You did not extract the audio features in advance, "
                 + "extracting online now, which will increase processing delay"
@@ -290,22 +304,12 @@ class Model:
         # Enhancer
         if face_sr and check_package_installed("gfpgan"):
             # Super-resolution
-            mimsave(
+            super_resolution(
                 predicted_video_512_path / self.settings.directory.tmp_extension,
-                enhancer_list(predicted_video_256_path, bg_upsampler=None),
-                fps=25.0,
+                predicted_video_256_path,
+                predicted_video_512_path,
             )
-            # Merge audio and video
-            video_clip = VideoFileClip(
-                predicted_video_512_path / self.settings.directory.tmp_extension
-            )
-            audio_clip = AudioFileClip(predicted_video_256_path)
-            final_clip = video_clip.set_audio(audio_clip)
-            final_clip.write_videofile(
-                predicted_video_512_path, codec="libx264", audio_codec="aac"
-            )
-            remove(predicted_video_512_path / self.settings.directory.tmp_extension)
-        if not path.exists(predicted_video_256_path):
+        if not predicted_video_256_path.exists():
             return (
                 None,
                 None,
@@ -334,60 +338,6 @@ class Model:
         lia.load_lightning_model(self.settings.model.checkpoint.stage_1)
         lia.to("cuda")
         return lia
-
-    def _load_stage_2_model(
-        self,
-        conf: TrainConfig,
-        stage_2_checkpoint_path: Path,
-    ) -> LitModel:
-        logger.info("Loading stage 2 model")
-        model = LitModel(conf)
-        state = torch_load(stage_2_checkpoint_path, "cpu")
-        model.load_state_dict(state)
-        model.ema_model.eval()
-        model.ema_model.to("cuda")
-        return model
-
-    def _init_conf(
-        self,
-        infer_type: Literal[
-            "mfcc_full_control",
-            "mfcc_pose_only",
-            "hubert_pose_only",
-            "hubert_audio_only",
-            "hubert_full_control",
-        ],
-        seed: int,
-    ) -> TrainConfig:
-        logger.info("Initializing configuration... ")
-        conf: TrainConfig = ffhq256_autoenc()
-        conf.seed = seed
-        conf.decoder_layers = 2
-        conf.infer_type = infer_type
-        conf.motion_dim = self.settings.model.motion_dim
-        logger.info(f"infer_type: {infer_type}")
-        match infer_type:
-            case "mfcc_full_control":
-                conf.face_location = True
-                conf.face_scale = True
-                conf.mfcc = True
-            case "mfcc_pose_only":
-                conf.face_location = False
-                conf.face_scale = False
-                conf.mfcc = True
-            case "hubert_pose_only":
-                conf.face_location = False
-                conf.face_scale = False
-                conf.mfcc = False
-            case "hubert_audio_only":
-                conf.face_location = False
-                conf.face_scale = False
-                conf.mfcc = False
-            case "hubert_full_control":
-                conf.face_location = True
-                conf.face_scale = True
-                conf.mfcc = False
-        return conf
 
     def _get_checkpoint_stage_2_path(
         self,

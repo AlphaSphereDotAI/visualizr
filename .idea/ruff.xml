@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="RuffConfigService">
+    <option name="alwaysUseGlobalRuff" value="true" />
     <option name="enableRuffLogging" value="true" />
     <option name="globalRuffExecutablePath" value="C:\Users\moham\AppData\Local\Microsoft\WinGet\Packages\astral-sh.ruff_Microsoft.Winget.Source_8wekyb3d8bbwe\ruff.exe" />
     <option name="runRuffOnSave" value="true" />
