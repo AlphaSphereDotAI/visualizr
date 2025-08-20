@@ -49,7 +49,7 @@ class TrainConfig(BaseConfig):
         "hubert_pose_only",
         "hubert_audio_only",
         "hubert_full_control",
-    ]
+    ] = None
     # random seed
     seed: int = 0
     train_mode: TrainMode = TrainMode.diffusion

@@ -93,8 +93,8 @@ class Model:
             "hubert_audio_only",
             "hubert_full_control",
         ],
-        image_path: Path,
-        audio_path: Path,
+        image_path: str,
+        audio_path: str,
         face_sr: bool,
         pose_yaw: float,
         pose_pitch: float,
@@ -104,11 +104,7 @@ class Model:
         step_t: int,
         seed: int,
     ) -> tuple[Video | None, Video | None, Markdown]:
-        if (
-            image_path is None
-            or not isinstance(image_path, Path)
-            or not image_path.exists()
-        ):
+        if image_path is None or not Path(image_path).exists():
             logger.error(f"{image_path} does not exist or is invalid!")
             return (
                 None,
@@ -117,11 +113,7 @@ class Model:
                     f"Error: image_path '{image_path}' does not exist or is invalid."
                 ),
             )
-        if (
-            audio_path is None
-            or not isinstance(audio_path, Path)
-            or not audio_path.exists()
-        ):
+        if audio_path is None or not Path(audio_path).exists():
             logger.error(f"{audio_path} does not exist or is invalid!")
             return (
                 None,
@@ -132,11 +124,12 @@ class Model:
             )
 
         predicted_video_256_path: Path = (
-            self.settings.directory.results / f"{image_path.stem}-{audio_path.stem}.mp4"
+            self.settings.directory.results
+            / f"{Path(image_path).stem}-{Path(audio_path).stem}.mp4"
         )
         predicted_video_512_path: Path = (
             self.settings.directory.results
-            / f"{image_path.stem}-{audio_path.stem}_SR.mp4"
+            / f"{Path(image_path).stem}-{Path(audio_path).stem}_SR.mp4"
         )
 
         lia: LIA_Model = self._load_stage_1_model()
