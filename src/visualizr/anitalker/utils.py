@@ -75,7 +75,7 @@ def load_stage_2_model(conf: TrainConfig, stage_2_checkpoint_path: Path) -> LitM
     try:
         state = torch_load(stage_2_checkpoint_path, map_location="cpu")
     except Exception as e:
-        raise RuntimeError(f"Failed to load checkpoint: {e}")
+        raise RuntimeError(f"Failed to load checkpoint: {e}") from e
     model.load_state_dict(state)
     model.ema_model.eval()
     model.ema_model.to("cuda")
