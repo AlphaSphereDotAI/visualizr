@@ -69,8 +69,13 @@ def remove_frames(frames_path: Path):
 
 def load_stage_2_model(conf: TrainConfig, stage_2_checkpoint_path: Path) -> LitModel:
     logger.info("Loading stage 2 model")
+    if not stage_2_checkpoint_path.exists():
+        raise FileNotFoundError(f"Checkpoint not found: {stage_2_checkpoint_path}")
     model = LitModel(conf)
-    state = torch_load(stage_2_checkpoint_path, "cpu")
+    try:
+        state = torch_load(stage_2_checkpoint_path, map_location="cpu")
+    except Exception as e:
+        raise RuntimeError(f"Failed to load checkpoint: {e}")
     model.load_state_dict(state)
     model.ema_model.eval()
     model.ema_model.to("cuda")
