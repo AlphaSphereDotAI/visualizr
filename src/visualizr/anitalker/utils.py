@@ -124,7 +124,8 @@ def init_configuration(
             return _init_configuration_param(conf, False, False, False)
         case "hubert_full_control":
             return _init_configuration_param(conf, True, True, False)
-
+        case _:
+            raise ValueError(f"Unknown infer_type: {infer_type}")
 
 def super_resolution(
     tmp_predicted_video_512_path: Path,
