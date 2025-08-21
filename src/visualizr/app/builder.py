@@ -409,20 +409,19 @@ class App:
                     step=1,
                     value=self.settings.model.step_t,
                 )
-
             generate_button = generate_button.click(
                 self.generate_video,
                 [
+                    infer_type,
                     image_path,
                     audio_path,
-                    infer_type,
+                    face_sr,
                     pose_yaw,
                     pose_pitch,
                     pose_roll,
                     face_location,
                     face_scale,
                     step_t,
-                    face_sr,
                     seed,
                 ],
                 [
