@@ -20,9 +20,12 @@
       <w>cumprod</w>
       <w>cves</w>
       <w>ddim</w>
+      <w>decouping</w>
       <w>fewshot</w>
       <w>gatedconv</w>
+      <w>gfpga</w>
       <w>ghcr</w>
+      <w>hdtf</w>
       <w>hstack</w>
       <w>jlumbroso</w>
       <w>latentdiffusion</w>
@@ -35,6 +38,7 @@
       <w>recipm</w>
       <w>resblock</w>
       <w>resblocks</w>
+      <w>sched</w>
       <w>silu</w>
       <w>taocode</w>
       <w>vaeddpm</w>

@@ -16,6 +16,7 @@ from visualizr.anitalker.choices import (
 from visualizr.anitalker.config_base import BaseConfig
 from visualizr.anitalker.model import Model
 from visualizr.anitalker.model.nn import mean_flat
+from tqdm import tqdm
 
 
 @dataclass
@@ -352,7 +353,7 @@ class GaussianDiffusionBeatGans:
             ModelVarType.fixed_small,
         ]:
             model_variance, model_log_variance = {
-                # for fixedlarge, we set the initial (log-)variance like so
+                # for `fixed_large`, we set the initial (log-)variance like so
                 # to get a better decoder log likelihood.
                 ModelVarType.fixed_large: (
                     np.append(self.posterior_variance[1], self.betas[1:]),
@@ -600,8 +601,6 @@ class GaussianDiffusionBeatGans:
 
         if progress:
             # Lazy import so that we don't depend on tqdm.
-            from tqdm.auto import tqdm
-
             indices = tqdm(indices)
 
         for i in indices:
@@ -820,8 +819,6 @@ class GaussianDiffusionBeatGans:
 
         if progress:
             # Lazy import so that we don't depend on tqdm.
-            from tqdm.auto import tqdm
-
             indices = tqdm(indices)
 
         for i in indices:

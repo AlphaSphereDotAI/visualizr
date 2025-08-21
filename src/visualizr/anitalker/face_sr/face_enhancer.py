@@ -7,6 +7,8 @@ from tqdm import tqdm
 
 from visualizr.anitalker.face_sr.videoio import load_video_to_cv2
 from visualizr.settings import logger
+from basicsr.archs.rrdbnet_arch import RRDBNet
+from realesrgan import RealESRGANer
 
 
 class GeneratorWithLen(object):
@@ -29,21 +31,24 @@ def enhancer_list(images, method="gfpgan", bg_upsampler="realesrgan"):
 
 
 def enhancer_generator_with_len(images, method="gfpgan", bg_upsampler="realesrgan"):
-    """Provide a generator with a __len__ method so that it can passed to functions that
-    call len()"""
+    """
+    Provide a generator with a __len__ method so that it can be passed to functions that
+    call `len()`
+    """
 
     if os.path.isfile(images):  # handle video to images
         images = load_video_to_cv2(images)
 
     gen = enhancer_generator_no_len(images, method=method, bg_upsampler=bg_upsampler)
-    gen_with_len = GeneratorWithLen(gen, len(images))
-    return gen_with_len
+    return GeneratorWithLen(gen, len(images))
 
 
 def enhancer_generator_no_len(images, method="gfpgan", bg_upsampler="realesrgan"):
-    """Provide a generator function so that all of the enhanced images don't need
+    """
+    Provide a generator function so that all the enhanced images don't need
     to be stored in memory at the same time. This can save tons of RAM compared to
-    the enhancer function."""
+    the enhancer function.
+    """
     if method not in ["gfpgan", "RestoreFormer", "codeformer"]:
         raise ValueError(f"Wrong model version {method}.")
     logger.info("face enhancer....")
@@ -51,7 +56,10 @@ def enhancer_generator_no_len(images, method="gfpgan", bg_upsampler="realesrgan"
         images
     ):  # handle video to images
         images = load_video_to_cv2(images)
-
+    channel_multiplier = None
+    model_name = None
+    url = None
+    arch = None
     # ------------------------ set up GFPGAN restorer ------------------------
     match method:
         case "gfpgan":
@@ -80,23 +88,12 @@ def enhancer_generator_no_len(images, method="gfpgan", bg_upsampler="realesrgan"
             )
             bg_upsampler = None
         else:
-            from basicsr.archs.rrdbnet_arch import RRDBNet
-            from realesrgan import RealESRGANer
-
-            model = RRDBNet(
-                num_in_ch=3,
-                num_out_ch=3,
-                num_feat=64,
-                num_block=23,
-                num_grow_ch=32,
-                scale=2,
-            )
+            model = RRDBNet(num_in_ch=3, num_out_ch=3, scale=2)
             bg_upsampler = RealESRGANer(
                 scale=2,
                 model_path="https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.1/RealESRGAN_x2plus.pth",
                 model=model,
                 tile=400,
-                tile_pad=10,
                 pre_pad=0,
                 half=True,
             )  # need to set False in CPU mode
@@ -104,18 +101,17 @@ def enhancer_generator_no_len(images, method="gfpgan", bg_upsampler="realesrgan"
         bg_upsampler = None
 
     # determine model paths
-    model_path = os.path.join("gfpgan/weights", model_name + ".pth")
+    model_path = os.path.join("gfpgan/weights", f"{model_name}.pth")
 
     if not os.path.isfile(model_path):
-        model_path = os.path.join("checkpoints", model_name + ".pth")
+        model_path = os.path.join("checkpoints", f"{model_name}.pth")
 
     if not os.path.isfile(model_path):
-        # download pre-trained models from url
+        # download pre-trained models from URL
         model_path = url
 
     restorer = GFPGANer(
         model_path=model_path,
-        upscale=2,
         arch=arch,
         channel_multiplier=channel_multiplier,
         bg_upsampler=bg_upsampler,
@@ -126,9 +122,6 @@ def enhancer_generator_no_len(images, method="gfpgan", bg_upsampler="realesrgan"
         img = cv2.cvtColor(images[idx], cv2.COLOR_RGB2BGR)
 
         # restore faces and background if necessary
-        cropped_faces, restored_faces, r_img = restorer.enhance(
-            img, has_aligned=False, only_center_face=False, paste_back=True
-        )
+        _, _, r_img = restorer.enhance(img)
 
-        r_img = cv2.cvtColor(r_img, cv2.COLOR_BGR2RGB)
-        yield r_img
+        yield cv2.cvtColor(r_img, cv2.COLOR_BGR2RGB)

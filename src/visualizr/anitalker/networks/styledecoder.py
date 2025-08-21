@@ -481,11 +481,9 @@ class ToFlow(nn.Module):
         self.conv = ModulatedConv2d(in_channel, 3, 1, style_dim, demodulate=False)
         self.bias = nn.Parameter(torch.zeros(1, 3, 1, 1))
 
-    def forward(
-        self, input, style, feat, skip=None
-    ):  # input 是来自上一层的 feature， style 是 512 的 condition， feat 是来自于 unet 的跳层
+    def forward(self, input, style, feat, skip=None):
         out = self.conv(input, style)
-        out = out + self.bias
+        out += self.bias
 
         # warping
         xs = np.linspace(-1, 1, input.size(2))

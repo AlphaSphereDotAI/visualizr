@@ -1,12 +1,11 @@
 import os
-import random
+from random import randint
 
-import librosa
+from librosa import load as librosa_load
 import numpy as np
-import python_speech_features
-import torchvision
 from PIL import Image
-from torchvision import transforms
+from python_speech_features import delta, mfcc
+from torchvision.transforms import Compose, Resize, ToTensor, Normalize
 from tqdm import tqdm
 
 
@@ -21,10 +20,10 @@ class LatentDataLoader(object):
         motion_latents_prefix,
         pose_prefix,
         db_name,
-        video_fps=25,
-        audio_hz=50,
-        size=256,
-        mfcc_mode=False,
+        video_fps: int = 25,
+        audio_hz: int = 50,
+        size: int = 256,
+        mfcc_mode: bool = False,
     ):
         self.window_size = window_size
         self.lmd_feats_prefix = lmd_feats_prefix
@@ -36,11 +35,11 @@ class LatentDataLoader(object):
         self.raw_audio_prefix = raw_audio_prefix
         self.mfcc_mode = mfcc_mode
 
-        self.transform = torchvision.transforms.Compose(
+        self.transform = Compose(
             [
-                transforms.Resize((size, size)),
-                transforms.ToTensor(),
-                transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)),
+                Resize((size, size)),
+                ToTensor(),
+                Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)),
             ]
         )
 
@@ -85,16 +84,10 @@ class LatentDataLoader(object):
                     continue
 
                 if self.mfcc_mode:
-                    wav, sr = librosa.load(item_dict["wav_path"], sr=16000)
-                    input_values = python_speech_features.mfcc(
-                        signal=wav,
-                        samplerate=sr,
-                        numcep=13,
-                        winlen=0.025,
-                        winstep=0.01,
-                    )
-                    d_mfcc_feat = python_speech_features.base.delta(input_values, 1)
-                    d_mfcc_feat2 = python_speech_features.base.delta(input_values, 2)
+                    wav, sr = librosa_load(item_dict["wav_path"], sr=16000)
+                    input_values = mfcc(signal=wav, samplerate=sr)
+                    d_mfcc_feat = delta(input_values, 1)
+                    d_mfcc_feat2 = delta(input_values, 2)
                     input_values = np.hstack((input_values, d_mfcc_feat, d_mfcc_feat2))
                     item_dict["hubert_obj"] = input_values
                 else:
@@ -102,7 +95,7 @@ class LatentDataLoader(object):
                         item_dict["hubert_path"], mmap_mode="r"
                     )
                 item_dict["lmd_path"] = os.path.join(
-                    lmd_feats_prefix, db_name, clip_name + ".txt"
+                    lmd_feats_prefix, db_name, f"{clip_name}.txt"
                 )
                 item_dict["lmd_obj_full"] = self.read_landmark_info(
                     item_dict["lmd_path"], upper_face=False
@@ -164,8 +157,9 @@ class LatentDataLoader(object):
         img_source = self.transform(img_source)
         return img_source
 
-    def get_multiple_ranges(self, lists, multi_ranges):
-        # Ensure that multi_ranges is a list of tuples
+    @staticmethod
+    def get_multiple_ranges(lists, multi_ranges):
+        # Ensure that `multi_ranges` is a list of tuples
         if not all(isinstance(item, tuple) and len(item) == 2 for item in multi_ranges):
             raise ValueError(
                 "multi_ranges must be a list of (start, end) tuples with exactly two elements each"
@@ -174,21 +168,21 @@ class LatentDataLoader(object):
         return [item for sublist in extracted_elements for item in sublist]
 
     def read_landmark_info(self, lmd_path, upper_face=True):
-        with open(lmd_path, "r") as file:
+        with open(lmd_path) as file:
             lmd_lines = file.readlines()
         lmd_lines.sort()
 
         total_lmd_obj = []
-        for i, line in enumerate(lmd_lines):
+        for line in lmd_lines:
             # Split the coordinates and filter out any empty strings
             coords = [c for c in line.strip().split(" ") if c]
-            coords = coords[1:]  # do not include the file name in the first row
+            coords = coords[1:]  # don't include the filename in the first row
             lmd_obj = []
             if upper_face:
                 # Ensure that the coordinates are parsed as integers
                 for coord_pair in self.get_multiple_ranges(
                     coords, [(0, 3), (14, 27), (36, 48)]
-                ):  # 28个
+                ):  # 28
                     x, y = coord_pair.split("_")
                     lmd_obj.append((int(x) / 512, int(y) / 512))
             else:
@@ -199,11 +193,11 @@ class LatentDataLoader(object):
 
         return np.array(total_lmd_obj, dtype=np.float32)
 
-    def calculate_face_height(self, landmarks):
+    @staticmethod
+    def calculate_face_height(landmarks):
         forehead_center = (landmarks[:, 21, :] + landmarks[:, 22, :]) / 2
         chin_bottom = landmarks[:, 8, :]
-        distances = np.linalg.norm(forehead_center - chin_bottom, axis=1, keepdims=True)
-        return distances
+        return np.linalg.norm(forehead_center - chin_bottom, axis=1, keepdims=True)
 
     def __getitem__(self, index):
         data_item = self.data[index]
@@ -214,7 +208,7 @@ class LatentDataLoader(object):
         motion_start_obj = data_item["motion_start_obj"]
         motion_direction_obj = data_item["motion_direction_obj"]
 
-        frame_end_index = random.randint(
+        frame_end_index = randint(
             self.window_size * self.video_fps + 1, frame_count - 1
         )
         frame_start_index = frame_end_index - self.window_size * self.video_fps
@@ -240,9 +234,9 @@ class LatentDataLoader(object):
             "motion_start": motion_start,
             "motion_direction": motion_direction,
             "audio_feats": audio_feats,
-            # '1:' means taking the first frame as the driven frame.
-            # '30' is the noise location,
-            # '0' means x coordinate
+            # '1': means taking the first frame as the driven frame.
+            # '30': is the noise location,
+            # '0': means x coordinate.
             "face_location": lmd_obj_full[1:, 30, 0],
             "face_scale": self.calculate_face_height(lmd_obj_full[1:, :, :]),
             "yaw_pitch_roll": yaw_pitch_roll,

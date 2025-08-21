@@ -1,39 +1,37 @@
-import math
+from math import sqrt, log
 
-import torch
-from torch import nn
-from torch.nn import functional as F
+from torch import nn, zeros_like, softmax, randn, zeros, flip, tensor, float32
+from torch.nn.functional import leaky_relu, pad, conv2d, linear
 
 from visualizr.settings import logger
 
 
-def fused_leaky_relu(input, bias, negative_slope=0.2, scale=2**0.5):
-    return F.leaky_relu(input + bias, negative_slope) * scale
+def fused_leaky_relu(_input, bias, negative_slope=0.2, scale=2**0.5):
+    return leaky_relu(_input + bias, negative_slope) * scale
 
 
 class FusedLeakyReLU(nn.Module):
     def __init__(self, channel, negative_slope=0.2, scale=2**0.5):
         super().__init__()
-        self.bias = nn.Parameter(torch.zeros(1, channel, 1, 1))
+        self.bias = nn.Parameter(zeros(1, channel, 1, 1))
         self.negative_slope = negative_slope
         self.scale = scale
 
-    def forward(self, input):
-        out = fused_leaky_relu(input, self.bias, self.negative_slope, self.scale)
-        return out
+    def forward(self, _input):
+        return fused_leaky_relu(_input, self.bias, self.negative_slope, self.scale)
 
 
 def upfirdn2d_native(
-    input, kernel, up_x, up_y, down_x, down_y, pad_x0, pad_x1, pad_y0, pad_y1
+    _input, kernel, up_x, up_y, down_x, down_y, pad_x0, pad_x1, pad_y0, pad_y1
 ):
-    _, minor, in_h, in_w = input.shape
+    _, minor, in_h, in_w = _input.shape
     kernel_h, kernel_w = kernel.shape
 
-    out = input.view(-1, minor, in_h, 1, in_w, 1)
-    out = F.pad(out, [0, up_x - 1, 0, 0, 0, up_y - 1, 0, 0])
+    out = _input.view(-1, minor, in_h, 1, in_w, 1)
+    out = pad(out, [0, up_x - 1, 0, 0, 0, up_y - 1, 0, 0])
     out = out.view(-1, minor, in_h * up_y, in_w * up_x)
 
-    out = F.pad(out, [max(pad_x0, 0), max(pad_x1, 0), max(pad_y0, 0), max(pad_y1, 0)])
+    out = pad(out, [max(pad_x0, 0), max(pad_x1, 0), max(pad_y0, 0), max(pad_y1, 0)])
     out = out[
         :,
         :,
@@ -44,8 +42,8 @@ def upfirdn2d_native(
     out = out.reshape(
         [-1, 1, in_h * up_y + pad_y0 + pad_y1, in_w * up_x + pad_x0 + pad_x1]
     )
-    w = torch.flip(kernel, [0, 1]).view(1, 1, kernel_h, kernel_w)
-    out = F.conv2d(out, w)
+    w = flip(kernel, [0, 1]).view(1, 1, kernel_h, kernel_w)
+    out = conv2d(out, w)
     out = out.reshape(
         -1,
         minor,
@@ -56,14 +54,14 @@ def upfirdn2d_native(
     return out[:, :, ::down_y, ::down_x]
 
 
-def upfirdn2d(input, kernel, up=1, down=1, pad=(0, 0)):
+def upfirdn2d(_input, kernel, up=1, down=1, _pad=(0, 0)):
     return upfirdn2d_native(
-        input, kernel, up, up, down, down, pad[0], pad[1], pad[0], pad[1]
+        _input, kernel, up, up, down, down, _pad[0], _pad[1], _pad[0], _pad[1]
     )
 
 
 def make_kernel(k):
-    k = torch.tensor(k, dtype=torch.float32)
+    k = tensor(k, dtype=float32)
 
     if k.ndim == 1:
         k = k[None, :] * k[:, None]
@@ -74,7 +72,7 @@ def make_kernel(k):
 
 
 class Blur(nn.Module):
-    def __init__(self, kernel, pad, upsample_factor=1):
+    def __init__(self, kernel, _pad, upsample_factor=1):
         super().__init__()
 
         kernel = make_kernel(kernel)
@@ -84,10 +82,10 @@ class Blur(nn.Module):
 
         self.register_buffer("kernel", kernel)
 
-        self.pad = pad
+        self.pad = _pad
 
-    def forward(self, input):
-        return upfirdn2d(input, self.kernel, pad=self.pad)
+    def forward(self, _input):
+        return upfirdn2d(_input, self.kernel, _pad=self.pad)
 
 
 class ScaledLeakyReLU(nn.Module):
@@ -96,8 +94,8 @@ class ScaledLeakyReLU(nn.Module):
 
         self.negative_slope = negative_slope
 
-    def forward(self, input):
-        return F.leaky_relu(input, negative_slope=self.negative_slope)
+    def forward(self, _input):
+        return leaky_relu(_input, negative_slope=self.negative_slope)
 
 
 class EqualConv2d(nn.Module):
@@ -113,21 +111,18 @@ class EqualConv2d(nn.Module):
         super().__init__()
 
         self.weight = nn.Parameter(
-            torch.randn(out_channel, in_channel, kernel_size, kernel_size)
+            randn(out_channel, in_channel, kernel_size, kernel_size)
         )
-        self.scale = 1 / math.sqrt(in_channel * kernel_size**2)
+        self.scale = 1 / sqrt(in_channel * kernel_size**2)
 
         self.stride = stride
         self.padding = padding
 
-        if bias:
-            self.bias = nn.Parameter(torch.zeros(out_channel))
-        else:
-            self.bias = None
+        self.bias = nn.Parameter(zeros(out_channel)) if bias else None
 
-    def forward(self, input):
-        return F.conv2d(
-            input,
+    def forward(self, _input):
+        return conv2d(
+            _input,
             self.weight * self.scale,
             bias=self.bias,
             stride=self.stride,
@@ -153,26 +148,19 @@ class EqualLinear(nn.Module):
     ):
         super().__init__()
 
-        self.weight = nn.Parameter(torch.randn(out_dim, in_dim).div_(lr_mul))
-
-        if bias:
-            self.bias = nn.Parameter(torch.zeros(out_dim).fill_(bias_init))
-        else:
-            self.bias = None
-
+        self.weight = nn.Parameter(randn(out_dim, in_dim).div_(lr_mul))
+        self.bias = nn.Parameter(zeros(out_dim).fill_(bias_init)) if bias else None
         self.activation = activation
 
-        self.scale = (1 / math.sqrt(in_dim)) * lr_mul
+        self.scale = (1 / sqrt(in_dim)) * lr_mul
         self.lr_mul = lr_mul
 
-    def forward(self, input):
+    def forward(self, _input):
         if self.activation:
-            out = F.linear(input, self.weight * self.scale)
+            out = linear(_input, self.weight * self.scale)
             out = fused_leaky_relu(out, self.bias * self.lr_mul)
         else:
-            out = F.linear(
-                input, self.weight * self.scale, bias=self.bias * self.lr_mul
-            )
+            out = linear(_input, self.weight * self.scale, bias=self.bias * self.lr_mul)
 
         return out
 
@@ -201,7 +189,7 @@ class ConvLayer(nn.Sequential):
             pad0 = (p + 1) // 2
             pad1 = p // 2
 
-            layers.append(Blur(blur_kernel, pad=(pad0, pad1)))
+            layers.append(Blur(blur_kernel, _pad=(pad0, pad1)))
 
             stride = 2
             self.padding = 0
@@ -231,7 +219,7 @@ class ConvLayer(nn.Sequential):
 
 
 class ResBlock(nn.Module):
-    def __init__(self, in_channel, out_channel, blur_kernel=[1, 3, 3, 1]):
+    def __init__(self, in_channel, out_channel):
         super().__init__()
 
         self.conv1 = ConvLayer(in_channel, in_channel, 3)
@@ -241,17 +229,17 @@ class ResBlock(nn.Module):
             in_channel,
             out_channel,
             1,
-            downsample=True,
+            True,
             activate=False,
             bias=False,
         )
 
-    def forward(self, input):
-        out = self.conv1(input)
+    def forward(self, _input):
+        out = self.conv1(_input)
         out = self.conv2(out)
 
-        skip = self.skip(input)
-        out = (out + skip) / math.sqrt(2)
+        skip = self.skip(_input)
+        out = (out + skip) / sqrt(2)
 
         return out
 
@@ -260,13 +248,13 @@ class WeightedSumLayer(nn.Module):
     def __init__(self, num_tensors=8):
         super(WeightedSumLayer, self).__init__()
 
-        self.weights = nn.Parameter(torch.randn(num_tensors))
+        self.weights = nn.Parameter(randn(num_tensors))
 
     def forward(self, tensor_list):
-        weights = torch.softmax(self.weights, dim=0)
-        weighted_sum = torch.zeros_like(tensor_list[0])
-        for tensor, weight in zip(tensor_list, weights):
-            weighted_sum += tensor * weight
+        weights = softmax(self.weights, dim=0)
+        weighted_sum = zeros_like(tensor_list[0])
+        for _tensor, weight in zip(tensor_list, weights):
+            weighted_sum += _tensor * weight
 
         return weighted_sum
 
@@ -288,7 +276,7 @@ class EncoderApp(nn.Module):
         }
 
         self.w_dim = w_dim
-        log_size = int(math.log(size, 2))
+        log_size = int(log(size, 2))
 
         self.convs = nn.ModuleList()
         self.convs.append(ConvLayer(3, channels[size], 1))
@@ -380,22 +368,16 @@ class Encoder(nn.Module):
 
         # part of the motion encoder
         fc = [EqualLinear(dim, dim)]
-        for i in range(3):
-            fc.append(EqualLinear(dim, dim))
-
+        fc.extend(EqualLinear(dim, dim) for _ in range(3))
         fc.append(EqualLinear(dim, dim_motion))
         self.fc = nn.Sequential(*fc)
 
     def enc_app(self, x):
-        h_source = self.net_app(x)
-
-        return h_source
+        return self.net_app(x)
 
     def enc_motion(self, x):
         h, _ = self.net_app(x)
-        h_motion = self.fc(h)
-
-        return h_motion
+        return self.fc(h)
 
     def encode_image_obj(self, image_obj):
         feat, _ = self.net_app(image_obj)
@@ -403,6 +385,21 @@ class Encoder(nn.Module):
         return id_emb, idrm_emb, id_density_emb
 
     def forward(self, input_source, input_target, input_face, input_aug):
+        h_target_motion_target = None
+        h_another_face_target = None
+        h_face = None
+        h_source_id_emb = None
+        h_source_idrm_emb = None
+        h_source_id_density_emb = None
+        h_target_id_emb = None
+        h_target_idrm_emb = None
+        h_target_id_density_emb = None
+        h_face_id_emb = None
+        h_face_idrm_emb = None
+        h_face_id_density_emb = None
+        h_aug_id_emb = None
+        h_aug_idrm_emb = None
+        h_aug_id_density_emb = None
         if input_target is not None:
             h_source, feats = self.net_app(input_source)
             h_target, _ = self.net_app(input_target)

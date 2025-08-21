@@ -2,10 +2,15 @@ import copy
 import os
 
 import numpy as np
-import pytorch_lightning as pl
 import torch
-from pytorch_lightning import loggers as pl_loggers
+from pytorch_lightning import (
+    loggers as pl_loggers,
+    LightningModule,
+    seed_everything,
+    Trainer,
+)
 from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
+from pytorch_lightning.strategies import DDPStrategy
 from torch.cuda import amp
 from torch.optim.optimizer import Optimizer
 from torch.utils.data.dataset import TensorDataset
@@ -18,12 +23,12 @@ from visualizr.anitalker.renderer import render_condition
 from visualizr.settings import logger
 
 
-class LitModel(pl.LightningModule):
+class LitModel(LightningModule):
     def __init__(self, conf: TrainConfig):
         super().__init__()
         assert conf.train_mode != TrainMode.manipulate
         if conf.seed is not None:
-            pl.seed_everything(conf.seed)
+            seed_everything(conf.seed)
 
         self.save_hyperparameters(conf.as_dict_jsonable())
 
@@ -64,16 +69,17 @@ class LitModel(pl.LightningModule):
         face_location,
         face_scale,
         ypr_info,
-        noisyT,
-        step_T,
+        noisy_t,
+        step_t,
         control_flag,
     ):
-        if step_T is None:
-            sampler = self.eval_sampler
-        else:
-            sampler = self.conf._make_diffusion_conf(step_T).make_sampler()
+        sampler = (
+            self.conf._make_diffusion_conf(step_t).make_sampler()
+            if step_t is not None
+            else self.eval_sampler
+        )
 
-        pred_img = render_condition(
+        return render_condition(
             self.conf,
             self.ema_model,
             sampler,
@@ -83,10 +89,9 @@ class LitModel(pl.LightningModule):
             face_location,
             face_scale,
             ypr_info,
-            noisyT,
+            noisy_t,
             control_flag,
         )
-        return pred_img
 
     def forward(self, noise=None, x_start=None, ema_model: bool = False):
         with amp.autocast(False):
@@ -94,11 +99,8 @@ class LitModel(pl.LightningModule):
             return self.eval_sampler.sample(model=model, noise=noise, x_start=x_start)
 
     def setup(self, stage=None) -> None:
-        """
-        make datasets & seeding each worker separately
-        """
+        """make datasets & seeding each worker"""
         ##############################################
-        # NEED TO SET THE SEED SEPARATELY HERE
         if self.conf.seed is not None:
             seed = self.conf.seed * get_world_size() + self.global_rank
             np.random.seed(seed)
@@ -113,43 +115,37 @@ class LitModel(pl.LightningModule):
         logger.info("val data:", len(self.val_data))
 
     def _train_dataloader(self, drop_last=True):
-        """
-        really make the dataloader
-        """
+        """make the dataloader"""
         # make sure to use the fraction of batch size
-        # the batch size is global!
+        # the batch size is global.
         conf = self.conf.clone()
         conf.batch_size = self.batch_size
 
-        dataloader = conf.make_loader(
-            self.train_data, shuffle=True, drop_last=drop_last
-        )
-        return dataloader
+        return conf.make_loader(self.train_data, shuffle=True, drop_last=drop_last)
 
     def train_dataloader(self):
         """
-        return the dataloader, if diffusion mode => return image dataset
-        if latent mode => return the inferred latent dataset
+        return the dataloader if diffusion mode → return image dataset
+        if latent mode → return the inferred latent dataset.
         """
         logger.info("on train dataloader start ...")
-        if self.conf.train_mode.require_dataset_infer():
-            if self.conds is None:
-                # usually we load self.conds from a file
-                # so we do not need to do this again!
-                self.conds = self.infer_whole_dataset()
-                # need to use float32! unless the mean & std will be off!
-                # (1, c)
-                self.conds_mean.data = self.conds.float().mean(dim=0, keepdim=True)
-                self.conds_std.data = self.conds.float().std(dim=0, keepdim=True)
-            logger.info("mean:", self.conds_mean.mean(), "std:", self.conds_std.mean())
-
-            # return the dataset with pre-calculated conds
-            conf = self.conf.clone()
-            conf.batch_size = self.batch_size
-            data = TensorDataset(self.conds)
-            return conf.make_loader(data, shuffle=True)
-        else:
+        if not self.conf.train_mode.require_dataset_infer():
             return self._train_dataloader()
+        if self.conds is None:
+            # usually we load self.conds from a file,
+            # so we don't need to do this again.
+            self.conds = self.infer_whole_dataset()
+            # Need to use float32. Unless the mean & std will be off.
+            # (1, c)
+            self.conds_mean.data = self.conds.float().mean(dim=0, keepdim=True)
+            self.conds_std.data = self.conds.float().std(dim=0, keepdim=True)
+        logger.info("mean:", self.conds_mean.mean(), "std:", self.conds_std.mean())
+
+        # return the dataset with pre-calculated conds
+        conf = self.conf.clone()
+        conf.batch_size = self.batch_size
+        data = TensorDataset(self.conds)
+        return conf.make_loader(data, shuffle=True)
 
     @property
     def batch_size(self):
@@ -162,17 +158,15 @@ class LitModel(pl.LightningModule):
 
     @property
     def num_samples(self):
-        """
-        (global) batch size * iterations
-        """
-        # batch size here is global!
-        # global_step already takes into account the accum batches
+        """(global) batch size * iterations"""
+        # Batch size here is global.
+        # `global_step` already takes into account the accum batches.
         return self.global_step * self.conf.batch_size_effective
 
     def is_last_accum(self, batch_idx):
         """
         is it the last gradient accumulation loop?
-        used with gradient_accum > 1 and to see if the optimizer will perform "step" in this iteration or not
+        used with gradient_accum > 1 and to see if the optimizer will perform “step” in this iteration or not.
         """
         return (batch_idx + 1) % self.conf.accum_batches == 0
 
@@ -182,25 +176,17 @@ class LitModel(pl.LightningModule):
         no optimization at this stage.
         """
         with amp.autocast(False):
-            motion_start = batch["motion_start"]  # torch.Size([B, 512])
-            motion_direction = batch["motion_direction"]  # torch.Size([B, 125, 20])
-            audio_feats = batch["audio_feats"].float()  # torch.Size([B, 25, 250, 1024])
-            face_location = batch["face_location"].float()  # torch.Size([B, 125])
-            face_scale = batch["face_scale"].float()  # torch.Size([B, 125, 1])
-            yaw_pitch_roll = batch["yaw_pitch_roll"].float()  # torch.Size([B, 125, 3])
-            motion_direction_start = batch[
-                "motion_direction_start"
-            ].float()  # torch.Size([B, 20])
-
-            # import pdb; pdb.set_trace()
+            motion_start = batch["motion_start"]  # Size [B, 512]
+            motion_direction = batch["motion_direction"]  # Size [B, 125, 20]
+            audio_feats = batch["audio_feats"].float()  # Size [B, 25, 250, 1024]
+            face_location = batch["face_location"].float()  # Size [B, 125]
+            face_scale = batch["face_scale"].float()  # Size [B, 125, 1]
+            yaw_pitch_roll = batch["yaw_pitch_roll"].float()  # Size [B, 125, 3]
+            motion_direction_start = batch["motion_direction_start"].float()
             if self.conf.train_mode == TrainMode.diffusion:
-                """
-                main training mode!!!
-                """
-                # with numpy seed we have the problem that the sample t's are related!
-                t, weight = self.T_sampler.sample(
-                    len(motion_start), motion_start.device
-                )
+                # main training mode
+                # with numpy seed we have the problem that the sample t's are related.
+                t, _ = self.T_sampler.sample(len(motion_start), motion_start.device)
                 losses = self.sampler.training_losses(
                     model=self.model,
                     motion_direction_start=motion_direction_start,
@@ -216,7 +202,7 @@ class LitModel(pl.LightningModule):
                 raise NotImplementedError()
 
             loss = losses["loss"].mean()
-            # divide by accum batches to make the accumulated gradient exact!
+            # divide by accum batches to make the accumulated gradient exact.
             for key in losses.keys():
                 losses[key] = self.all_gather(losses[key]).mean()
 
@@ -234,9 +220,7 @@ class LitModel(pl.LightningModule):
     def on_train_batch_end(
         self, outputs, batch, batch_idx: int, dataloader_idx: int
     ) -> None:
-        """
-        after each training step ...
-        """
+        """after each training step"""
         if self.is_last_accum(batch_idx):
             if self.conf.train_mode == TrainMode.latent_diffusion:
                 # it trains only the latent hence change only the latent
@@ -251,15 +235,13 @@ class LitModel(pl.LightningModule):
     def on_before_optimizer_step(
         self, optimizer: Optimizer, optimizer_idx: int
     ) -> None:
-        # fix the fp16 + clip grad norm problem with pytorch lightinng
+        # fix the fp16 + clip grad norm problem with pytorch lighting
         # this is the currently correct way to do it
         if self.conf.grad_clip > 0:
-            # from trainer.params_grads import grads_norm, iter_opt_params
             params = [p for group in optimizer.param_groups for p in group["params"]]
             torch.nn.utils.clip_grad_norm_(params, max_norm=self.conf.grad_clip)
 
     def configure_optimizers(self):
-        out = {}
         if self.conf.optimizer == OptimizerType.adam:
             optim = torch.optim.Adam(
                 self.model.parameters(),
@@ -272,32 +254,26 @@ class LitModel(pl.LightningModule):
                 lr=self.conf.lr,
                 weight_decay=self.conf.weight_decay,
             )
-        else:
-            raise NotImplementedError()
-        out["optimizer"] = optim
+        out = {"optimizer": optim}
         if self.conf.warmup > 0:
             sched = torch.optim.lr_scheduler.LambdaLR(
                 optim, lr_lambda=WarmupLR(self.conf.warmup)
             )
-            out["lr_scheduler"] = {
-                "scheduler": sched,
-                "interval": "step",
-            }
+            out["lr_scheduler"] = {"scheduler": sched, "interval": "step"}
         return out
 
     def split_tensor(self, x):
         """
-        extract the tensor for a corresponding "worker" in the batch dimension
+        Extract the tensor for a corresponding “worker” in the batch dimension.
 
         Args:
             x: (n, c)
 
-        Returns: x: (n_local, c)
+        Returns: x: (`n_local`, c)
         """
         n = len(x)
         rank = self.global_rank
         world_size = get_world_size()
-        # print(f'rank: {rank}/{world_size}')
         per_rank = n // world_size
         return x[rank * per_rank : (rank + 1) * per_rank]
 
@@ -324,7 +300,7 @@ def is_time(num_samples, every, step_size):
     return num_samples - closest < step_size
 
 
-def train(conf: TrainConfig, gpus, nodes=1, mode: str = "train"):
+def train(conf: TrainConfig, gpus, nodes=1):
     logger.info("conf:", conf.name)
     model = LitModel(conf)
 
@@ -342,12 +318,7 @@ def train(conf: TrainConfig, gpus, nodes=1, mode: str = "train"):
         resume = checkpoint_path
         logger.info("resume!")
     else:
-        if conf.continue_from is not None:
-            # continue from a checkpoint
-            resume = conf.continue_from.pathcd
-        else:
-            resume = None
-
+        resume = conf.continue_from.pathcd if conf.continue_from is not None else None
     tb_logger = pl_loggers.TensorBoardLogger(
         save_dir=conf.logdir, name=None, version=""
     )
@@ -359,12 +330,10 @@ def train(conf: TrainConfig, gpus, nodes=1, mode: str = "train"):
         accelerator = None
     else:
         accelerator = "ddp"
-        from pytorch_lightning.plugins import DDPPlugin
-
         # important for working with gradient checkpoint
-        plugins.append(DDPPlugin(find_unused_parameters=True))
+        plugins.append(DDPStrategy(find_unused_parameters=True))
 
-    trainer = pl.Trainer(
+    trainer = Trainer(
         max_steps=conf.total_samples // conf.batch_size_effective,
         resume_from_checkpoint=resume,
         gpus=gpus,
