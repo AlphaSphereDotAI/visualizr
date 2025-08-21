@@ -127,6 +127,7 @@ def init_configuration(
         case _:
             raise ValueError(f"Unknown infer_type: {infer_type}")
 
+
 def super_resolution(
     tmp_predicted_video_512_path: Path,
     predicted_video_256_path: Path,
