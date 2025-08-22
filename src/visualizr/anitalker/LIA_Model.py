@@ -26,11 +26,7 @@ class LIA_Model(nn.Module):
     def get_start_direction_code(self, x_start, x_target, x_face, x_aug):
         enc_dic = self.enc(x_start, x_target, x_face, x_aug)
 
-        wa, alpha, feats = (
-            enc_dic["h_source"],
-            enc_dic["h_motion"],
-            enc_dic["feats"],
-        )
+        wa, alpha, feats = enc_dic["h_source"], enc_dic["h_motion"], enc_dic["feats"]
 
         return wa, alpha, feats
 
