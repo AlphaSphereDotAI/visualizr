@@ -3,11 +3,14 @@ import os
 
 import numpy as np
 import torch
+from gradio import Info
+from pytorch_lightning import (
+    LightningModule,
+    Trainer,
+    seed_everything,
+)
 from pytorch_lightning import (
     loggers as pl_loggers,
-    LightningModule,
-    seed_everything,
-    Trainer,
 )
 from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning.strategies import DDPStrategy
@@ -106,13 +109,16 @@ class LitModel(LightningModule):
             np.random.seed(seed)
             torch.manual_seed(seed)
             torch.cuda.manual_seed(seed)
-            logger.info("local seed:", seed)
+            logger.info(f"local seed: {seed}")
+            Info(f"local seed: {seed}")
         ##############################################
 
         self.train_data = self.conf.make_dataset()
-        logger.info("train data:", len(self.train_data))
+        logger.info(f"train data: {len(self.train_data)}")
+        Info(f"train data: {len(self.train_data)}")
         self.val_data = self.train_data
-        logger.info("val data:", len(self.val_data))
+        logger.info(f"val data: {len(self.val_data)}")
+        Info(f"val data: {len(self.val_data)}")
 
     def _train_dataloader(self, drop_last=True):
         """make the dataloader"""
@@ -129,6 +135,7 @@ class LitModel(LightningModule):
         if latent mode → return the inferred latent dataset.
         """
         logger.info("on train dataloader start ...")
+        Info("on train dataloader start ...")
         if not self.conf.train_mode.require_dataset_infer():
             return self._train_dataloader()
         if self.conds is None:
@@ -139,7 +146,8 @@ class LitModel(LightningModule):
             # (1, c)
             self.conds_mean.data = self.conds.float().mean(dim=0, keepdim=True)
             self.conds_std.data = self.conds.float().std(dim=0, keepdim=True)
-        logger.info("mean:", self.conds_mean.mean(), "std:", self.conds_std.mean())
+        logger.info(f"mean: {self.conds_mean.mean()}, std: {self.conds_std.mean()}")
+        Info(f"mean: {self.conds_mean.mean()}, std: {self.conds_std.mean()}")
 
         # return the dataset with pre-calculated conds
         conf = self.conf.clone()
@@ -301,7 +309,8 @@ def is_time(num_samples, every, step_size):
 
 
 def train(conf: TrainConfig, gpus, nodes=1):
-    logger.info("conf:", conf.name)
+    logger.info(f"conf: {conf.name}")
+    Info(f"conf: {conf.name}")
     model = LitModel(conf)
 
     if not os.path.exists(conf.logdir):
@@ -313,10 +322,12 @@ def train(conf: TrainConfig, gpus, nodes=1):
         every_n_epochs=10,
     )
     checkpoint_path = f"{conf.logdir}/last.ckpt"
-    logger.info("ckpt path:", checkpoint_path)
+    logger.info(f"ckpt path: {checkpoint_path}")
+    Info(f"ckpt path: {checkpoint_path}")
     if os.path.exists(checkpoint_path):
         resume = checkpoint_path
         logger.info("resume!")
+        Info("resume!")
     else:
         resume = conf.continue_from.pathcd if conf.continue_from is not None else None
     tb_logger = pl_loggers.TensorBoardLogger(

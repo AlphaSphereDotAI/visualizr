@@ -1,6 +1,8 @@
 from importlib.util import find_spec
 from pathlib import Path
 from typing import Literal
+
+from gradio import Info, Error
 from moviepy.editor import AudioFileClip, ImageClip, concatenate_videoclips
 from numpy import asarray, ndarray, transpose
 from PIL import Image
@@ -62,13 +64,16 @@ def remove_frames(frames_path: Path):
         try:
             frame.unlink()
             logger.info(f"Deleted {frame}")
+            Info(f"Deleted {frame}")
         except OSError:
             logger.exception(f"Error while deleting file {frame}")
+            Error(f"Error while deleting file {frame}")
             continue
 
 
 def load_stage_2_model(conf: TrainConfig, stage_2_checkpoint_path: Path) -> LitModel:
     logger.info("Loading stage 2 model")
+    Info("Loading stage 2 model")
     if not stage_2_checkpoint_path.exists():
         raise FileNotFoundError(f"Checkpoint not found: {stage_2_checkpoint_path}")
     model = LitModel(conf)
@@ -107,12 +112,14 @@ def init_configuration(
     motion_dim: int,
 ) -> TrainConfig:
     logger.info("Initializing configuration... ")
+    Info("Initializing configuration... ")
     conf: TrainConfig = ffhq256_autoenc()
     conf.seed = seed
     conf.decoder_layers = decoder_layers
     conf.motion_dim = motion_dim
     conf.infer_type = infer_type
     logger.info(f"infer_type: {infer_type}")
+    Info(f"infer_type: {infer_type}")
     match infer_type:
         case "mfcc_full_control":
             return _init_configuration_param(conf, True, True, True)
@@ -132,6 +139,7 @@ def super_resolution(
     predicted_video_512_path: Path,
 ):
     logger.info(f"Saving video at {tmp_predicted_video_512_path}")
+    Info(f"Saving video at {tmp_predicted_video_512_path}")
     mimsave(
         tmp_predicted_video_512_path,
         enhancer_list(predicted_video_256_path, bg_upsampler=None),

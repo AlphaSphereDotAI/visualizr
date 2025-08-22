@@ -1,6 +1,7 @@
 """This module contains tests for the app's HTTP endpoints."""
 
 from os import getenv
+
 from requests import Response, head
 
 
