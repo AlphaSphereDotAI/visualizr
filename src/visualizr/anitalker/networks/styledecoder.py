@@ -18,8 +18,7 @@ class FusedLeakyReLU(nn.Module):
         self.scale = scale
 
     def forward(self, input):
-        out = fused_leaky_relu(input, self.bias, self.negative_slope, self.scale)
-        return out
+        return fused_leaky_relu(input, self.bias, self.negative_slope, self.scale)
 
 
 def upfirdn2d_native(
@@ -162,10 +161,7 @@ class EqualConv2d(nn.Module):
         self.stride = stride
         self.padding = padding
 
-        if bias:
-            self.bias = nn.Parameter(torch.zeros(out_channel))
-        else:
-            self.bias = None
+        self.bias = nn.Parameter(torch.zeros(out_channel)) if bias else None
 
     def forward(self, input):
         return F.conv2d(
@@ -244,8 +240,10 @@ class ModulatedConv2d(nn.Module):
         demodulate=True,
         upsample=False,
         downsample=False,
-        blur_kernel=[1, 3, 3, 1],
+        blur_kernel: list = None,
     ):
+        if blur_kernel is None:
+            blur_kernel = [1, 3, 3, 1]
         super().__init__()
 
         self.eps = 1e-8
@@ -347,10 +345,7 @@ class NoiseInjection(nn.Module):
         self.weight = nn.Parameter(torch.zeros(1))
 
     def forward(self, image, noise=None):
-        if noise is None:
-            return image
-        else:
-            return image + self.weight * noise
+        return image if noise is None else image + self.weight * noise
 
 
 class ConstantInput(nn.Module):
@@ -361,9 +356,7 @@ class ConstantInput(nn.Module):
 
     def forward(self, input):
         batch = input.shape[0]
-        out = self.input.repeat(batch, 1, 1, 1)
-
-        return out
+        return self.input.repeat(batch, 1, 1, 1)
 
 
 class StyledConv(nn.Module):
@@ -374,9 +367,11 @@ class StyledConv(nn.Module):
         kernel_size,
         style_dim,
         upsample=False,
-        blur_kernel=[1, 3, 3, 1],
+        blur_kernel: list = None,
         demodulate=True,
     ):
+        if blur_kernel is None:
+            blur_kernel = [1, 3, 3, 1]
         super().__init__()
 
         self.conv = ModulatedConv2d(
@@ -407,10 +402,12 @@ class ConvLayer(nn.Sequential):
         out_channel,
         kernel_size,
         downsample=False,
-        blur_kernel=[1, 3, 3, 1],
+        blur_kernel: list = None,
         bias=True,
         activate=True,
     ):
+        if blur_kernel is None:
+            blur_kernel = [1, 3, 3, 1]
         layers = []
 
         if downsample:
@@ -449,7 +446,9 @@ class ConvLayer(nn.Sequential):
 
 
 class ToRGB(nn.Module):
-    def __init__(self, in_channel, style_dim, upsample=True, blur_kernel=[1, 3, 3, 1]):
+    def __init__(self, in_channel, style_dim, upsample=True, blur_kernel: list = None):
+        if blur_kernel is None:
+            blur_kernel = [1, 3, 3, 1]
         super().__init__()
 
         if upsample:
@@ -460,7 +459,7 @@ class ToRGB(nn.Module):
 
     def forward(self, input, skip=None):
         out = self.conv(input)
-        out = out + self.bias
+        out += self.bias
 
         if skip is not None:
             skip = self.upsample(skip)
@@ -470,7 +469,9 @@ class ToRGB(nn.Module):
 
 
 class ToFlow(nn.Module):
-    def __init__(self, in_channel, style_dim, upsample=True, blur_kernel=[1, 3, 3, 1]):
+    def __init__(self, in_channel, style_dim, upsample=True, blur_kernel: list = None):
+        if blur_kernel is None:
+            blur_kernel = [1, 3, 3, 1]
         super().__init__()
 
         if upsample:
@@ -522,8 +523,8 @@ class Direction(nn.Module):
         # input: (bs*t) x 512
 
         weight = self.weight + 1e-8
-        Q, R = torch.qr(weight)  # get eignvector, orthogonal [n1, n2, n3, n4]
-
+        # get eigenvector, orthogonal [n1, n2, n3, n4]
+        Q, R = torch.qr(weight)
         if input is None:
             return Q
         else:
@@ -539,9 +540,11 @@ class Synthesis(nn.Module):
         size,
         style_dim,
         motion_dim,
-        blur_kernel=[1, 3, 3, 1],
+        blur_kernel: list = None,
         channel_multiplier=1,
     ):
+        if blur_kernel is None:
+            blur_kernel = [1, 3, 3, 1]
         super(Synthesis, self).__init__()
 
         self.size = size
@@ -646,6 +649,4 @@ class Synthesis(nn.Module):
                 skip = to_rgb(out_warp, skip)
             i += 2
 
-        img = skip
-
-        return img
+        return skip

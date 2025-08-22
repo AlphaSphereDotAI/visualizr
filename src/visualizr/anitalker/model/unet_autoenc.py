@@ -121,11 +121,7 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
                 s = module.cond_emb_layers.forward(cond)
                 S.append(s)
 
-        if return_vector:
-            # (n, sum_c)
-            return torch.cat(S, dim=1)
-        else:
-            return S
+        return torch.cat(S, dim=1) if return_vector else S
 
     def forward(
         self,

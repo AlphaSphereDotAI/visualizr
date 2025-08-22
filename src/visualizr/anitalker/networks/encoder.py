@@ -1,7 +1,7 @@
-from math import sqrt, log
+from math import log, sqrt
 
-from torch import nn, zeros_like, softmax, randn, zeros, flip, tensor, float32
-from torch.nn.functional import leaky_relu, pad, conv2d, linear
+from torch import flip, float32, nn, randn, softmax, tensor, zeros, zeros_like
+from torch.nn.functional import conv2d, leaky_relu, linear, pad
 
 from visualizr.settings import logger
 
@@ -177,10 +177,12 @@ class ConvLayer(nn.Sequential):
         out_channel,
         kernel_size,
         downsample=False,
-        blur_kernel=[1, 3, 3, 1],
+        blur_kernel: list = None,
         bias=True,
         activate=True,
     ):
+        if blur_kernel is None:
+            blur_kernel = [1, 3, 3, 1]
         layers = []
 
         if downsample:

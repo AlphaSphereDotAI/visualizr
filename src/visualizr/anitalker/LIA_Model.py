@@ -12,9 +12,11 @@ class LIA_Model(nn.Module):
         style_dim=512,
         motion_dim=20,
         channel_multiplier=1,
-        blur_kernel=[1, 3, 3, 1],
+        blur_kernel: list = None,
         fusion_type="",
     ):
+        if blur_kernel is None:
+            blur_kernel = [1, 3, 3, 1]
         super().__init__()
         self.enc = Encoder(size, style_dim, motion_dim, fusion_type)
         self.dec = Synthesis(
@@ -43,18 +45,13 @@ class LIA_Model(nn.Module):
             origName = name
             if name not in selfState:
                 name = name.replace("lia.", "")
-                if name not in selfState:
-                    logger.exception("%s is not in the model." % origName)
-                    # You can ignore those errors as some parameters are only used for training
-                    continue
+            if name not in selfState:
+                logger.exception(f"{origName} is not in the model.")
+                # You can ignore those errors as some parameters are only used for training
+                continue
             if selfState[name].size() != state[origName].size():
                 logger.exception(
-                    "Wrong parameter length: %s, model: %s, loaded: %s"
-                    % (
-                        origName,
-                        selfState[name].size(),
-                        state[origName].size(),
-                    )
+                    f"Wrong parameter length: {origName}, model: {selfState[name].size()}, loaded: {state[origName].size()}"
                 )
                 continue
             selfState[name].copy_(param)

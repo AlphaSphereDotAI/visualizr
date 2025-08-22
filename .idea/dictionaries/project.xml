@@ -5,6 +5,8 @@
       <w>adaptivenonzero</w>
       <w>afternorm</w>
       <w>allneg</w>
+      <w>alphabar</w>
+      <w>alphacum</w>
       <w>alphaspheredotai</w>
       <w>anitalker</w>
       <w>autoenc</w>
@@ -21,18 +23,22 @@
       <w>cves</w>
       <w>ddim</w>
       <w>decouping</w>
+      <w>dickstein</w>
       <w>fewshot</w>
       <w>gatedconv</w>
       <w>gfpga</w>
       <w>ghcr</w>
       <w>hdtf</w>
+      <w>hiddens</w>
       <w>hstack</w>
       <w>jlumbroso</w>
       <w>latentdiffusion</w>
+      <w>logvar</w>
       <w>lrelu</w>
       <w>markdownlint</w>
       <w>mergify</w>
       <w>mergifyio</w>
+      <w>mults</w>
       <w>pavelzw</w>
       <w>randn</w>
       <w>recipm</w>
@@ -40,8 +46,12 @@
       <w>resblocks</w>
       <w>sched</w>
       <w>silu</w>
+      <w>sohl</w>
+      <w>spks</w>
+      <w>stdv</w>
       <w>taocode</w>
       <w>vaeddpm</w>
+      <w>xprev</w>
       <w>xstart</w>
       <w>znormalize</w>
     </words>

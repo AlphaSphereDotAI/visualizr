@@ -57,12 +57,8 @@ class MLPSkipNet(nn.Module):
 
         layers = []
         for i in range(conf.num_time_layers):
-            if i == 0:
-                a = conf.num_time_emb_channels
-                b = conf.num_channels
-            else:
-                a = conf.num_channels
-                b = conf.num_channels
+            a = conf.num_time_emb_channels if i == 0 else conf.num_channels
+            b = conf.num_channels
             layers.append(nn.Linear(a, b))
             if i < conf.num_time_layers - 1 or conf.time_last_act:
                 layers.append(conf.activation.get_act())
@@ -141,32 +137,22 @@ class MLPLNAct(nn.Module):
         if self.use_cond:
             self.linear_emb = nn.Linear(cond_channels, out_channels)
             self.cond_layers = nn.Sequential(self.act, self.linear_emb)
-        if norm:
-            self.norm = nn.LayerNorm(out_channels)
-        else:
-            self.norm = nn.Identity()
-
-        if dropout > 0:
-            self.dropout = nn.Dropout(p=dropout)
-        else:
-            self.dropout = nn.Identity()
-
+        self.norm = nn.LayerNorm(out_channels) if norm else nn.Identity()
+        self.dropout = nn.Dropout(p=dropout) if dropout > 0 else nn.Identity()
         self.init_weights()
 
     def init_weights(self):
         for module in self.modules():
             if isinstance(module, nn.Linear):
-                if self.activation == Activation.relu:
-                    init.kaiming_normal_(module.weight, a=0, nonlinearity="relu")
+                if (
+                    self.activation == Activation.relu
+                    or self.activation == Activation.silu
+                ):
+                    init.kaiming_normal_(module.weight, nonlinearity="relu")
                 elif self.activation == Activation.lrelu:
                     init.kaiming_normal_(
                         module.weight, a=0.2, nonlinearity="leaky_relu"
                     )
-                elif self.activation == Activation.silu:
-                    init.kaiming_normal_(module.weight, a=0, nonlinearity="relu")
-                else:
-                    # leave it as default
-                    pass
 
     def forward(self, x, cond=None):
         x = self.linear(x)
@@ -179,11 +165,8 @@ class MLPLNAct(nn.Module):
             x = x * (self.condition_bias + cond[0])
             if cond[1] is not None:
                 x = x + cond[1]
-            # then norm
-            x = self.norm(x)
-        else:
-            # no condition
-            x = self.norm(x)
+        # then norm
+        x = self.norm(x)
         x = self.act(x)
         x = self.dropout(x)
         return x

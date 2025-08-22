@@ -178,6 +178,5 @@ class _WrappedModel:
     def __getattr__(self, name):
         # allow for calling the model's methods
         if hasattr(self.model, name):
-            func = getattr(self.model, name)
-            return func
+            return getattr(self.model, name)
         raise AttributeError(name)

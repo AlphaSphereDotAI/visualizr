@@ -17,10 +17,7 @@ class FusedLeakyReLU(nn.Module):
         self.scale = scale
 
     def forward(self, input):
-        # print("FusedLeakyReLU: ", input.abs().mean())
-        out = fused_leaky_relu(input, self.bias, self.negative_slope, self.scale)
-        # print("FusedLeakyReLU: ", out.abs().mean())
-        return out
+        return fused_leaky_relu(input, self.bias, self.negative_slope, self.scale)
 
 
 def upfirdn2d_native(
@@ -122,10 +119,7 @@ class EqualConv2d(nn.Module):
         self.stride = stride
         self.padding = padding
 
-        if bias:
-            self.bias = nn.Parameter(torch.zeros(out_channel))
-        else:
-            self.bias = None
+        self.bias = nn.Parameter(torch.zeros(out_channel)) if bias else None
 
     def forward(self, input):
         return F.conv2d(
@@ -191,10 +185,12 @@ class ConvLayer(nn.Sequential):
         out_channel,
         kernel_size,
         downsample=False,
-        blur_kernel=[1, 3, 3, 1],
+        blur_kernel: list = None,
         bias=True,
         activate=True,
     ):
+        if blur_kernel is None:
+            blur_kernel = [1, 3, 3, 1]
         layers = []
 
         if downsample:
@@ -233,7 +229,9 @@ class ConvLayer(nn.Sequential):
 
 
 class ResBlock(nn.Module):
-    def __init__(self, in_channel, out_channel, blur_kernel=[1, 3, 3, 1]):
+    def __init__(self, in_channel, out_channel, blur_kernel: list = None):
+        if blur_kernel is None:
+            blur_kernel = [1, 3, 3, 1]
         super().__init__()
 
         self.conv1 = ConvLayer(in_channel, in_channel, 3)
@@ -259,7 +257,9 @@ class ResBlock(nn.Module):
 
 
 class Discriminator(nn.Module):
-    def __init__(self, size, channel_multiplier=1, blur_kernel=[1, 3, 3, 1]):
+    def __init__(self, size, channel_multiplier=1, blur_kernel: list = None):
+        if blur_kernel is None:
+            blur_kernel = [1, 3, 3, 1]
         super().__init__()
 
         self.size = size

@@ -192,10 +192,7 @@ class DiffusionPredictor(BaseModule):
         return self.face_scale_encoder(predicted_face_scale), predicted_face_scale
 
     def adjust_pose(self, x, yaw_pitch_roll, control_flag):
-        if control_flag:
-            predicted_pose = yaw_pitch_roll
-        else:
-            predicted_pose = self.pose_predictor(x)
+        predicted_pose = yaw_pitch_roll if control_flag else self.pose_predictor(x)
         return self.pose_encoder(predicted_pose), predicted_pose
 
     def combine_features(self, x, initial_code, direction_code, noisy_x, t_emb):

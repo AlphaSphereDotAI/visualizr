@@ -81,7 +81,7 @@ def scale_module(module, scale):
     return module
 
 
-def mean_flat(tensor):
+def mean_flat(tensor: th.Tensor) -> th.Tensor:
     """
     Take the mean over all non-batch dimensions.
     """
@@ -93,7 +93,7 @@ def normalization(channels):
     Make a standard normalization layer.
 
     :param channels: Number of input channels.
-    :return: A nn.Module for normalization.
+    :return: A `nn.Module` for normalization.
     """
     return GroupNorm32(min(32, channels), channels)
 
