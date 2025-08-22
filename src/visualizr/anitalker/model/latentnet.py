@@ -144,10 +144,7 @@ class MLPLNAct(nn.Module):
     def init_weights(self):
         for module in self.modules():
             if isinstance(module, nn.Linear):
-                if (
-                    self.activation == Activation.relu
-                    or self.activation == Activation.silu
-                ):
+                if self.activation in [Activation.relu, Activation.silu]:
                     init.kaiming_normal_(module.weight, nonlinearity="relu")
                 elif self.activation == Activation.lrelu:
                     init.kaiming_normal_(

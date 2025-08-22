@@ -286,8 +286,8 @@ class ModulatedConv2d(nn.Module):
             f"upsample={self.upsample}, downsample={self.downsample})"
         )
 
-    def forward(self, input, style):
-        batch, in_channel, height, width = input.shape
+    def forward(self, _input, style):
+        batch, in_channel, height, width = _input.shape
 
         style = self.modulation(style).view(batch, 1, in_channel, 1, 1)
         weight = self.scale * self.weight * style
@@ -304,7 +304,7 @@ class ModulatedConv2d(nn.Module):
         )
 
         if self.upsample:
-            input = input.view(1, batch * in_channel, height, width)
+            _input = _input.view(1, batch * in_channel, height, width)
             weight = weight.view(
                 batch,
                 self.out_channel,
@@ -318,20 +318,20 @@ class ModulatedConv2d(nn.Module):
                 self.kernel_size,
                 self.kernel_size,
             )
-            out = F.conv_transpose2d(input, weight, padding=0, stride=2, groups=batch)
+            out = F.conv_transpose2d(_input, weight, stride=2, groups=batch)
             _, _, height, width = out.shape
             out = out.view(batch, self.out_channel, height, width)
             out = self.blur(out)
         elif self.downsample:
-            input = self.blur(input)
-            _, _, height, width = input.shape
-            input = input.view(1, batch * in_channel, height, width)
-            out = F.conv2d(input, weight, padding=0, stride=2, groups=batch)
+            _input = self.blur(_input)
+            _, _, height, width = _input.shape
+            _input = _input.view(1, batch * in_channel, height, width)
+            out = F.conv2d(_input, weight, stride=2, groups=batch)
             _, _, height, width = out.shape
             out = out.view(batch, self.out_channel, height, width)
         else:
-            input = input.view(1, batch * in_channel, height, width)
-            out = F.conv2d(input, weight, padding=self.padding, groups=batch)
+            _input = _input.view(1, batch * in_channel, height, width)
+            out = F.conv2d(_input, weight, padding=self.padding, groups=batch)
             _, _, height, width = out.shape
             out = out.view(batch, self.out_channel, height, width)
 
@@ -519,19 +519,17 @@ class Direction(nn.Module):
 
         self.weight = nn.Parameter(torch.randn(512, motion_dim))
 
-    def forward(self, input):
+    def forward(self, _input):
         # input: (bs*t) x 512
-
         weight = self.weight + 1e-8
         # get eigenvector, orthogonal [n1, n2, n3, n4]
-        Q, R = torch.qr(weight)
-        if input is None:
+        Q, _ = torch.qr(weight)
+        if _input is None:
             return Q
-        else:
-            input_diag = torch.diag_embed(input)  # alpha, diagonal matrix
-            out = torch.matmul(input_diag, Q.T)
-            out = torch.sum(out, dim=1)
-            return out
+        input_diag = torch.diag_embed(_input)  # alpha, diagonal matrix
+        out = torch.matmul(input_diag, Q.T)
+        out = torch.sum(out, dim=1)
+        return out
 
 
 class Synthesis(nn.Module):
