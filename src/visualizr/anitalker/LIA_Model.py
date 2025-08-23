@@ -47,10 +47,14 @@ class LIA_Model(nn.Module):
                 continue
             if selfState[name].size() != state[origName].size():
                 logger.exception(
-                    f"Wrong parameter length: {origName}, model: {selfState[name].size()}, loaded: {state[origName].size()}"
+                    f"Wrong parameter length: {origName}",
+                    f"model: {selfState[name].size()}",
+                    f"loaded: {state[origName].size()}",
                 )
                 Error(
-                    f"Wrong parameter length: {origName}, model: {selfState[name].size()}, loaded: {state[origName].size()}"
+                    f"Wrong parameter length: {origName}",
+                    f"model: {selfState[name].size()}",
+                    f"loaded: {state[origName].size()}",
                 )
                 continue
             selfState[name].copy_(param)

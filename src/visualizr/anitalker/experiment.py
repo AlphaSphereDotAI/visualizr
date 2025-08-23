@@ -101,7 +101,7 @@ class LitModel(LightningModule):
             model = self.model if self.disable_ema else self.ema_model
             return self.eval_sampler.sample(model=model, noise=noise, x_start=x_start)
 
-    def setup(self, stage=None) -> None:
+    def setup(self) -> None:
         """make datasets & seeding each worker"""
         ##############################################
         if self.conf.seed is not None:
@@ -174,7 +174,8 @@ class LitModel(LightningModule):
     def is_last_accum(self, batch_idx):
         """
         is it the last gradient accumulation loop?
-        used with gradient_accum > 1 and to see if the optimizer will perform “step” in this iteration or not.
+        used with gradient_accum > 1 and to see if the optimizer will perform “step”
+        in this iteration or not.
         """
         return (batch_idx + 1) % self.conf.accum_batches == 0
 
@@ -225,9 +226,7 @@ class LitModel(LightningModule):
 
         return {"loss": loss}
 
-    def on_train_batch_end(
-        self, outputs, batch, batch_idx: int, dataloader_idx: int
-    ) -> None:
+    def on_train_batch_end(self, outputs, batch, batch_idx: int) -> None:
         """after each training step"""
         if self.is_last_accum(batch_idx):
             if self.conf.train_mode == TrainMode.latent_diffusion:
@@ -240,9 +239,7 @@ class LitModel(LightningModule):
             else:
                 ema(self.model, self.ema_model, self.conf.ema_decay)
 
-    def on_before_optimizer_step(
-        self, optimizer: Optimizer, optimizer_idx: int
-    ) -> None:
+    def on_before_optimizer_step(self, optimizer: Optimizer) -> None:
         # fix the fp16 + clip grad norm problem with pytorch lighting
         # this is the currently correct way to do it
         if self.conf.grad_clip > 0:

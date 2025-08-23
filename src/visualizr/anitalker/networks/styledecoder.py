@@ -446,7 +446,7 @@ class ConvLayer(nn.Sequential):
 
 
 class ToRGB(nn.Module):
-    def __init__(self, in_channel, style_dim, upsample=True, blur_kernel: list = None):
+    def __init__(self, in_channel, upsample=True, blur_kernel: list = None):
         if blur_kernel is None:
             blur_kernel = [1, 3, 3, 1]
         super().__init__()
@@ -457,8 +457,8 @@ class ToRGB(nn.Module):
         self.conv = ConvLayer(in_channel, 3, 1)
         self.bias = nn.Parameter(torch.zeros(1, 3, 1, 1))
 
-    def forward(self, input, skip=None):
-        out = self.conv(input)
+    def forward(self, _input, skip=None):
+        out = self.conv(_input)
         out += self.bias
 
         if skip is not None:
@@ -573,7 +573,7 @@ class Synthesis(nn.Module):
             style_dim,
             blur_kernel=blur_kernel,
         )
-        self.to_rgb1 = ToRGB(self.channels[4], style_dim, upsample=False)
+        self.to_rgb1 = ToRGB(self.channels[4], upsample=False)
 
         self.log_size = int(math.log(size, 2))
         self.num_layers = (self.log_size - 2) * 2 + 1
@@ -607,7 +607,7 @@ class Synthesis(nn.Module):
                     blur_kernel=blur_kernel,
                 )
             )
-            self.to_rgbs.append(ToRGB(out_channel, style_dim))
+            self.to_rgbs.append(ToRGB(out_channel))
 
             self.to_flows.append(ToFlow(out_channel, style_dim))
 
