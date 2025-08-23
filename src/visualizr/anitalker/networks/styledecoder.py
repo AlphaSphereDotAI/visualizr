@@ -482,12 +482,12 @@ class ToFlow(nn.Module):
         self.conv = ModulatedConv2d(in_channel, 3, 1, style_dim, demodulate=False)
         self.bias = nn.Parameter(torch.zeros(1, 3, 1, 1))
 
-    def forward(self, input, style, feat, skip=None):
-        out = self.conv(input, style)
+    def forward(self, _input, style, feat, skip=None):
+        out = self.conv(_input, style)
         out += self.bias
 
         # warping
-        xs = np.linspace(-1, 1, input.size(2))
+        xs = np.linspace(-1, 1, _input.size(2))
 
         xs = np.meshgrid(xs, xs)
         xs = np.stack(xs, 2)
@@ -496,21 +496,18 @@ class ToFlow(nn.Module):
             torch.tensor(xs, requires_grad=False)
             .float()
             .unsqueeze(0)
-            .repeat(input.size(0), 1, 1, 1)
-            .to(input.device)
+            .repeat(_input.size(0), 1, 1, 1)
+            .to(_input.device)
         )
-        # import pdb;pdb.set_trace()
         if skip is not None:
             skip = self.upsample(skip)
             out = out + skip
 
         sampler = torch.tanh(out[:, 0:2, :, :])
         mask = torch.sigmoid(out[:, 2:3, :, :])
-        flow = sampler.permute(0, 2, 3, 1) + xs  # xs在这里相当于一个 location 的位置
-
+        flow = sampler.permute(0, 2, 3, 1) + xs
         feat_warp = F.grid_sample(feat, flow) * mask
-        # import pdb;pdb.set_trace()
-        return feat_warp, feat_warp + input * (1.0 - mask), out
+        return feat_warp, feat_warp + _input * (1.0 - mask), out
 
 
 class Direction(nn.Module):
