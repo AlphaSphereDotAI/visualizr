@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import NamedTuple, Tuple, Optional
+from typing import NamedTuple, Optional, Tuple
 
 import torch
 from torch import Tensor, nn
