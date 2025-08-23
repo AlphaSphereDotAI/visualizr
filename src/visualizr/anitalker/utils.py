@@ -2,20 +2,25 @@ from importlib.util import find_spec
 from pathlib import Path
 from typing import Literal
 
-from gradio import Info, Error
-from moviepy.editor import AudioFileClip, ImageClip, concatenate_videoclips
+from gradio import Error, Info
+from imageio import mimsave
+from moviepy.editor import (
+    AudioFileClip,
+    ImageClip,
+    VideoFileClip,
+    concatenate_videoclips,
+)
 from numpy import asarray, ndarray, transpose
 from PIL import Image
 from torch import Tensor, from_numpy
+from torch import load as torch_load
 from torchvision.transforms import ToPILImage
+
 from visualizr.anitalker.config import TrainConfig
 from visualizr.anitalker.experiment import LitModel
-from visualizr.settings import logger
-from torch import load as torch_load
-from imageio import mimsave
-from moviepy.editor import VideoFileClip
 from visualizr.anitalker.face_sr.face_enhancer import enhancer_list
 from visualizr.anitalker.templates import ffhq256_autoenc
+from visualizr.settings import logger
 
 
 def check_package_installed(package_name: str) -> bool:
