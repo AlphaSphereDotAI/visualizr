@@ -1,5 +1,6 @@
 from math import log, sqrt
 
+from gradio import Info
 from torch import flip, float32, nn, randn, softmax, tensor, zeros, zeros_like
 from torch.nn.functional import conv2d, leaky_relu, linear, pad
 
@@ -295,6 +296,7 @@ class EncoderApp(nn.Module):
         assert self.fusion_type == "weighted_sum"
         if self.fusion_type == "weighted_sum":
             logger.info("HAL layer is enabled!")
+            Info("HAL layer is enabled!")
             self.adaptive_pool = nn.AdaptiveAvgPool2d((1, 1))
             self.fc1 = EqualLinear(64, 512)
             self.fc2 = EqualLinear(128, 512)

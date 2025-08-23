@@ -5,6 +5,7 @@ from sys import exit
 from typing import Literal
 
 from dotenv import load_dotenv
+from gradio import Error, Info
 from loguru import logger
 from pydantic import (
     BaseModel,
@@ -67,6 +68,7 @@ class DirectorySettings(BaseModel):
         ]:
             directory.mkdir(exist_ok=True)
             logger.info(f"Created directory: {directory}")
+            Info(f"Created directory: {directory}")
         return self
 
 
@@ -128,9 +130,11 @@ class ModelSettings(BaseModel):
     def check_image_path(self) -> "ModelSettings":
         if self.image_path and not self.image_path.exists():
             logger.error("Image path does not exist.")
+            Error("Image path does not exist.")
             exit(0)
         if self.audio_path and not self.audio_path.exists():
             logger.error("Audio path does not exist.")
+            Error("Audio path does not exist.")
             exit(0)
         return self
 

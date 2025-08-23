@@ -1,6 +1,7 @@
 import torch
 import torch.nn.functional as F
 from espnet.nets.pytorch_backend.conformer.encoder import Encoder
+from gradio import Error, Info
 from torch import nn
 
 from visualizr.anitalker.model.base import BaseModule
@@ -31,6 +32,7 @@ class DiffusionPredictor(BaseModule):
 
         self.initialize_layers(conf)
         logger.info(f"infer_type: {self.infer_type}")
+        Info(f"infer_type: {self.infer_type}")
 
     def create_conformer_encoder(self, attention_dim, num_blocks):
         return Encoder(
@@ -87,6 +89,7 @@ class DiffusionPredictor(BaseModule):
             )
         else:
             logger.exception("infer_type not supported")
+            Error("infer_type not supported")
 
         # Encoders & Decoders
         self.coarse_decoder = self.create_conformer_encoder(
@@ -141,6 +144,7 @@ class DiffusionPredictor(BaseModule):
         )
         if self.infer_type != "hubert_audio_only":
             logger.info(f"pose controllable. control_flag: {control_flag}")
+            Info(f"pose controllable. control_flag: {control_flag}")
             x, predicted_location, predicted_scale, predicted_pose = (
                 self.adjust_features(
                     x, face_location, face_scale, yaw_pitch_roll, control_flag
@@ -165,6 +169,7 @@ class DiffusionPredictor(BaseModule):
         predicted_location, predicted_scale = 0, 0
         if "full_control" in self.infer_type:
             logger.info(f"full controllable. control_flag: {control_flag}")
+            Info(f"full controllable. control_flag: {control_flag}")
             x_residual, predicted_location = self.adjust_location(
                 x, face_location, control_flag
             )

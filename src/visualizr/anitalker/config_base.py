@@ -5,6 +5,8 @@ from json import dump, dumps, load
 from pathlib import Path
 from typing import Any
 
+from gradio import Info
+
 from visualizr.settings import logger
 
 
@@ -58,6 +60,7 @@ class BaseConfig:
                 if strict:
                     raise ValueError(f"loading extra '{k}'")
                 logger.info(f"loading extra '{k}'")
+                Info(f"loading extra '{k}'")
                 continue
             if isinstance(self.__dict__[k], BaseConfig):
                 self.__dict__[k].from_dict(v)

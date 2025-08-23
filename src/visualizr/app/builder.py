@@ -2,6 +2,7 @@ from pathlib import Path
 from sys import exit as sys_exit
 from time import time
 from typing import Literal, Optional
+
 from gradio import (
     Audio,
     Blocks,
@@ -9,7 +10,9 @@ from gradio import (
     Checkbox,
     Column,
     Dropdown,
+    Error,
     Image,
+    Info,
     Markdown,
     Number,
     Row,
@@ -20,35 +23,51 @@ from gradio import (
 from huggingface_hub import snapshot_download
 from librosa import load as librosa_load
 from numpy import (
-    ndarray,
     array as np_array,
+)
+from numpy import (
     hstack as np_hstack,
+)
+from numpy import (
+    ndarray,
+)
+from numpy import (
     pad as np_pad,
+)
+from numpy import (
     squeeze as np_squeeze,
 )
 from python_speech_features import mfcc
 from python_speech_features.base import delta
 from torch import (
-    no_grad,
     Tensor,
+    no_grad,
+)
+from torch import (
     cat as torch_cat,
+)
+from torch import (
     clamp as torch_clamp,
+)
+from torch import (
     randn as torch_randn,
+)
+from torch import (
     zeros as torch_zeros,
 )
 from tqdm import tqdm
 from transformers import HubertModel, Wav2Vec2FeatureExtractor
 
-from visualizr.anitalker.LIA_Model import LIA_Model
 from visualizr.anitalker.config import TrainConfig
+from visualizr.anitalker.LIA_Model import LIA_Model
 from visualizr.anitalker.utils import (
     check_package_installed,
     frames_to_video,
     img_preprocessing,
+    init_configuration,
+    load_stage_2_model,
     remove_frames,
     saved_image,
-    load_stage_2_model,
-    init_configuration,
     super_resolution,
 )
 from visualizr.settings import Settings, logger
@@ -85,6 +104,7 @@ class App:
     ) -> tuple[Video | None, Video | None, Markdown]:
         if image_path is None or not Path(image_path).exists():
             logger.error(f"{image_path} does not exist or is invalid!")
+            Error(f"{image_path} does not exist or is invalid!")
             return (
                 None,
                 None,
@@ -94,6 +114,7 @@ class App:
             )
         if audio_path is None or not Path(audio_path).exists():
             logger.error(f"{audio_path} does not exist or is invalid!")
+            Error(f"{audio_path} does not exist or is invalid!")
             return (
                 None,
                 None,
@@ -152,14 +173,20 @@ class App:
             # Hubert features
             if not check_package_installed("transformers"):
                 logger.exception("Please install transformers module first.")
+                Error("Please install transformers module first.")
                 sys_exit(0)
             hubert_model_path = "ckpts/chinese-hubert-large"
             if not Path(hubert_model_path).exists():
                 logger.exception(
                     "Please download the hubert weight into the ckpts path first."
                 )
+                Error("Please download the hubert weight into the ckpts path first.")
                 sys_exit(0)
             logger.info(
+                "You did not extract the audio features in advance, "
+                + "extracting online now, which will increase processing delay"
+            )
+            Info(
                 "You did not extract the audio features in advance, "
                 + "extracting online now, which will increase processing delay"
             )
@@ -197,6 +224,7 @@ class App:
 
             execution_time = time() - start_time
             logger.info(f"Extraction Audio Feature: {execution_time:.2f} Seconds")
+            Info(f"Extraction Audio Feature: {execution_time:.2f} Seconds")
 
             audio_driven_obj = ws_feat_obj
 
@@ -245,6 +273,7 @@ class App:
 
         execution_time = time() - start_time
         logger.info(f"Motion Diffusion Model: {execution_time:.2f} Seconds")
+        Info(f"Motion Diffusion Model: {execution_time:.2f} Seconds")
 
         generated_directions = generated_directions.detach().cpu().numpy()
 
@@ -265,7 +294,9 @@ class App:
 
         execution_time = time() - start_time
         logger.info(f"Renderer Model: {execution_time:.2f} Seconds")
+        Info(f"Renderer Model: {execution_time:.2f} Seconds")
         logger.info(f"Saving video at {predicted_video_256_path}")
+        Info(f"Saving video at {predicted_video_256_path}")
 
         frames_to_video(
             self.settings.directory.frames, audio_path, predicted_video_256_path
@@ -304,6 +335,7 @@ class App:
 
     def _load_stage_1_model(self) -> LIA_Model:
         logger.info("Loading stage 1 model")
+        Info("Loading stage 1 model")
         lia: LIA_Model = LIA_Model(
             motion_dim=self.settings.model.motion_dim, fusion_type="weighted_sum"
         )

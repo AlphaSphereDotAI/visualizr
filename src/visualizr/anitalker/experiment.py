@@ -3,11 +3,14 @@ import os
 
 import numpy as np
 import torch
+from gradio import Info
+from pytorch_lightning import (
+    LightningModule,
+    Trainer,
+    seed_everything,
+)
 from pytorch_lightning import (
     loggers as pl_loggers,
-    LightningModule,
-    seed_everything,
-    Trainer,
 )
 from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning.strategies import DDPStrategy
@@ -98,7 +101,7 @@ class LitModel(LightningModule):
             model = self.model if self.disable_ema else self.ema_model
             return self.eval_sampler.sample(model=model, noise=noise, x_start=x_start)
 
-    def setup(self, stage=None) -> None:
+    def setup(self) -> None:
         """make datasets & seeding each worker"""
         ##############################################
         if self.conf.seed is not None:
@@ -106,13 +109,16 @@ class LitModel(LightningModule):
             np.random.seed(seed)
             torch.manual_seed(seed)
             torch.cuda.manual_seed(seed)
-            logger.info("local seed:", seed)
+            logger.info(f"local seed: {seed}")
+            Info(f"local seed: {seed}")
         ##############################################
 
         self.train_data = self.conf.make_dataset()
-        logger.info("train data:", len(self.train_data))
+        logger.info(f"train data: {len(self.train_data)}")
+        Info(f"train data: {len(self.train_data)}")
         self.val_data = self.train_data
-        logger.info("val data:", len(self.val_data))
+        logger.info(f"val data: {len(self.val_data)}")
+        Info(f"val data: {len(self.val_data)}")
 
     def _train_dataloader(self, drop_last=True):
         """make the dataloader"""
@@ -129,6 +135,7 @@ class LitModel(LightningModule):
         if latent mode → return the inferred latent dataset.
         """
         logger.info("on train dataloader start ...")
+        Info("on train dataloader start ...")
         if not self.conf.train_mode.require_dataset_infer():
             return self._train_dataloader()
         if self.conds is None:
@@ -139,7 +146,8 @@ class LitModel(LightningModule):
             # (1, c)
             self.conds_mean.data = self.conds.float().mean(dim=0, keepdim=True)
             self.conds_std.data = self.conds.float().std(dim=0, keepdim=True)
-        logger.info("mean:", self.conds_mean.mean(), "std:", self.conds_std.mean())
+        logger.info(f"mean: {self.conds_mean.mean()}, std: {self.conds_std.mean()}")
+        Info(f"mean: {self.conds_mean.mean()}, std: {self.conds_std.mean()}")
 
         # return the dataset with pre-calculated conds
         conf = self.conf.clone()
@@ -166,7 +174,8 @@ class LitModel(LightningModule):
     def is_last_accum(self, batch_idx):
         """
         is it the last gradient accumulation loop?
-        used with gradient_accum > 1 and to see if the optimizer will perform “step” in this iteration or not.
+        used with gradient_accum > 1 and to see if the optimizer will perform “step”
+        in this iteration or not.
         """
         return (batch_idx + 1) % self.conf.accum_batches == 0
 
@@ -217,9 +226,7 @@ class LitModel(LightningModule):
 
         return {"loss": loss}
 
-    def on_train_batch_end(
-        self, outputs, batch, batch_idx: int, dataloader_idx: int
-    ) -> None:
+    def on_train_batch_end(self, outputs, batch, batch_idx: int) -> None:
         """after each training step"""
         if self.is_last_accum(batch_idx):
             if self.conf.train_mode == TrainMode.latent_diffusion:
@@ -232,9 +239,7 @@ class LitModel(LightningModule):
             else:
                 ema(self.model, self.ema_model, self.conf.ema_decay)
 
-    def on_before_optimizer_step(
-        self, optimizer: Optimizer, optimizer_idx: int
-    ) -> None:
+    def on_before_optimizer_step(self, optimizer: Optimizer) -> None:
         # fix the fp16 + clip grad norm problem with pytorch lighting
         # this is the currently correct way to do it
         if self.conf.grad_clip > 0:
@@ -301,7 +306,8 @@ def is_time(num_samples, every, step_size):
 
 
 def train(conf: TrainConfig, gpus, nodes=1):
-    logger.info("conf:", conf.name)
+    logger.info(f"conf: {conf.name}")
+    Info(f"conf: {conf.name}")
     model = LitModel(conf)
 
     if not os.path.exists(conf.logdir):
@@ -313,10 +319,12 @@ def train(conf: TrainConfig, gpus, nodes=1):
         every_n_epochs=10,
     )
     checkpoint_path = f"{conf.logdir}/last.ckpt"
-    logger.info("ckpt path:", checkpoint_path)
+    logger.info(f"ckpt path: {checkpoint_path}")
+    Info(f"ckpt path: {checkpoint_path}")
     if os.path.exists(checkpoint_path):
         resume = checkpoint_path
         logger.info("resume!")
+        Info("resume!")
     else:
         resume = conf.continue_from.pathcd if conf.continue_from is not None else None
     tb_logger = pl_loggers.TensorBoardLogger(

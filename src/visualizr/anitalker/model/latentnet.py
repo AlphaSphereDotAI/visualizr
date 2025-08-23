@@ -102,13 +102,13 @@ class MLPSkipNet(nn.Module):
             )
         self.last_act = conf.last_act.get_act()
 
-    def forward(self, x, t, **kwargs):
+    def forward(self, x, t):
         t = timestep_embedding(t, self.conf.num_time_emb_channels)
         cond = self.time_embed(t)
         h = x
         for i in range(len(self.layers)):
             if i in self.conf.skip_layers:
-                # injecting input into the hidden layers
+                # injecting input the hidden layers
                 h = torch.cat([h, x], dim=1)
             h = self.layers[i].forward(x=h, cond=cond)
         h = self.last_act(h)

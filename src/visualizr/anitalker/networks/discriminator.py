@@ -241,9 +241,10 @@ class ResBlock(nn.Module):
             in_channel,
             out_channel,
             1,
-            downsample=True,
-            activate=False,
-            bias=False,
+            True,
+            blur_kernel,
+            False,
+            False,
         )
 
     def forward(self, input):

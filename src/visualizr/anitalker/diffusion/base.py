@@ -111,7 +111,6 @@ class GaussianDiffusionBeatGans:
         face_scale: th.Tensor,
         yaw_pitch_roll: th.Tensor,
         t: th.Tensor,
-        model_kwargs=None,
         noise: th.Tensor = None,
     ):
         """
@@ -119,14 +118,10 @@ class GaussianDiffusionBeatGans:
 
         :param model: The model to evaluate loss on.
         :param t: A batch of timestep indexes.
-        :param model_kwargs: If not None, a dict of extra keyword arguments to
-            pass to the model. This can be used for conditioning.
         :param noise: If specified, the specific Gaussian noise to try to remove.
         :return: A dict with the key “loss” containing a tensor of shape [N].
                  Some mean or variance settings may also have other keys.
         """
-        if not model_kwargs:
-            model_kwargs = {}
         if noise is None:
             noise = th.randn_like(motion_target)
 
@@ -1133,7 +1128,7 @@ class DummyModel(th.nn.Module):
         super().__init__()
         self.pred = pred
 
-    def forward(self, *args, **kwargs):
+    def forward(self):
         return DummyReturn(pred=self.pred)
 
 
