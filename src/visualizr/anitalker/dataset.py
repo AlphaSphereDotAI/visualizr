@@ -1,11 +1,11 @@
 import os
 from random import randint
 
-from librosa import load as librosa_load
 import numpy as np
+from librosa import load as librosa_load
 from PIL import Image
 from python_speech_features import delta, mfcc
-from torchvision.transforms import Compose, Resize, ToTensor, Normalize
+from torchvision.transforms import Compose, Normalize, Resize, ToTensor
 from tqdm import tqdm
 
 

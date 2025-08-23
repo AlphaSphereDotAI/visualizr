@@ -37,8 +37,7 @@ from numpy import (
 from numpy import (
     squeeze as np_squeeze,
 )
-from python_speech_features import mfcc
-from python_speech_features.base import delta
+from python_speech_features import delta, mfcc
 from torch import (
     Tensor,
     no_grad,

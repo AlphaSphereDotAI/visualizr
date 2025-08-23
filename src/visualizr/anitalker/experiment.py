@@ -4,15 +4,9 @@ import os
 import numpy as np
 import torch
 from gradio import Info
-from pytorch_lightning import (
-    LightningModule,
-    Trainer,
-    seed_everything,
-)
-from pytorch_lightning import (
-    loggers as pl_loggers,
-)
+from pytorch_lightning import LightningModule, Trainer, seed_everything
 from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
+from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.strategies import DDPStrategy
 from torch.cuda import amp
 from torch.optim.optimizer import Optimizer
@@ -327,9 +321,7 @@ def train(conf: TrainConfig, gpus, nodes=1):
         Info("resume!")
     else:
         resume = conf.continue_from.pathcd if conf.continue_from is not None else None
-    tb_logger = pl_loggers.TensorBoardLogger(
-        save_dir=conf.logdir, name=None, version=""
-    )
+    tb_logger = TensorBoardLogger(save_dir=conf.logdir, name=None, version="")
 
     # from pytorch_lightning.
 
