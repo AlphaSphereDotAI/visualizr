@@ -1,12 +1,12 @@
 from gradio import Blocks
 
-from visualizr.gui import app_block
+from visualizr.app.runner import app
 
 
 def main() -> None:
     """Launch the Gradio voice generation web app."""
-    app: Blocks = app_block()
-    app.queue(api_open=True).launch(
+    application: Blocks = app.gui()
+    application.queue(api_open=True).launch(
         server_port=7860,
         debug=True,
         mcp_server=True,
