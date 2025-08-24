@@ -1,0 +1,4 @@
+[lint]
+select = ["I"]
+[lint.isort]
+combine-as-imports = true

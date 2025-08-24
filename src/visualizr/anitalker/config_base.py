@@ -5,6 +5,8 @@ from json import dump, dumps, load
 from pathlib import Path
 from typing import Any
 
+from gradio import Info
+
 from visualizr.settings import logger
 
 
@@ -33,7 +35,7 @@ class BaseConfig:
                 v.propagate()
 
     def save(self, save_path: Path):
-        """save config to JSON file"""
+        """save a config to JSON file"""
         if not save_path.exists():
             save_path.mkdir(parents=True, exist_ok=True)
         conf = self.as_dict_jsonable()
@@ -49,7 +51,8 @@ class BaseConfig:
         self.from_dict(conf)
 
     def from_dict(self, config_dict, strict=False):
-        """Populate configuration attributes from a dictionary, optionally
+        """
+        Populate configuration attributes from a dictionary, optionally
         enforcing strict key checking.
         """
         for k, v in config_dict.items():
@@ -57,6 +60,7 @@ class BaseConfig:
                 if strict:
                     raise ValueError(f"loading extra '{k}'")
                 logger.info(f"loading extra '{k}'")
+                Info(f"loading extra '{k}'")
                 continue
             if isinstance(self.__dict__[k], BaseConfig):
                 self.__dict__[k].from_dict(v)
