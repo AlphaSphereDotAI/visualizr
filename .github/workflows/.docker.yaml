@@ -158,7 +158,7 @@ jobs:
           cache-dependency-glob: "uv.lock"
           activate-environment: true
       - name: Install deps
-        run: uv sync --only-dev
+        run: uv sync --only-dev -p 3.13
       - name: Test
         env:
           VISUALIZR_URL: http://localhost:${{ job.services.visualizr.ports['7860'] }}/
