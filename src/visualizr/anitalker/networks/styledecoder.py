@@ -3,11 +3,18 @@ import math
 import numpy as np
 import torch
 from torch import nn
-from torch.nn import functional as F
+from torch.nn.functional import (
+    conv2d,
+    conv_transpose2d,
+    grid_sample,
+    leaky_relu,
+    linear,
+    pad,
+)
 
 
-def fused_leaky_relu(input, bias, negative_slope=0.2, scale=2**0.5):
-    return F.leaky_relu(input + bias, negative_slope) * scale
+def fused_leaky_relu(_input, bias, negative_slope=0.2, scale=2**0.5):
+    return leaky_relu(_input + bias, negative_slope) * scale
 
 
 class FusedLeakyReLU(nn.Module):
@@ -17,22 +24,21 @@ class FusedLeakyReLU(nn.Module):
         self.negative_slope = negative_slope
         self.scale = scale
 
-    def forward(self, input):
-        out = fused_leaky_relu(input, self.bias, self.negative_slope, self.scale)
-        return out
+    def forward(self, _input):
+        return fused_leaky_relu(_input, self.bias, self.negative_slope, self.scale)
 
 
 def upfirdn2d_native(
-    input, kernel, up_x, up_y, down_x, down_y, pad_x0, pad_x1, pad_y0, pad_y1
+    _input, kernel, up_x, up_y, down_x, down_y, pad_x0, pad_x1, pad_y0, pad_y1
 ):
-    _, minor, in_h, in_w = input.shape
+    _, minor, in_h, in_w = _input.shape
     kernel_h, kernel_w = kernel.shape
 
-    out = input.view(-1, minor, in_h, 1, in_w, 1)
-    out = F.pad(out, [0, up_x - 1, 0, 0, 0, up_y - 1, 0, 0])
+    out = _input.view(-1, minor, in_h, 1, in_w, 1)
+    out = pad(out, [0, up_x - 1, 0, 0, 0, up_y - 1, 0, 0])
     out = out.view(-1, minor, in_h * up_y, in_w * up_x)
 
-    out = F.pad(out, [max(pad_x0, 0), max(pad_x1, 0), max(pad_y0, 0), max(pad_y1, 0)])
+    out = pad(out, [max(pad_x0, 0), max(pad_x1, 0), max(pad_y0, 0), max(pad_y1, 0)])
     out = out[
         :,
         :,
@@ -44,7 +50,7 @@ def upfirdn2d_native(
         [-1, 1, in_h * up_y + pad_y0 + pad_y1, in_w * up_x + pad_x0 + pad_x1]
     )
     w = torch.flip(kernel, [0, 1]).view(1, 1, kernel_h, kernel_w)
-    out = F.conv2d(out, w)
+    out = conv2d(out, w)
     out = out.reshape(
         -1,
         minor,
@@ -54,9 +60,9 @@ def upfirdn2d_native(
     return out[:, :, ::down_y, ::down_x]
 
 
-def upfirdn2d(input, kernel, up=1, down=1, pad=(0, 0)):
+def upfirdn2d(_input, kernel, up=1, down=1, _pad=(0, 0)):
     return upfirdn2d_native(
-        input, kernel, up, up, down, down, pad[0], pad[1], pad[0], pad[1]
+        _input, kernel, up, up, down, down, _pad[0], _pad[1], _pad[0], _pad[1]
     )
 
 
@@ -64,16 +70,18 @@ class PixelNorm(nn.Module):
     def __init__(self):
         super().__init__()
 
-    def forward(self, input):
-        return input * torch.rsqrt(torch.mean(input**2, dim=1, keepdim=True) + 1e-8)
+    @staticmethod
+    def forward(_input):
+        return _input * torch.rsqrt(torch.mean(_input**2, dim=1, keepdim=True) + 1e-8)
 
 
 class MotionPixelNorm(nn.Module):
     def __init__(self):
         super().__init__()
 
-    def forward(self, input):
-        return input * torch.rsqrt(torch.mean(input**2, dim=2, keepdim=True) + 1e-8)
+    @staticmethod
+    def forward(_input):
+        return _input * torch.rsqrt(torch.mean(_input**2, dim=2, keepdim=True) + 1e-8)
 
 
 def make_kernel(k):
@@ -102,8 +110,8 @@ class Upsample(nn.Module):
 
         self.pad = (pad0, pad1)
 
-    def forward(self, input):
-        return upfirdn2d(input, self.kernel, up=self.factor, down=1, pad=self.pad)
+    def forward(self, _input):
+        return upfirdn2d(_input, self.kernel, up=self.factor, _pad=self.pad)
 
 
 class Downsample(nn.Module):
@@ -121,12 +129,12 @@ class Downsample(nn.Module):
 
         self.pad = (pad0, pad1)
 
-    def forward(self, input):
-        return upfirdn2d(input, self.kernel, up=1, down=self.factor, pad=self.pad)
+    def forward(self, _input):
+        return upfirdn2d(_input, self.kernel, down=self.factor, _pad=self.pad)
 
 
 class Blur(nn.Module):
-    def __init__(self, kernel, pad, upsample_factor=1):
+    def __init__(self, kernel, _pad, upsample_factor=1):
         super().__init__()
 
         kernel = make_kernel(kernel)
@@ -136,10 +144,10 @@ class Blur(nn.Module):
 
         self.register_buffer("kernel", kernel)
 
-        self.pad = pad
+        self.pad = _pad
 
-    def forward(self, input):
-        return upfirdn2d(input, self.kernel, pad=self.pad)
+    def forward(self, _input):
+        return upfirdn2d(_input, self.kernel, _pad=self.pad)
 
 
 class EqualConv2d(nn.Module):
@@ -162,24 +170,17 @@ class EqualConv2d(nn.Module):
         self.stride = stride
         self.padding = padding
 
-        if bias:
-            self.bias = nn.Parameter(torch.zeros(out_channel))
-        else:
-            self.bias = None
+        self.bias = nn.Parameter(torch.zeros(out_channel)) if bias else None
 
-    def forward(self, input):
-        return F.conv2d(
-            input,
-            self.weight * self.scale,
-            bias=self.bias,
-            stride=self.stride,
-            padding=self.padding,
+    def forward(self, _input):
+        return conv2d(
+            _input, self.weight * self.scale, self.bias, self.stride, self.padding
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"{self.__class__.__name__}({self.weight.shape[1]}, {self.weight.shape[0]},"
-            f" {self.weight.shape[2]}, stride={self.stride}, padding={self.padding})"
+            + f" {self.weight.shape[2]}, stride={self.stride}, padding={self.padding})"
         )
 
 
@@ -207,15 +208,12 @@ class EqualLinear(nn.Module):
         self.scale = (1 / math.sqrt(in_dim)) * lr_mul
         self.lr_mul = lr_mul
 
-    def forward(self, input):
+    def forward(self, _input):
         if self.activation:
-            out = F.linear(input, self.weight * self.scale)
+            out = linear(_input, self.weight * self.scale)
             out = fused_leaky_relu(out, self.bias * self.lr_mul)
         else:
-            out = F.linear(
-                input, self.weight * self.scale, bias=self.bias * self.lr_mul
-            )
-
+            out = linear(_input, self.weight * self.scale, self.bias * self.lr_mul)
         return out
 
     def __repr__(self):
@@ -230,8 +228,8 @@ class ScaledLeakyReLU(nn.Module):
 
         self.negative_slope = negative_slope
 
-    def forward(self, input):
-        return F.leaky_relu(input, negative_slope=self.negative_slope)
+    def forward(self, _input):
+        return leaky_relu(_input, negative_slope=self.negative_slope)
 
 
 class ModulatedConv2d(nn.Module):
@@ -244,8 +242,10 @@ class ModulatedConv2d(nn.Module):
         demodulate=True,
         upsample=False,
         downsample=False,
-        blur_kernel=[1, 3, 3, 1],
+        blur_kernel: list = None,
     ):
+        if blur_kernel is None:
+            blur_kernel = [1, 3, 3, 1]
         super().__init__()
 
         self.eps = 1e-8
@@ -261,7 +261,7 @@ class ModulatedConv2d(nn.Module):
             pad0 = (p + 1) // 2 + factor - 1
             pad1 = p // 2 + 1
 
-            self.blur = Blur(blur_kernel, pad=(pad0, pad1), upsample_factor=factor)
+            self.blur = Blur(blur_kernel, _pad=(pad0, pad1), upsample_factor=factor)
 
         if downsample:
             factor = 2
@@ -269,7 +269,7 @@ class ModulatedConv2d(nn.Module):
             pad0 = (p + 1) // 2
             pad1 = p // 2
 
-            self.blur = Blur(blur_kernel, pad=(pad0, pad1))
+            self.blur = Blur(blur_kernel, _pad=(pad0, pad1))
 
         fan_in = in_channel * kernel_size**2
         self.scale = 1 / math.sqrt(fan_in)
@@ -288,15 +288,15 @@ class ModulatedConv2d(nn.Module):
             f"upsample={self.upsample}, downsample={self.downsample})"
         )
 
-    def forward(self, input, style):
-        batch, in_channel, height, width = input.shape
+    def forward(self, _input, style):
+        batch, in_channel, height, width = _input.shape
 
         style = self.modulation(style).view(batch, 1, in_channel, 1, 1)
         weight = self.scale * self.weight * style
 
         if self.demodulate:
             demod = torch.rsqrt(weight.pow(2).sum([2, 3, 4]) + 1e-8)
-            weight = weight * demod.view(batch, self.out_channel, 1, 1, 1)
+            weight *= demod.view(batch, self.out_channel, 1, 1, 1)
 
         weight = weight.view(
             batch * self.out_channel,
@@ -306,7 +306,7 @@ class ModulatedConv2d(nn.Module):
         )
 
         if self.upsample:
-            input = input.view(1, batch * in_channel, height, width)
+            _input = _input.view(1, batch * in_channel, height, width)
             weight = weight.view(
                 batch,
                 self.out_channel,
@@ -320,20 +320,20 @@ class ModulatedConv2d(nn.Module):
                 self.kernel_size,
                 self.kernel_size,
             )
-            out = F.conv_transpose2d(input, weight, padding=0, stride=2, groups=batch)
+            out = conv_transpose2d(_input, weight, stride=2, groups=batch)
             _, _, height, width = out.shape
             out = out.view(batch, self.out_channel, height, width)
             out = self.blur(out)
         elif self.downsample:
-            input = self.blur(input)
-            _, _, height, width = input.shape
-            input = input.view(1, batch * in_channel, height, width)
-            out = F.conv2d(input, weight, padding=0, stride=2, groups=batch)
+            _input = self.blur(_input)
+            _, _, height, width = _input.shape
+            _input = _input.view(1, batch * in_channel, height, width)
+            out = conv2d(_input, weight, stride=2, groups=batch)
             _, _, height, width = out.shape
             out = out.view(batch, self.out_channel, height, width)
         else:
-            input = input.view(1, batch * in_channel, height, width)
-            out = F.conv2d(input, weight, padding=self.padding, groups=batch)
+            _input = _input.view(1, batch * in_channel, height, width)
+            out = conv2d(_input, weight, padding=self.padding, groups=batch)
             _, _, height, width = out.shape
             out = out.view(batch, self.out_channel, height, width)
 
@@ -347,10 +347,7 @@ class NoiseInjection(nn.Module):
         self.weight = nn.Parameter(torch.zeros(1))
 
     def forward(self, image, noise=None):
-        if noise is None:
-            return image
-        else:
-            return image + self.weight * noise
+        return image if noise is None else image + self.weight * noise
 
 
 class ConstantInput(nn.Module):
@@ -359,11 +356,9 @@ class ConstantInput(nn.Module):
 
         self.input = nn.Parameter(torch.randn(1, channel, size, size))
 
-    def forward(self, input):
-        batch = input.shape[0]
-        out = self.input.repeat(batch, 1, 1, 1)
-
-        return out
+    def forward(self, _input):
+        batch = _input.shape[0]
+        return self.input.repeat(batch, 1, 1, 1)
 
 
 class StyledConv(nn.Module):
@@ -374,9 +369,11 @@ class StyledConv(nn.Module):
         kernel_size,
         style_dim,
         upsample=False,
-        blur_kernel=[1, 3, 3, 1],
+        blur_kernel: list = None,
         demodulate=True,
     ):
+        if blur_kernel is None:
+            blur_kernel = [1, 3, 3, 1]
         super().__init__()
 
         self.conv = ModulatedConv2d(
@@ -392,11 +389,10 @@ class StyledConv(nn.Module):
         self.noise = NoiseInjection()
         self.activate = FusedLeakyReLU(out_channel)
 
-    def forward(self, input, style, noise=None):
-        out = self.conv(input, style)
+    def forward(self, _input, style, noise=None):
+        out = self.conv(_input, style)
         out = self.noise(out, noise=noise)
         out = self.activate(out)
-
         return out
 
 
@@ -407,10 +403,12 @@ class ConvLayer(nn.Sequential):
         out_channel,
         kernel_size,
         downsample=False,
-        blur_kernel=[1, 3, 3, 1],
+        blur_kernel: list = None,
         bias=True,
         activate=True,
     ):
+        if blur_kernel is None:
+            blur_kernel = [1, 3, 3, 1]
         layers = []
 
         if downsample:
@@ -419,7 +417,7 @@ class ConvLayer(nn.Sequential):
             pad0 = (p + 1) // 2
             pad1 = p // 2
 
-            layers.append(Blur(blur_kernel, pad=(pad0, pad1)))
+            layers.append(Blur(blur_kernel, _pad=(pad0, pad1)))
 
             stride = 2
             self.padding = 0
@@ -443,13 +441,15 @@ class ConvLayer(nn.Sequential):
             if bias:
                 layers.append(FusedLeakyReLU(out_channel))
             else:
-                layers.append(ScaledLeakyReLU(0.2))
+                layers.append(ScaledLeakyReLU())
 
         super().__init__(*layers)
 
 
 class ToRGB(nn.Module):
-    def __init__(self, in_channel, style_dim, upsample=True, blur_kernel=[1, 3, 3, 1]):
+    def __init__(self, in_channel, upsample=True, blur_kernel: list = None):
+        if blur_kernel is None:
+            blur_kernel = [1, 3, 3, 1]
         super().__init__()
 
         if upsample:
@@ -458,19 +458,19 @@ class ToRGB(nn.Module):
         self.conv = ConvLayer(in_channel, 3, 1)
         self.bias = nn.Parameter(torch.zeros(1, 3, 1, 1))
 
-    def forward(self, input, skip=None):
-        out = self.conv(input)
-        out = out + self.bias
-
+    def forward(self, _input, skip=None):
+        out = self.conv(_input)
+        out += self.bias
         if skip is not None:
             skip = self.upsample(skip)
             out = out + skip
-
         return out
 
 
 class ToFlow(nn.Module):
-    def __init__(self, in_channel, style_dim, upsample=True, blur_kernel=[1, 3, 3, 1]):
+    def __init__(self, in_channel, style_dim, upsample=True, blur_kernel: list = None):
+        if blur_kernel is None:
+            blur_kernel = [1, 3, 3, 1]
         super().__init__()
 
         if upsample:
@@ -481,37 +481,32 @@ class ToFlow(nn.Module):
         self.conv = ModulatedConv2d(in_channel, 3, 1, style_dim, demodulate=False)
         self.bias = nn.Parameter(torch.zeros(1, 3, 1, 1))
 
-    def forward(
-        self, input, style, feat, skip=None
-    ):  # input 是来自上一层的 feature， style 是 512 的 condition， feat 是来自于 unet 的跳层
-        out = self.conv(input, style)
-        out = out + self.bias
+    def forward(self, _input, style, feat, skip=None):
+        out = self.conv(_input, style)
+        out += self.bias
 
         # warping
-        xs = np.linspace(-1, 1, input.size(2))
+        xs = np.linspace(-1, 1, _input.size(2))
 
         xs = np.meshgrid(xs, xs)
         xs = np.stack(xs, 2)
 
         xs = (
-            torch.tensor(xs, requires_grad=False)
+            torch.tensor(xs)
             .float()
             .unsqueeze(0)
-            .repeat(input.size(0), 1, 1, 1)
-            .to(input.device)
+            .repeat(_input.size(0), 1, 1, 1)
+            .to(_input.device)
         )
-        # import pdb;pdb.set_trace()
         if skip is not None:
             skip = self.upsample(skip)
             out = out + skip
 
         sampler = torch.tanh(out[:, 0:2, :, :])
         mask = torch.sigmoid(out[:, 2:3, :, :])
-        flow = sampler.permute(0, 2, 3, 1) + xs  # xs在这里相当于一个 location 的位置
-
-        feat_warp = F.grid_sample(feat, flow) * mask
-        # import pdb;pdb.set_trace()
-        return feat_warp, feat_warp + input * (1.0 - mask), out
+        flow = sampler.permute(0, 2, 3, 1) + xs
+        feat_warp = grid_sample(feat, flow) * mask
+        return feat_warp, feat_warp + _input * (1.0 - mask), out
 
 
 class Direction(nn.Module):
@@ -520,19 +515,17 @@ class Direction(nn.Module):
 
         self.weight = nn.Parameter(torch.randn(512, motion_dim))
 
-    def forward(self, input):
+    def forward(self, _input):
         # input: (bs*t) x 512
-
         weight = self.weight + 1e-8
-        Q, R = torch.qr(weight)  # get eignvector, orthogonal [n1, n2, n3, n4]
-
-        if input is None:
-            return Q
-        else:
-            input_diag = torch.diag_embed(input)  # alpha, diagonal matrix
-            out = torch.matmul(input_diag, Q.T)
-            out = torch.sum(out, dim=1)
-            return out
+        # get eigenvector, orthogonal [n1, n2, n3, n4]
+        q, _ = torch.qr(weight)
+        if _input is None:
+            return q
+        input_diag = torch.diag_embed(_input)  # alpha, diagonal matrix
+        out = torch.matmul(input_diag, q.T)
+        out = torch.sum(out, dim=1)
+        return out
 
 
 class Synthesis(nn.Module):
@@ -541,9 +534,11 @@ class Synthesis(nn.Module):
         size,
         style_dim,
         motion_dim,
-        blur_kernel=[1, 3, 3, 1],
+        blur_kernel: list = None,
         channel_multiplier=1,
     ):
+        if blur_kernel is None:
+            blur_kernel = [1, 3, 3, 1]
         super(Synthesis, self).__init__()
 
         self.size = size
@@ -574,7 +569,7 @@ class Synthesis(nn.Module):
             style_dim,
             blur_kernel=blur_kernel,
         )
-        self.to_rgb1 = ToRGB(self.channels[4], style_dim, upsample=False)
+        self.to_rgb1 = ToRGB(self.channels[4], upsample=False)
 
         self.log_size = int(math.log(size, 2))
         self.num_layers = (self.log_size - 2) * 2 + 1
@@ -608,7 +603,7 @@ class Synthesis(nn.Module):
                     blur_kernel=blur_kernel,
                 )
             )
-            self.to_rgbs.append(ToRGB(out_channel, style_dim))
+            self.to_rgbs.append(ToRGB(out_channel))
 
             self.to_flows.append(ToFlow(out_channel, style_dim))
 
@@ -648,6 +643,4 @@ class Synthesis(nn.Module):
                 skip = to_rgb(out_warp, skip)
             i += 2
 
-        img = skip
-
-        return img
+        return skip
