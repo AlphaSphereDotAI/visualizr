@@ -58,7 +58,7 @@ from tqdm import tqdm
 from transformers import HubertModel, Wav2Vec2FeatureExtractor
 
 from visualizr.anitalker.config import TrainConfig
-from visualizr.anitalker.LIA_Model import LIA_Model
+from visualizr.anitalker.lia_model import lia_model
 from visualizr.anitalker.utils import (
     check_package_installed,
     frames_to_video,
@@ -131,7 +131,7 @@ class App:
             / f"{Path(image_path).stem}-{Path(audio_path).stem}_SR.mp4"
         )
 
-        lia: LIA_Model = self._load_stage_1_model()
+        lia: lia_model = self._load_stage_1_model()
 
         conf: TrainConfig = init_configuration(
             infer_type, seed, 2, self.settings.model.motion_dim
@@ -332,10 +332,10 @@ class App:
             Markdown("Video (256*256 only) generated successfully!"),
         )
 
-    def _load_stage_1_model(self) -> LIA_Model:
+    def _load_stage_1_model(self) -> lia_model:
         logger.info("Loading stage 1 model")
         Info("Loading stage 1 model")
-        lia: LIA_Model = LIA_Model(
+        lia: lia_model = lia_model(
             motion_dim=self.settings.model.motion_dim, fusion_type="weighted_sum"
         )
         lia.load_lightning_model(self.settings.model.checkpoint.stage_1)

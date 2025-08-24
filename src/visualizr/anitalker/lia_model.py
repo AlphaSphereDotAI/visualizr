@@ -6,7 +6,7 @@ from visualizr.anitalker.networks.styledecoder import Synthesis
 from visualizr.settings import logger
 
 
-class LIA_Model(nn.Module):
+class lia_model(nn.Module):
     def __init__(
         self,
         size=256,

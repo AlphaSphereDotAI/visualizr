@@ -147,9 +147,7 @@ class MLPLNAct(nn.Module):
                 if self.activation in [Activation.relu, Activation.silu]:
                     init.kaiming_normal_(module.weight, nonlinearity="relu")
                 elif self.activation == Activation.lrelu:
-                    init.kaiming_normal_(
-                        module.weight, a=0.2, nonlinearity="leaky_relu"
-                    )
+                    init.kaiming_normal_(module.weight, a=0.2)  # leaky_relu
 
     def forward(self, x, cond=None):
         x = self.linear(x)

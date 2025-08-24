@@ -26,23 +26,16 @@ class LitModel(LightningModule):
         assert conf.train_mode != TrainMode.manipulate
         if conf.seed is not None:
             seed_everything(conf.seed)
-
         self.save_hyperparameters(conf.as_dict_jsonable())
-
         self.conf = conf
-
         self.model = DiffusionPredictor(conf)
-
         self.ema_model = copy.deepcopy(self.model)
         self.ema_model.requires_grad_(False)
         self.ema_model.eval()
-
         self.sampler = conf.make_diffusion_conf().make_sampler()
         self.eval_sampler = conf.make_eval_diffusion_conf().make_sampler()
-
         # this is shared for both model and latent
         self.T_sampler = conf.make_t_sampler()
-
         if conf.train_mode.use_latent_net():
             self.latent_sampler = conf.make_latent_diffusion_conf().make_sampler()
             self.eval_latent_sampler = (
@@ -51,7 +44,6 @@ class LitModel(LightningModule):
         else:
             self.latent_sampler = None
             self.eval_latent_sampler = None
-
         # initial variables for consistent sampling
         self.register_buffer(
             "x_T",
@@ -120,7 +112,6 @@ class LitModel(LightningModule):
         # the batch size is global.
         conf = self.conf.clone()
         conf.batch_size = self.batch_size
-
         return conf.make_loader(self.train_data, shuffle=True, drop_last=drop_last)
 
     def train_dataloader(self):

@@ -721,38 +721,32 @@ class GaussianDiffusionBeatGans:
             device = next(model.parameters()).device
         sample_t = []
         xstart_t = []
-        T = []
+        _t = []
         indices = list(range(self.num_timesteps))
         sample = x
         for i in indices:
             t = th.tensor([i] * len(sample), device=device)
             with th.no_grad():
                 out = self.ddim_reverse_sample(
-                    model,
-                    sample,
-                    t=t,
-                    clip_denoised=clip_denoised,
-                    denoised_fn=denoised_fn,
-                    model_kwargs=model_kwargs,
-                    eta=eta,
+                    model, sample, t, clip_denoised, denoised_fn, model_kwargs, eta
                 )
                 sample = out["sample"]
-                # [1, ..., T]
+                # [1, ..., _t]
                 sample_t.append(sample)
-                # [0, ...., T-1]
+                # [0, ...., _t-1]
                 xstart_t.append(out["pred_xstart"])
-                # [0, ..., T-1] ready to use
-                T.append(t)
+                # [0, ..., _t-1] ready to use
+                _t.append(t)
 
         return {
-            #  xT "
+            #  xT
             "sample": sample,
-            # (1, ..., T)
+            # (1, ..., _t)
             "sample_t": sample_t,
-            # xstart here is a bit different from sampling from T = T-1 to T = 0
+            # xstart here is a bit different from sampling from _t = _t-1 to _t = 0
             # may not be exact.
             "xstart_t": xstart_t,
-            "T": T,
+            "T": _t,
         }
 
     def ddim_sample_loop(

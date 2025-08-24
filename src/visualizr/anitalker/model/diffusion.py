@@ -282,7 +282,7 @@ class Diffusion(BaseModule):
             1.0 - torch.exp(-0.5 * cum_noise)
         )
         variance = 1.0 - torch.exp(-cum_noise)
-        z = torch.randn(x0.shape, dtype=x0.dtype, device=x0.device, requires_grad=False)
+        z = torch.randn(x0.shape, dtype=x0.dtype, device=x0.device)
         xt = mean + z * torch.sqrt(variance)
         return xt * mask, z * mask
 
@@ -295,17 +295,12 @@ class Diffusion(BaseModule):
                 z.shape[0], dtype=z.dtype, device=z.device
             )
             time = t.unsqueeze(-1).unsqueeze(-1)
-            noise_t = get_noise(time, self.beta_min, self.beta_max, cumulative=False)
+            noise_t = get_noise(time, self.beta_min, self.beta_max)
             if stoc:  # adds stochastic term
                 dxt_det = 0.5 * (mu - xt) - self.estimator(xt, mask, mu, t, spk)
                 dxt_det = dxt_det * noise_t * h
-                dxt_stoc = torch.randn(
-                    z.shape,
-                    dtype=z.dtype,
-                    device=z.device,
-                    requires_grad=False,
-                )
-                dxt_stoc = dxt_stoc * torch.sqrt(noise_t * h)
+                dxt_stoc = torch.randn(z.shape, dtype=z.dtype, device=z.device)
+                dxt_stoc *= torch.sqrt(noise_t * h)
                 dxt = dxt_det + dxt_stoc
             else:
                 dxt = 0.5 * (mu - xt - self.estimator(xt, mask, mu, t, spk))
@@ -327,8 +322,6 @@ class Diffusion(BaseModule):
         return loss, xt
 
     def compute_loss(self, x0, mask, mu, spk=None, offset=1e-5):
-        t = torch.rand(
-            x0.shape[0], dtype=x0.dtype, device=x0.device, requires_grad=False
-        )
+        t = torch.rand(x0.shape[0], dtype=x0.dtype, device=x0.device)
         t = torch.clamp(t, offset, 1.0 - offset)
         return self.loss_t(x0, mask, mu, t, spk)

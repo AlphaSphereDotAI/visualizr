@@ -2,11 +2,11 @@ import math
 
 import torch
 from torch import nn
-from torch.nn import functional as F
+from torch.nn.functional import conv2d, leaky_relu, linear, pad
 
 
 def fused_leaky_relu(_input, bias, negative_slope=0.2, scale=2**0.5):
-    return F.leaky_relu(_input + bias, negative_slope) * scale
+    return leaky_relu(_input + bias, negative_slope) * scale
 
 
 class FusedLeakyReLU(nn.Module):
@@ -27,10 +27,10 @@ def upfirdn2d_native(
     kernel_h, kernel_w = kernel.shape
 
     out = _input.view(-1, minor, in_h, 1, in_w, 1)
-    out = F.pad(out, [0, up_x - 1, 0, 0, 0, up_y - 1, 0, 0])
+    out = pad(out, [0, up_x - 1, 0, 0, 0, up_y - 1, 0, 0])
     out = out.view(-1, minor, in_h * up_y, in_w * up_x)
 
-    out = F.pad(out, [max(pad_x0, 0), max(pad_x1, 0), max(pad_y0, 0), max(pad_y1, 0)])
+    out = pad(out, [max(pad_x0, 0), max(pad_x1, 0), max(pad_y0, 0), max(pad_y1, 0)])
     out = out[
         :,
         :,
@@ -43,21 +43,19 @@ def upfirdn2d_native(
         [-1, 1, in_h * up_y + pad_y0 + pad_y1, in_w * up_x + pad_x0 + pad_x1]
     )
     w = torch.flip(kernel, [0, 1]).view(1, 1, kernel_h, kernel_w)
-    out = F.conv2d(out, w)
+    out = conv2d(out, w)
     out = out.reshape(
         -1,
         minor,
         in_h * up_y + pad_y0 + pad_y1 - kernel_h + 1,
         in_w * up_x + pad_x0 + pad_x1 - kernel_w + 1,
     )
-    # out = out.permute(0, 2, 3, 1)
-
     return out[:, :, ::down_y, ::down_x]
 
 
-def upfirdn2d(_input, kernel, up=1, down=1, pad=(0, 0)):
+def upfirdn2d(_input, kernel, up=1, down=1, _pad=(0, 0)):
     return upfirdn2d_native(
-        _input, kernel, up, up, down, down, pad[0], pad[1], pad[0], pad[1]
+        _input, kernel, up, up, down, down, _pad[0], _pad[1], _pad[0], _pad[1]
     )
 
 
@@ -73,7 +71,7 @@ def make_kernel(k):
 
 
 class Blur(nn.Module):
-    def __init__(self, kernel, pad, upsample_factor=1):
+    def __init__(self, kernel, _pad, upsample_factor=1):
         super().__init__()
 
         kernel = make_kernel(kernel)
@@ -83,10 +81,10 @@ class Blur(nn.Module):
 
         self.register_buffer("kernel", kernel)
 
-        self.pad = pad
+        self.pad = _pad
 
     def forward(self, _input):
-        return upfirdn2d(_input, self.kernel, pad=self.pad)
+        return upfirdn2d(_input, self.kernel, _pad=self.pad)
 
 
 class ScaledLeakyReLU(nn.Module):
@@ -96,7 +94,7 @@ class ScaledLeakyReLU(nn.Module):
         self.negative_slope = negative_slope
 
     def forward(self, _input):
-        return F.leaky_relu(_input, negative_slope=self.negative_slope)
+        return leaky_relu(_input, negative_slope=self.negative_slope)
 
 
 class EqualConv2d(nn.Module):
@@ -122,7 +120,7 @@ class EqualConv2d(nn.Module):
         self.bias = nn.Parameter(torch.zeros(out_channel)) if bias else None
 
     def forward(self, _input):
-        return F.conv2d(
+        return conv2d(
             _input, self.weight * self.scale, self.bias, self.stride, self.padding
         )
 
@@ -159,12 +157,10 @@ class EqualLinear(nn.Module):
 
     def forward(self, _input):
         if self.activation:
-            out = F.linear(_input, self.weight * self.scale)
+            out = linear(_input, self.weight * self.scale)
             out = fused_leaky_relu(out, self.bias * self.lr_mul)
         else:
-            out = F.linear(
-                _input, self.weight * self.scale, bias=self.bias * self.lr_mul
-            )
+            out = linear(_input, self.weight * self.scale, bias=self.bias * self.lr_mul)
 
         return out
 
@@ -195,7 +191,7 @@ class ConvLayer(nn.Sequential):
             pad0 = (p + 1) // 2
             pad1 = p // 2
 
-            layers.append(Blur(blur_kernel, pad=(pad0, pad1)))
+            layers.append(Blur(blur_kernel, _pad=(pad0, pad1)))
 
             stride = 2
             self.padding = 0
@@ -219,7 +215,7 @@ class ConvLayer(nn.Sequential):
             if bias:
                 layers.append(FusedLeakyReLU(out_channel))
             else:
-                layers.append(ScaledLeakyReLU(0.2))
+                layers.append(ScaledLeakyReLU())
 
         super().__init__(*layers)
 

@@ -39,6 +39,7 @@ from visualizr.anitalker.model.latentnet import LatentNetType, MLPSkipNetConfig
 class PretrainConfig(BaseConfig):
     name: str
     path: str
+    pathcd: str
 
 
 @dataclass

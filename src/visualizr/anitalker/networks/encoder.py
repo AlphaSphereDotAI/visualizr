@@ -216,7 +216,7 @@ class ConvLayer(nn.Sequential):
             if bias:
                 layers.append(FusedLeakyReLU(out_channel))
             else:
-                layers.append(ScaledLeakyReLU(0.2))
+                layers.append(ScaledLeakyReLU())
 
         super().__init__(*layers)
 
@@ -290,7 +290,7 @@ class EncoderApp(nn.Module):
             self.convs.append(ResBlock(in_channel, out_channel))
             in_channel = out_channel
 
-        self.convs.append(EqualConv2d(in_channel, self.w_dim, 4, padding=0, bias=False))
+        self.convs.append(EqualConv2d(in_channel, self.w_dim, 4, bias=False))
 
         self.fusion_type = fusion_type
         assert self.fusion_type == "weighted_sum"

@@ -1,5 +1,5 @@
 import math
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 from numbers import Number
@@ -25,7 +25,7 @@ class ScaleAt(Enum):
     after_norm = "afternorm"
 
 
-class TimestepBlock(nn.Module):
+class TimestepBlock(nn.Module, ABC):
     """Any module where forward() takes timestep embeddings as a second argument."""
 
     @abstractmethod
