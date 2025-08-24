@@ -1,20 +1,69 @@
 <component name="ProjectDictionaryState">
   <dictionary name="project">
     <words>
+      <w>adamw</w>
+      <w>adaptivenonzero</w>
+      <w>afternorm</w>
+      <w>allneg</w>
+      <w>alphabar</w>
+      <w>alphacum</w>
       <w>alphaspheredotai</w>
       <w>anitalker</w>
+      <w>autoenc</w>
+      <w>beatgans</w>
+      <w>beatt</w>
       <w>buildx</w>
+      <w>celeba</w>
+      <w>celebahq</w>
+      <w>cfewshot</w>
+      <w>cfewshotallneg</w>
       <w>chatacter</w>
       <w>ckpts</w>
+      <w>convs</w>
       <w>cumprod</w>
       <w>cves</w>
+      <w>ddim</w>
+      <w>decouping</w>
+      <w>depthconv</w>
+      <w>dickstein</w>
+      <w>fewshot</w>
+      <w>gatedconv</w>
+      <w>gfpga</w>
       <w>ghcr</w>
+      <w>hdtf</w>
+      <w>hiddens</w>
+      <w>hstack</w>
       <w>jlumbroso</w>
+      <w>latentdiffusion</w>
+      <w>logvar</w>
+      <w>lrelu</w>
       <w>markdownlint</w>
       <w>mergify</w>
+      <w>mergifyio</w>
+      <w>meshgrids</w>
+      <w>mgrid</w>
+      <w>mults</w>
+      <w>pathcd</w>
       <w>pavelzw</w>
+      <w>randn</w>
       <w>recipm</w>
+      <w>resblock</w>
+      <w>resblocks</w>
+      <w>rgbs</w>
+      <w>sched</w>
+      <w>selfattn</w>
+      <w>seperate</w>
+      <w>silu</w>
+      <w>sohl</w>
+      <w>spks</w>
+      <w>stdv</w>
+      <w>stylespace</w>
       <w>taocode</w>
+      <w>upfirdn</w>
+      <w>vaeddpm</w>
+      <w>xprev</w>
+      <w>xstart</w>
+      <w>znormalize</w>
     </words>
   </dictionary>
 </component>

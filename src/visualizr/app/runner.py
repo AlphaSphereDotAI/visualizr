@@ -1,5 +1,5 @@
-from visualizr.model.builder import Model
+from visualizr.app.builder import App
 from visualizr.settings import Settings
 
 settings: Settings = Settings()
-model: Model = Model(settings)
+app: App = App(settings)
