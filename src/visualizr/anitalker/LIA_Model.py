@@ -33,28 +33,26 @@ class LIA_Model(nn.Module):
         return self.dec(start, direction, feats)
 
     def load_lightning_model(self, lia_pretrained_model_path):
-        selfState = self.state_dict()
+        self_state = self.state_dict()
 
         state = load(lia_pretrained_model_path, map_location="cpu")
         for name, param in state.items():
-            origName = name
-            if name not in selfState:
+            orig_name = name
+            if name not in self_state:
                 name = name.replace("lia.", "")
-            if name not in selfState:
-                logger.exception(f"{origName} is not in the model.")
-                Error(f"{origName} is not in the model.")
-                # You can ignore those errors as some parameters are only used for training
+            if name not in self_state:
+                logger.exception(f"{orig_name} is not in the model.")
+                Error(f"{orig_name} is not in the model.")
+                # You can ignore those errors as some parameters are only used for training.
                 continue
-            if selfState[name].size() != state[origName].size():
-                logger.exception(
-                    f"Wrong parameter length: {origName}",
-                    f"model: {selfState[name].size()}",
-                    f"loaded: {state[origName].size()}",
+            if self_state[name].size() != state[orig_name].size():
+                _message: str = (
+                    f"Wrong parameter length: {orig_name}, "
+                    + f"model: {self_state[name].size()}, "
+                    + f"loaded: {state[orig_name].size()}"
                 )
-                Error(
-                    f"Wrong parameter length: {origName}",
-                    f"model: {selfState[name].size()}",
-                    f"loaded: {state[origName].size()}",
-                )
+
+                logger.exception(_message)
+                Error(_message)
                 continue
-            selfState[name].copy_(param)
+            self_state[name].copy_(param)
