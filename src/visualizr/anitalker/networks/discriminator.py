@@ -2,11 +2,11 @@ import math
 
 import torch
 from torch import nn
-from torch.nn import functional as F
+from torch.nn.functional import conv2d, leaky_relu, linear, pad
 
 
-def fused_leaky_relu(input, bias, negative_slope=0.2, scale=2**0.5):
-    return F.leaky_relu(input + bias, negative_slope) * scale
+def fused_leaky_relu(_input, bias, negative_slope=0.2, scale=2**0.5):
+    return leaky_relu(_input + bias, negative_slope) * scale
 
 
 class FusedLeakyReLU(nn.Module):
@@ -16,24 +16,21 @@ class FusedLeakyReLU(nn.Module):
         self.negative_slope = negative_slope
         self.scale = scale
 
-    def forward(self, input):
-        # print("FusedLeakyReLU: ", input.abs().mean())
-        out = fused_leaky_relu(input, self.bias, self.negative_slope, self.scale)
-        # print("FusedLeakyReLU: ", out.abs().mean())
-        return out
+    def forward(self, _input):
+        return fused_leaky_relu(_input, self.bias, self.negative_slope, self.scale)
 
 
 def upfirdn2d_native(
-    input, kernel, up_x, up_y, down_x, down_y, pad_x0, pad_x1, pad_y0, pad_y1
+    _input, kernel, up_x, up_y, down_x, down_y, pad_x0, pad_x1, pad_y0, pad_y1
 ):
-    _, minor, in_h, in_w = input.shape
+    _, minor, in_h, in_w = _input.shape
     kernel_h, kernel_w = kernel.shape
 
-    out = input.view(-1, minor, in_h, 1, in_w, 1)
-    out = F.pad(out, [0, up_x - 1, 0, 0, 0, up_y - 1, 0, 0])
+    out = _input.view(-1, minor, in_h, 1, in_w, 1)
+    out = pad(out, [0, up_x - 1, 0, 0, 0, up_y - 1, 0, 0])
     out = out.view(-1, minor, in_h * up_y, in_w * up_x)
 
-    out = F.pad(out, [max(pad_x0, 0), max(pad_x1, 0), max(pad_y0, 0), max(pad_y1, 0)])
+    out = pad(out, [max(pad_x0, 0), max(pad_x1, 0), max(pad_y0, 0), max(pad_y1, 0)])
     out = out[
         :,
         :,
@@ -46,21 +43,19 @@ def upfirdn2d_native(
         [-1, 1, in_h * up_y + pad_y0 + pad_y1, in_w * up_x + pad_x0 + pad_x1]
     )
     w = torch.flip(kernel, [0, 1]).view(1, 1, kernel_h, kernel_w)
-    out = F.conv2d(out, w)
+    out = conv2d(out, w)
     out = out.reshape(
         -1,
         minor,
         in_h * up_y + pad_y0 + pad_y1 - kernel_h + 1,
         in_w * up_x + pad_x0 + pad_x1 - kernel_w + 1,
     )
-    # out = out.permute(0, 2, 3, 1)
-
     return out[:, :, ::down_y, ::down_x]
 
 
-def upfirdn2d(input, kernel, up=1, down=1, pad=(0, 0)):
+def upfirdn2d(_input, kernel, up=1, down=1, _pad=(0, 0)):
     return upfirdn2d_native(
-        input, kernel, up, up, down, down, pad[0], pad[1], pad[0], pad[1]
+        _input, kernel, up, up, down, down, _pad[0], _pad[1], _pad[0], _pad[1]
     )
 
 
@@ -76,7 +71,7 @@ def make_kernel(k):
 
 
 class Blur(nn.Module):
-    def __init__(self, kernel, pad, upsample_factor=1):
+    def __init__(self, kernel, _pad, upsample_factor=1):
         super().__init__()
 
         kernel = make_kernel(kernel)
@@ -86,10 +81,10 @@ class Blur(nn.Module):
 
         self.register_buffer("kernel", kernel)
 
-        self.pad = pad
+        self.pad = _pad
 
-    def forward(self, input):
-        return upfirdn2d(input, self.kernel, pad=self.pad)
+    def forward(self, _input):
+        return upfirdn2d(_input, self.kernel, _pad=self.pad)
 
 
 class ScaledLeakyReLU(nn.Module):
@@ -98,8 +93,8 @@ class ScaledLeakyReLU(nn.Module):
 
         self.negative_slope = negative_slope
 
-    def forward(self, input):
-        return F.leaky_relu(input, negative_slope=self.negative_slope)
+    def forward(self, _input):
+        return leaky_relu(_input, negative_slope=self.negative_slope)
 
 
 class EqualConv2d(nn.Module):
@@ -122,18 +117,11 @@ class EqualConv2d(nn.Module):
         self.stride = stride
         self.padding = padding
 
-        if bias:
-            self.bias = nn.Parameter(torch.zeros(out_channel))
-        else:
-            self.bias = None
+        self.bias = nn.Parameter(torch.zeros(out_channel)) if bias else None
 
-    def forward(self, input):
-        return F.conv2d(
-            input,
-            self.weight * self.scale,
-            bias=self.bias,
-            stride=self.stride,
-            padding=self.padding,
+    def forward(self, _input):
+        return conv2d(
+            _input, self.weight * self.scale, self.bias, self.stride, self.padding
         )
 
     def __repr__(self):
@@ -167,14 +155,12 @@ class EqualLinear(nn.Module):
         self.scale = (1 / math.sqrt(in_dim)) * lr_mul
         self.lr_mul = lr_mul
 
-    def forward(self, input):
+    def forward(self, _input):
         if self.activation:
-            out = F.linear(input, self.weight * self.scale)
+            out = linear(_input, self.weight * self.scale)
             out = fused_leaky_relu(out, self.bias * self.lr_mul)
         else:
-            out = F.linear(
-                input, self.weight * self.scale, bias=self.bias * self.lr_mul
-            )
+            out = linear(_input, self.weight * self.scale, bias=self.bias * self.lr_mul)
 
         return out
 
@@ -191,10 +177,12 @@ class ConvLayer(nn.Sequential):
         out_channel,
         kernel_size,
         downsample=False,
-        blur_kernel=[1, 3, 3, 1],
+        blur_kernel: list = None,
         bias=True,
         activate=True,
     ):
+        if blur_kernel is None:
+            blur_kernel = [1, 3, 3, 1]
         layers = []
 
         if downsample:
@@ -203,7 +191,7 @@ class ConvLayer(nn.Sequential):
             pad0 = (p + 1) // 2
             pad1 = p // 2
 
-            layers.append(Blur(blur_kernel, pad=(pad0, pad1)))
+            layers.append(Blur(blur_kernel, _pad=(pad0, pad1)))
 
             stride = 2
             self.padding = 0
@@ -227,13 +215,15 @@ class ConvLayer(nn.Sequential):
             if bias:
                 layers.append(FusedLeakyReLU(out_channel))
             else:
-                layers.append(ScaledLeakyReLU(0.2))
+                layers.append(ScaledLeakyReLU())
 
         super().__init__(*layers)
 
 
 class ResBlock(nn.Module):
-    def __init__(self, in_channel, out_channel, blur_kernel=[1, 3, 3, 1]):
+    def __init__(self, in_channel, out_channel, blur_kernel: list = None):
+        if blur_kernel is None:
+            blur_kernel = [1, 3, 3, 1]
         super().__init__()
 
         self.conv1 = ConvLayer(in_channel, in_channel, 3)
@@ -243,23 +233,26 @@ class ResBlock(nn.Module):
             in_channel,
             out_channel,
             1,
-            downsample=True,
-            activate=False,
-            bias=False,
+            True,
+            blur_kernel,
+            False,
+            False,
         )
 
-    def forward(self, input):
-        out = self.conv1(input)
+    def forward(self, _input):
+        out = self.conv1(_input)
         out = self.conv2(out)
 
-        skip = self.skip(input)
+        skip = self.skip(_input)
         out = (out + skip) / math.sqrt(2)
 
         return out
 
 
 class Discriminator(nn.Module):
-    def __init__(self, size, channel_multiplier=1, blur_kernel=[1, 3, 3, 1]):
+    def __init__(self, size, channel_multiplier=1, blur_kernel: list = None):
+        if blur_kernel is None:
+            blur_kernel = [1, 3, 3, 1]
         super().__init__()
 
         self.size = size
@@ -296,8 +289,8 @@ class Discriminator(nn.Module):
             EqualLinear(channels[4], 1),
         )
 
-    def forward(self, input):
-        out = self.convs(input)
+    def forward(self, _input):
+        out = self.convs(_input)
         batch, channel, height, width = out.shape
 
         group = min(batch, self.stddev_group)

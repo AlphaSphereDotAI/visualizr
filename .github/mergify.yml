@@ -27,6 +27,7 @@ pull_request_rules:
       comment:
         message: >
           Thank you for your contribution @{{author}}! Your pull request has been merged.
+
   - name: Comment if there is a conflict
     conditions:
       - conflict

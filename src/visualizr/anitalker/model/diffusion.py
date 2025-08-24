@@ -7,7 +7,8 @@ from visualizr.anitalker.model.base import BaseModule
 
 
 class Mish(BaseModule):
-    def forward(self, x):
+    @staticmethod
+    def forward(x):
         return x * torch.tanh(torch.nn.functional.softplus(x))
 
 
@@ -69,8 +70,7 @@ class ResnetBlock(BaseModule):
         h = self.block1(x, mask)
         h += self.mlp(time_emb).unsqueeze(-1).unsqueeze(-1)
         h = self.block2(h, mask)
-        output = h + self.res_conv(x * mask)
-        return output
+        return h + self.res_conv(x * mask)
 
 
 class LinearAttention(BaseModule):
@@ -109,8 +109,7 @@ class Residual(BaseModule):
         self.fn = fn
 
     def forward(self, x, *args, **kwargs):
-        output = self.fn(x, *args, **kwargs) + x
-        return output
+        return self.fn(x, *args, **kwargs) + x
 
 
 class SinusoidalPosEmb(BaseModule):
@@ -143,7 +142,7 @@ class GradLogPEstimator2d(BaseModule):
         self.dim = dim
         self.dim_mults = dim_mults
         self.groups = groups
-        self.n_spks = n_spks if not isinstance(n_spks, type(None)) else 1
+        self.n_spks = 1 if isinstance(n_spks, type(None)) else n_spks
         self.spk_emb_dim = spk_emb_dim
         self.pe_scale = pe_scale
 
@@ -177,7 +176,7 @@ class GradLogPEstimator2d(BaseModule):
                         ResnetBlock(dim_in, dim_out, time_emb_dim=dim),
                         ResnetBlock(dim_out, dim_out, time_emb_dim=dim),
                         Residual(Rezero(LinearAttention(dim_out))),
-                        Downsample(dim_out) if not is_last else torch.nn.Identity(),
+                        torch.nn.Identity() if is_last else Downsample(dim_out),
                     ]
                 )
             )
@@ -187,7 +186,7 @@ class GradLogPEstimator2d(BaseModule):
         self.mid_attn = Residual(Rezero(LinearAttention(mid_dim)))
         self.mid_block2 = ResnetBlock(mid_dim, mid_dim, time_emb_dim=dim)
 
-        for ind, (dim_in, dim_out) in enumerate(reversed(in_out[1:])):
+        for dim_in, dim_out in reversed(in_out[1:]):
             self.ups.append(
                 torch.nn.ModuleList(
                     [
@@ -202,10 +201,7 @@ class GradLogPEstimator2d(BaseModule):
         self.final_conv = torch.nn.Conv2d(dim, 1, 1)
 
     def forward(self, x, mask, mu, t, spk=None):
-        s = None
-        if not isinstance(spk, type(None)):
-            s = self.spk_mlp(spk)
-
+        s = None if isinstance(spk, type(None)) else self.spk_mlp(spk)
         t = self.time_pos_emb(t, scale=self.pe_scale)
         t = self.mlp(t)
 
@@ -248,11 +244,11 @@ class GradLogPEstimator2d(BaseModule):
 
 
 def get_noise(t, beta_init, beta_term, cumulative=False):
-    if cumulative:
-        noise = beta_init * t + 0.5 * (beta_term - beta_init) * (t**2)
-    else:
-        noise = beta_init + (beta_term - beta_init) * t
-    return noise
+    return (
+        beta_init * t + 0.5 * (beta_term - beta_init) * (t**2)
+        if cumulative
+        else beta_init + (beta_term - beta_init) * t
+    )
 
 
 class Diffusion(BaseModule):
@@ -286,7 +282,7 @@ class Diffusion(BaseModule):
             1.0 - torch.exp(-0.5 * cum_noise)
         )
         variance = 1.0 - torch.exp(-cum_noise)
-        z = torch.randn(x0.shape, dtype=x0.dtype, device=x0.device, requires_grad=False)
+        z = torch.randn(x0.shape, dtype=x0.dtype, device=x0.device)
         xt = mean + z * torch.sqrt(variance)
         return xt * mask, z * mask
 
@@ -299,17 +295,12 @@ class Diffusion(BaseModule):
                 z.shape[0], dtype=z.dtype, device=z.device
             )
             time = t.unsqueeze(-1).unsqueeze(-1)
-            noise_t = get_noise(time, self.beta_min, self.beta_max, cumulative=False)
+            noise_t = get_noise(time, self.beta_min, self.beta_max)
             if stoc:  # adds stochastic term
                 dxt_det = 0.5 * (mu - xt) - self.estimator(xt, mask, mu, t, spk)
                 dxt_det = dxt_det * noise_t * h
-                dxt_stoc = torch.randn(
-                    z.shape,
-                    dtype=z.dtype,
-                    device=z.device,
-                    requires_grad=False,
-                )
-                dxt_stoc = dxt_stoc * torch.sqrt(noise_t * h)
+                dxt_stoc = torch.randn(z.shape, dtype=z.dtype, device=z.device)
+                dxt_stoc *= torch.sqrt(noise_t * h)
                 dxt = dxt_det + dxt_stoc
             else:
                 dxt = 0.5 * (mu - xt - self.estimator(xt, mask, mu, t, spk))
@@ -331,8 +322,6 @@ class Diffusion(BaseModule):
         return loss, xt
 
     def compute_loss(self, x0, mask, mu, spk=None, offset=1e-5):
-        t = torch.rand(
-            x0.shape[0], dtype=x0.dtype, device=x0.device, requires_grad=False
-        )
+        t = torch.rand(x0.shape[0], dtype=x0.dtype, device=x0.device)
         t = torch.clamp(t, offset, 1.0 - offset)
         return self.loss_t(x0, mask, mu, t, spk)

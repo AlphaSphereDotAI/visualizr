@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Tuple
+from typing import Optional, Tuple
 
 import numpy as np
 from torch import tensor
@@ -66,20 +66,24 @@ def space_timesteps(num_timesteps, section_counts):
 
 @dataclass
 class SpacedDiffusionBeatGansConfig(GaussianDiffusionBeatGansConfig):
-    use_timesteps: Tuple[int] = None
+    """
+    Configuration for a spaced diffusion process.
+
+    This class holds the parameters for creating a spaced diffusion sampler, including the timesteps to use.
+
+    Args:
+        use_timesteps: A collection (sequence or set) of timesteps from the
+                          original diffusion process to retain.
+    """
+
+    use_timesteps: Optional[Tuple[int]] = None
 
     def make_sampler(self):
         return SpacedDiffusionBeatGans(self)
 
 
 class SpacedDiffusionBeatGans(GaussianDiffusionBeatGans):
-    """
-    A diffusion process which can skip steps in a base diffusion process.
-
-    :param use_timesteps: a collection (sequence or set) of timesteps from the
-                          original diffusion process to retain.
-    :param kwargs: the kwargs to create the base diffusion process.
-    """
+    """A diffusion process, which can skip steps in a base diffusion process."""
 
     def __init__(self, conf: SpacedDiffusionBeatGansConfig):
         self.conf = conf
@@ -148,17 +152,10 @@ class _WrappedModel:
         t,
         control_flag=False,
     ):
-        """
-        Args:
-            t: t's with different ranges
-               (can be << T due to smaller eval T)
-               need to be converted to the original t's
-            t_cond: the same as t but can be of different values
-        """
         map_tensor = tensor(self.timestep_map, device=t.device, dtype=t.dtype)
 
-        def do(t):
-            new_ts = map_tensor[t]
+        def do(_t):
+            new_ts = map_tensor[_t]
             if self.rescale_timesteps:
                 new_ts = new_ts.float() * (1000.0 / self.original_num_steps)
             return new_ts
@@ -178,6 +175,5 @@ class _WrappedModel:
     def __getattr__(self, name):
         # allow for calling the model's methods
         if hasattr(self.model, name):
-            func = getattr(self.model, name)
-            return func
+            return getattr(self.model, name)
         raise AttributeError(name)
