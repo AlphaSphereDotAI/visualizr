@@ -39,7 +39,7 @@ class DiffusionPredictor(BaseModule):
         super(DiffusionPredictor, self).__init__()
         self.conf: TrainConfig = conf
         # Speech downsampling
-        if self.infer_type.startswith("mfcc"):
+        if self.conf.infer_type.startswith("mfcc"):
             # from 100 hz to 25 hz
             self.down_sample1 = nn.Conv1d(
                 mfcc_dim, 256, kernel_size=3, stride=2, padding=1
@@ -47,7 +47,7 @@ class DiffusionPredictor(BaseModule):
             self.down_sample2 = nn.Conv1d(
                 256, speech_dim, kernel_size=3, stride=2, padding=1
             )
-        elif self.infer_type.startswith("hubert"):
+        elif self.conf.infer_type.startswith("hubert"):
             # from 50 hz to 25 hz
             self.down_sample1 = nn.Conv1d(
                 hubert_dim, speech_dim, kernel_size=3, stride=2, padding=1
@@ -67,11 +67,11 @@ class DiffusionPredictor(BaseModule):
         )
 
         # LSTM predictors for Variance Adapter
-        if self.infer_type != "hubert_audio_only":
+        if self.conf.infer_type != "hubert_audio_only":
             self.pose_predictor = LSTM(speech_dim, 3)
             self.pose_encoder = LSTM(3, speech_dim)
 
-        if "full_control" in self.infer_type:
+        if "full_control" in self.conf.infer_type:
             self.location_predictor = LSTM(speech_dim, 1)
             self.location_encoder = LSTM(1, speech_dim)
             self.face_scale_predictor = LSTM(speech_dim, 1)
@@ -83,8 +83,8 @@ class DiffusionPredictor(BaseModule):
         self.t_encoder = nn.Sequential(nn.Linear(1, 128))
         self.encoder_direction_code = nn.Linear(conf.motion_dim, 128)
         self.out_proj = nn.Linear(decoder_dim, conf.motion_dim)
-        logger.info(f"infer_type: {self.infer_type}")
-        Info(f"infer_type: {self.infer_type}")
+        logger.info(f"infer_type: {self.conf.infer_type}")
+        Info(f"infer_type: {self.conf.infer_type}")
 
     @staticmethod
     def create_conformer_encoder(attention_dim: int, num_blocks: int) -> Encoder:
@@ -120,9 +120,9 @@ class DiffusionPredictor(BaseModule):
         control_flag=False,
     ):
         x = None
-        if self.infer_type.startswith("mfcc"):
+        if self.conf.infer_type.startswith("mfcc"):
             x = self.mfcc_speech_downsample(seq_input_vector)
-        elif self.infer_type.startswith("hubert"):
+        elif self.conf.infer_type.startswith("hubert"):
             norm_weights = softmax(self.weights, dim=-1)
             weighted_feature = (
                 norm_weights.unsqueeze(0).unsqueeze(-1).unsqueeze(-1) * seq_input_vector
@@ -134,7 +134,7 @@ class DiffusionPredictor(BaseModule):
             face_scale,
             yaw_pitch_roll,
         )
-        if self.infer_type != "hubert_audio_only":
+        if self.conf.infer_type != "hubert_audio_only":
             logger.info(f"pose controllable. control_flag: {control_flag}")
             Info(f"pose controllable. control_flag: {control_flag}")
             x, predicted_location, predicted_scale, predicted_pose = (
@@ -159,7 +159,7 @@ class DiffusionPredictor(BaseModule):
         self, x, face_location, face_scale, yaw_pitch_roll, control_flag
     ):
         predicted_location, predicted_scale = 0, 0
-        if "full_control" in self.infer_type:
+        if "full_control" in self.conf.infer_type:
             logger.info(f"full controllable. control_flag: {control_flag}")
             Info(f"full controllable. control_flag: {control_flag}")
             x_residual, predicted_location = self.adjust_location(
