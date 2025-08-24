@@ -6,8 +6,8 @@ from torch import nn
 from torch.nn import functional as F
 
 
-def fused_leaky_relu(input, bias, negative_slope=0.2, scale=2**0.5):
-    return F.leaky_relu(input + bias, negative_slope) * scale
+def fused_leaky_relu(_input, bias, negative_slope=0.2, scale=2**0.5):
+    return F.leaky_relu(_input + bias, negative_slope) * scale
 
 
 class FusedLeakyReLU(nn.Module):
@@ -17,17 +17,17 @@ class FusedLeakyReLU(nn.Module):
         self.negative_slope = negative_slope
         self.scale = scale
 
-    def forward(self, input):
-        return fused_leaky_relu(input, self.bias, self.negative_slope, self.scale)
+    def forward(self, _input):
+        return fused_leaky_relu(_input, self.bias, self.negative_slope, self.scale)
 
 
 def upfirdn2d_native(
-    input, kernel, up_x, up_y, down_x, down_y, pad_x0, pad_x1, pad_y0, pad_y1
+    _input, kernel, up_x, up_y, down_x, down_y, pad_x0, pad_x1, pad_y0, pad_y1
 ):
-    _, minor, in_h, in_w = input.shape
+    _, minor, in_h, in_w = _input.shape
     kernel_h, kernel_w = kernel.shape
 
-    out = input.view(-1, minor, in_h, 1, in_w, 1)
+    out = _input.view(-1, minor, in_h, 1, in_w, 1)
     out = F.pad(out, [0, up_x - 1, 0, 0, 0, up_y - 1, 0, 0])
     out = out.view(-1, minor, in_h * up_y, in_w * up_x)
 
@@ -53,9 +53,9 @@ def upfirdn2d_native(
     return out[:, :, ::down_y, ::down_x]
 
 
-def upfirdn2d(input, kernel, up=1, down=1, pad=(0, 0)):
+def upfirdn2d(_input, kernel, up=1, down=1, pad=(0, 0)):
     return upfirdn2d_native(
-        input, kernel, up, up, down, down, pad[0], pad[1], pad[0], pad[1]
+        _input, kernel, up, up, down, down, pad[0], pad[1], pad[0], pad[1]
     )
 
 
@@ -63,16 +63,18 @@ class PixelNorm(nn.Module):
     def __init__(self):
         super().__init__()
 
-    def forward(self, input):
-        return input * torch.rsqrt(torch.mean(input**2, dim=1, keepdim=True) + 1e-8)
+    @staticmethod
+    def forward(_input):
+        return _input * torch.rsqrt(torch.mean(_input**2, dim=1, keepdim=True) + 1e-8)
 
 
 class MotionPixelNorm(nn.Module):
     def __init__(self):
         super().__init__()
 
-    def forward(self, input):
-        return input * torch.rsqrt(torch.mean(input**2, dim=2, keepdim=True) + 1e-8)
+    @staticmethod
+    def forward(_input):
+        return _input * torch.rsqrt(torch.mean(_input**2, dim=2, keepdim=True) + 1e-8)
 
 
 def make_kernel(k):
@@ -101,8 +103,8 @@ class Upsample(nn.Module):
 
         self.pad = (pad0, pad1)
 
-    def forward(self, input):
-        return upfirdn2d(input, self.kernel, up=self.factor, down=1, pad=self.pad)
+    def forward(self, _input):
+        return upfirdn2d(_input, self.kernel, up=self.factor, down=1, pad=self.pad)
 
 
 class Downsample(nn.Module):
@@ -120,8 +122,8 @@ class Downsample(nn.Module):
 
         self.pad = (pad0, pad1)
 
-    def forward(self, input):
-        return upfirdn2d(input, self.kernel, up=1, down=self.factor, pad=self.pad)
+    def forward(self, _input):
+        return upfirdn2d(_input, self.kernel, up=1, down=self.factor, pad=self.pad)
 
 
 class Blur(nn.Module):
@@ -137,8 +139,8 @@ class Blur(nn.Module):
 
         self.pad = pad
 
-    def forward(self, input):
-        return upfirdn2d(input, self.kernel, pad=self.pad)
+    def forward(self, _input):
+        return upfirdn2d(_input, self.kernel, pad=self.pad)
 
 
 class EqualConv2d(nn.Module):
@@ -163,19 +165,15 @@ class EqualConv2d(nn.Module):
 
         self.bias = nn.Parameter(torch.zeros(out_channel)) if bias else None
 
-    def forward(self, input):
+    def forward(self, _input):
         return F.conv2d(
-            input,
-            self.weight * self.scale,
-            bias=self.bias,
-            stride=self.stride,
-            padding=self.padding,
+            _input, self.weight * self.scale, self.bias, self.stride, self.padding
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"{self.__class__.__name__}({self.weight.shape[1]}, {self.weight.shape[0]},"
-            f" {self.weight.shape[2]}, stride={self.stride}, padding={self.padding})"
+            + f" {self.weight.shape[2]}, stride={self.stride}, padding={self.padding})"
         )
 
 
@@ -203,15 +201,12 @@ class EqualLinear(nn.Module):
         self.scale = (1 / math.sqrt(in_dim)) * lr_mul
         self.lr_mul = lr_mul
 
-    def forward(self, input):
+    def forward(self, _input):
         if self.activation:
-            out = F.linear(input, self.weight * self.scale)
+            out = F.linear(_input, self.weight * self.scale)
             out = fused_leaky_relu(out, self.bias * self.lr_mul)
         else:
-            out = F.linear(
-                input, self.weight * self.scale, bias=self.bias * self.lr_mul
-            )
-
+            out = F.linear(_input, self.weight * self.scale, self.bias * self.lr_mul)
         return out
 
     def __repr__(self):
@@ -226,8 +221,8 @@ class ScaledLeakyReLU(nn.Module):
 
         self.negative_slope = negative_slope
 
-    def forward(self, input):
-        return F.leaky_relu(input, negative_slope=self.negative_slope)
+    def forward(self, _input):
+        return F.leaky_relu(_input, negative_slope=self.negative_slope)
 
 
 class ModulatedConv2d(nn.Module):
@@ -354,8 +349,8 @@ class ConstantInput(nn.Module):
 
         self.input = nn.Parameter(torch.randn(1, channel, size, size))
 
-    def forward(self, input):
-        batch = input.shape[0]
+    def forward(self, _input):
+        batch = _input.shape[0]
         return self.input.repeat(batch, 1, 1, 1)
 
 
@@ -387,11 +382,10 @@ class StyledConv(nn.Module):
         self.noise = NoiseInjection()
         self.activate = FusedLeakyReLU(out_channel)
 
-    def forward(self, input, style, noise=None):
-        out = self.conv(input, style)
+    def forward(self, _input, style, noise=None):
+        out = self.conv(_input, style)
         out = self.noise(out, noise=noise)
         out = self.activate(out)
-
         return out
 
 
@@ -460,11 +454,9 @@ class ToRGB(nn.Module):
     def forward(self, _input, skip=None):
         out = self.conv(_input)
         out += self.bias
-
         if skip is not None:
             skip = self.upsample(skip)
             out = out + skip
-
         return out
 
 

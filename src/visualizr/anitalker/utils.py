@@ -12,8 +12,7 @@ from moviepy.editor import (
 )
 from numpy import asarray, ndarray, transpose
 from PIL import Image
-from torch import Tensor, from_numpy
-from torch import load as torch_load
+from torch import Tensor, from_numpy, load as torch_load
 from torchvision.transforms import ToPILImage
 
 from visualizr.anitalker.config import TrainConfig

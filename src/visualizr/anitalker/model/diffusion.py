@@ -7,7 +7,8 @@ from visualizr.anitalker.model.base import BaseModule
 
 
 class Mish(BaseModule):
-    def forward(self, x):
+    @staticmethod
+    def forward(x):
         return x * torch.tanh(torch.nn.functional.softplus(x))
 
 

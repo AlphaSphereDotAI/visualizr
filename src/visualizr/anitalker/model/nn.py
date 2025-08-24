@@ -8,7 +8,8 @@ import torch.utils.checkpoint
 # PyTorch 1.7 has SiLU, but we support PyTorch 1.5.
 class SiLU(nn.Module):
     # @th.jit.script
-    def forward(self, x):
+    @staticmethod
+    def forward(x):
         return x * th.sigmoid(x)
 
 

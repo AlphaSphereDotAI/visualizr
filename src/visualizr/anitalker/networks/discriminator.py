@@ -5,8 +5,8 @@ from torch import nn
 from torch.nn import functional as F
 
 
-def fused_leaky_relu(input, bias, negative_slope=0.2, scale=2**0.5):
-    return F.leaky_relu(input + bias, negative_slope) * scale
+def fused_leaky_relu(_input, bias, negative_slope=0.2, scale=2**0.5):
+    return F.leaky_relu(_input + bias, negative_slope) * scale
 
 
 class FusedLeakyReLU(nn.Module):
@@ -16,17 +16,17 @@ class FusedLeakyReLU(nn.Module):
         self.negative_slope = negative_slope
         self.scale = scale
 
-    def forward(self, input):
-        return fused_leaky_relu(input, self.bias, self.negative_slope, self.scale)
+    def forward(self, _input):
+        return fused_leaky_relu(_input, self.bias, self.negative_slope, self.scale)
 
 
 def upfirdn2d_native(
-    input, kernel, up_x, up_y, down_x, down_y, pad_x0, pad_x1, pad_y0, pad_y1
+    _input, kernel, up_x, up_y, down_x, down_y, pad_x0, pad_x1, pad_y0, pad_y1
 ):
-    _, minor, in_h, in_w = input.shape
+    _, minor, in_h, in_w = _input.shape
     kernel_h, kernel_w = kernel.shape
 
-    out = input.view(-1, minor, in_h, 1, in_w, 1)
+    out = _input.view(-1, minor, in_h, 1, in_w, 1)
     out = F.pad(out, [0, up_x - 1, 0, 0, 0, up_y - 1, 0, 0])
     out = out.view(-1, minor, in_h * up_y, in_w * up_x)
 
@@ -55,9 +55,9 @@ def upfirdn2d_native(
     return out[:, :, ::down_y, ::down_x]
 
 
-def upfirdn2d(input, kernel, up=1, down=1, pad=(0, 0)):
+def upfirdn2d(_input, kernel, up=1, down=1, pad=(0, 0)):
     return upfirdn2d_native(
-        input, kernel, up, up, down, down, pad[0], pad[1], pad[0], pad[1]
+        _input, kernel, up, up, down, down, pad[0], pad[1], pad[0], pad[1]
     )
 
 
@@ -85,8 +85,8 @@ class Blur(nn.Module):
 
         self.pad = pad
 
-    def forward(self, input):
-        return upfirdn2d(input, self.kernel, pad=self.pad)
+    def forward(self, _input):
+        return upfirdn2d(_input, self.kernel, pad=self.pad)
 
 
 class ScaledLeakyReLU(nn.Module):
@@ -95,8 +95,8 @@ class ScaledLeakyReLU(nn.Module):
 
         self.negative_slope = negative_slope
 
-    def forward(self, input):
-        return F.leaky_relu(input, negative_slope=self.negative_slope)
+    def forward(self, _input):
+        return F.leaky_relu(_input, negative_slope=self.negative_slope)
 
 
 class EqualConv2d(nn.Module):
@@ -121,13 +121,9 @@ class EqualConv2d(nn.Module):
 
         self.bias = nn.Parameter(torch.zeros(out_channel)) if bias else None
 
-    def forward(self, input):
+    def forward(self, _input):
         return F.conv2d(
-            input,
-            self.weight * self.scale,
-            bias=self.bias,
-            stride=self.stride,
-            padding=self.padding,
+            _input, self.weight * self.scale, self.bias, self.stride, self.padding
         )
 
     def __repr__(self):
@@ -161,13 +157,13 @@ class EqualLinear(nn.Module):
         self.scale = (1 / math.sqrt(in_dim)) * lr_mul
         self.lr_mul = lr_mul
 
-    def forward(self, input):
+    def forward(self, _input):
         if self.activation:
-            out = F.linear(input, self.weight * self.scale)
+            out = F.linear(_input, self.weight * self.scale)
             out = fused_leaky_relu(out, self.bias * self.lr_mul)
         else:
             out = F.linear(
-                input, self.weight * self.scale, bias=self.bias * self.lr_mul
+                _input, self.weight * self.scale, bias=self.bias * self.lr_mul
             )
 
         return out
@@ -247,11 +243,11 @@ class ResBlock(nn.Module):
             False,
         )
 
-    def forward(self, input):
-        out = self.conv1(input)
+    def forward(self, _input):
+        out = self.conv1(_input)
         out = self.conv2(out)
 
-        skip = self.skip(input)
+        skip = self.skip(_input)
         out = (out + skip) / math.sqrt(2)
 
         return out
@@ -297,8 +293,8 @@ class Discriminator(nn.Module):
             EqualLinear(channels[4], 1),
         )
 
-    def forward(self, input):
-        out = self.convs(input)
+    def forward(self, _input):
+        out = self.convs(_input)
         batch, channel, height, width = out.shape
 
         group = min(batch, self.stddev_group)

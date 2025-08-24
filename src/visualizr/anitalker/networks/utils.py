@@ -38,12 +38,10 @@ class AntiAliasInterpolation2d(nn.Module):
         inv_scale = 1 / scale
         self.int_inv_scale = int(inv_scale)
 
-    def forward(self, input):
-        if self.scale == 1.0:
-            return input
-
-        out = F.pad(input, (self.ka, self.kb, self.ka, self.kb))
+    def forward(self, _input):
+        if torch.isclose(self.scale, 1.0, rtol=1e-09, atol=1e-09):
+            return _input
+        out = F.pad(_input, (self.ka, self.kb, self.ka, self.kb))
         out = F.conv2d(out, weight=self.weight, groups=self.groups)
         out = out[:, :, :: self.int_inv_scale, :: self.int_inv_scale]
-
         return out

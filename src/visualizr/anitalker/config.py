@@ -171,6 +171,8 @@ class TrainConfig(BaseConfig):
     frame_jpgs = None
     lmd_feats_prefix = None
     window_size = None
+    decoder_layers = None
+    motion_dim = None
 
     def __post_init__(self):
         self.batch_size_eval = self.batch_size_eval or self.batch_size

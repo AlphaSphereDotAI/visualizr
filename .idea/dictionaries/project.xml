@@ -40,6 +40,8 @@
       <w>markdownlint</w>
       <w>mergify</w>
       <w>mergifyio</w>
+      <w>meshgrids</w>
+      <w>mgrid</w>
       <w>mults</w>
       <w>pavelzw</w>
       <w>randn</w>
@@ -48,6 +50,7 @@
       <w>resblocks</w>
       <w>rgbs</w>
       <w>sched</w>
+      <w>selfattn</w>
       <w>seperate</w>
       <w>silu</w>
       <w>sohl</w>
@@ -55,6 +58,7 @@
       <w>stdv</w>
       <w>stylespace</w>
       <w>taocode</w>
+      <w>upfirdn</w>
       <w>vaeddpm</w>
       <w>xprev</w>
       <w>xstart</w>
