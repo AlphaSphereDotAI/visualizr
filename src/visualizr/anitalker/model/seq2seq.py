@@ -1,9 +1,9 @@
-import torch
-import torch.nn.functional as F
 from espnet.nets.pytorch_backend.conformer.encoder import Encoder
 from gradio import Error, Info
-from torch import nn
+from torch import cat, nn, zeros
+from torch.nn.functional import softmax
 
+from visualizr.anitalker.config import TrainConfig
 from visualizr.anitalker.model.base import BaseModule
 from visualizr.settings import logger
 
@@ -25,49 +25,19 @@ class LSTM(nn.Module):
 
 
 class DiffusionPredictor(BaseModule):
-    def __init__(self, conf):
-        super(DiffusionPredictor, self).__init__()
-
-        self.infer_type = conf.infer_type
-
-        self.initialize_layers(conf)
-        logger.info(f"infer_type: {self.infer_type}")
-        Info(f"infer_type: {self.infer_type}")
-
-    def create_conformer_encoder(self, attention_dim, num_blocks):
-        return Encoder(
-            idim=0,
-            attention_dim=attention_dim,
-            attention_heads=2,
-            linear_units=attention_dim,
-            num_blocks=num_blocks,
-            input_layer=None,
-            dropout_rate=0.2,
-            positional_dropout_rate=0.2,
-            attention_dropout_rate=0.2,
-            normalize_before=False,
-            concat_after=False,
-            positionwise_layer_type="linear",
-            positionwise_conv_kernel_size=3,
-            macaron_style=True,
-            pos_enc_layer_type="rel_pos",
-            selfattention_layer_type="rel_selfattn",
-            use_cnn_module=True,
-            cnn_module_kernel=13,
-        )
-
-    def initialize_layers(
+    def __init__(
         self,
-        conf,
-        mfcc_dim=39,
-        hubert_dim=1024,
-        speech_layers=4,
-        speech_dim=512,
-        decoder_dim=1024,
-        motion_start_dim=512,
-        HAL_layers=25,
+        conf: TrainConfig,
+        mfcc_dim: int = 39,
+        hubert_dim: int = 1024,
+        speech_layers: int = 4,
+        speech_dim: int = 512,
+        decoder_dim: int = 1024,
+        motion_start_dim: int = 512,
+        hal_layers: int = 25,
     ):
-        self.conf = conf
+        super(DiffusionPredictor, self).__init__()
+        self.conf: TrainConfig = conf
         # Speech downsampling
         if self.infer_type.startswith("mfcc"):
             # from 100 hz to 25 hz
@@ -83,7 +53,7 @@ class DiffusionPredictor(BaseModule):
                 hubert_dim, speech_dim, kernel_size=3, stride=2, padding=1
             )
 
-            self.weights = nn.Parameter(torch.zeros(HAL_layers))
+            self.weights = nn.Parameter(zeros(hal_layers))
             self.speech_encoder = self.create_conformer_encoder(
                 speech_dim, speech_layers
             )
@@ -112,8 +82,30 @@ class DiffusionPredictor(BaseModule):
         self.noisy_encoder = nn.Sequential(nn.Linear(conf.motion_dim, 128))
         self.t_encoder = nn.Sequential(nn.Linear(1, 128))
         self.encoder_direction_code = nn.Linear(conf.motion_dim, 128)
-
         self.out_proj = nn.Linear(decoder_dim, conf.motion_dim)
+        logger.info(f"infer_type: {self.infer_type}")
+        Info(f"infer_type: {self.infer_type}")
+
+    @staticmethod
+    def create_conformer_encoder(attention_dim: int, num_blocks: int) -> Encoder:
+        return Encoder(
+            idim=0,
+            attention_dim=attention_dim,
+            attention_heads=2,
+            linear_units=attention_dim,
+            num_blocks=num_blocks,
+            input_layer=None,
+            dropout_rate=0.2,
+            positional_dropout_rate=0.2,
+            attention_dropout_rate=0.2,
+            normalize_before=False,
+            positionwise_conv_kernel_size=3,
+            macaron_style=True,
+            pos_enc_layer_type="rel_pos",
+            selfattention_layer_type="rel_selfattn",
+            use_cnn_module=True,
+            cnn_module_kernel=13,
+        )
 
     def forward(
         self,
@@ -131,7 +123,7 @@ class DiffusionPredictor(BaseModule):
         if self.infer_type.startswith("mfcc"):
             x = self.mfcc_speech_downsample(seq_input_vector)
         elif self.infer_type.startswith("hubert"):
-            norm_weights = F.softmax(self.weights, dim=-1)
+            norm_weights = softmax(self.weights, dim=-1)
             weighted_feature = (
                 norm_weights.unsqueeze(0).unsqueeze(-1).unsqueeze(-1) * seq_input_vector
             ).sum(dim=1)
@@ -174,7 +166,6 @@ class DiffusionPredictor(BaseModule):
                 x, face_location, control_flag
             )
             x = x + x_residual
-
             x_residual, predicted_scale = self.adjust_scale(x, face_scale, control_flag)
             x = x + x_residual
 
@@ -183,17 +174,15 @@ class DiffusionPredictor(BaseModule):
         return x, predicted_location, predicted_scale, predicted_pose
 
     def adjust_location(self, x, face_location, control_flag):
-        if control_flag:
-            predicted_location = face_location
-        else:
-            predicted_location = self.location_predictor(x)
+        predicted_location = (
+            face_location if control_flag else self.location_predictor(x)
+        )
         return self.location_encoder(predicted_location), predicted_location
 
     def adjust_scale(self, x, face_scale, control_flag):
-        if control_flag:
-            predicted_face_scale = face_scale
-        else:
-            predicted_face_scale = self.face_scale_predictor(x)
+        predicted_face_scale = (
+            face_scale if control_flag else self.face_scale_predictor(x)
+        )
         return self.face_scale_encoder(predicted_face_scale), predicted_face_scale
 
     def adjust_pose(self, x, yaw_pitch_roll, control_flag):
@@ -215,14 +204,8 @@ class DiffusionPredictor(BaseModule):
             .unsqueeze(1)
             .repeat(1, x.size(1), 1)
         )
-        return torch.cat(
-            (
-                x,
-                direction_code_feature,
-                init_code_proj,
-                noisy_feature,
-                t_emb_feature,
-            ),
+        return cat(
+            (x, direction_code_feature, init_code_proj, noisy_feature, t_emb_feature),
             dim=-1,
         )
 
