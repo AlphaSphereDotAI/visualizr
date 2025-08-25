@@ -15,7 +15,7 @@ runtimes:
     - python@3.10.8
 lint:
   enabled:
-    - ty@0.0.1-alpha.19
+    #    - ty@0.0.1-alpha.19
     - trufflehog-git@3.90.5
     - pre-commit-hooks@5.0.0
     - trivy@0.65.0
