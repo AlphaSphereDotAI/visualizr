@@ -1,7 +1,7 @@
 from math import log, sqrt
 
 from gradio import Info
-from torch import flip, float32, nn, randn, softmax, tensor, zeros, zeros_like
+from torch import flip, float32, nn, randn, softmax, tensor, zeros, zeros_like, Tensor
 from torch.nn.functional import conv2d, leaky_relu, linear, pad
 
 from visualizr.settings import logger
@@ -255,10 +255,9 @@ class WeightedSumLayer(nn.Module):
 
     def forward(self, tensor_list):
         weights = softmax(self.weights, dim=0)
-        weighted_sum = zeros_like(tensor_list[0])
+        weighted_sum: Tensor = zeros_like(tensor_list[0])
         for _tensor, weight in zip(tensor_list, weights):
             weighted_sum += _tensor * weight
-
         return weighted_sum
 
 
