@@ -2,7 +2,7 @@ import math
 
 import numpy as np
 import torch
-from torch import nn, Tensor
+from torch import Tensor, nn
 from torch.nn.functional import (
     conv2d,
     conv_transpose2d,
