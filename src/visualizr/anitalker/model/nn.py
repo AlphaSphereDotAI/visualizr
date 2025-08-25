@@ -1,4 +1,4 @@
-import math
+from math import log
 
 from torch import (
     Tensor,
@@ -113,9 +113,9 @@ def timestep_embedding(timesteps, dim, max_period=10000):
     :return: An [N x dim] Tensor of positional embeddings.
     """
     half = dim // 2
-    freqs = exp(
-        -math.log(max_period) * arange(start=0, end=half, dtype=float32) / half
-    ).to(device=timesteps.device)
+    freqs = exp(-log(max_period) * arange(start=0, end=half, dtype=float32) / half).to(
+        device=timesteps.device
+    )
     args = timesteps[:, None].float() * freqs[None]
     embedding = cat([cos(args), sin(args)], dim=-1)
     if dim % 2:
