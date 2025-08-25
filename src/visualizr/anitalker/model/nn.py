@@ -1,15 +1,15 @@
 import math
 
 from torch import (
-    nn,
     Tensor,
-    sigmoid,
     arange,
+    cat,
+    cos,
     exp,
     float32,
+    nn,
+    sigmoid,
     sin,
-    cos,
-    cat,
     zeros_like,
 )
 from torch.utils.checkpoint import checkpoint
