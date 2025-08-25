@@ -7,7 +7,7 @@ from torch import Tensor, nn
 from visualizr.anitalker.model import BeatGANsUNetConfig, BeatGANsUNetModel
 from visualizr.anitalker.model.blocks import ResBlock
 from visualizr.anitalker.model.latentnet import MLPSkipNetConfig
-from visualizr.anitalker.model.nn import linear, timestep_embedding
+from visualizr.anitalker.model.nn import timestep_embedding
 from visualizr.anitalker.model.unet import BeatGANsEncoderConfig
 
 
@@ -247,9 +247,9 @@ class TimeStyleSeperateEmbed(nn.Module):
     def __init__(self, time_channels, time_out_channels):
         super().__init__()
         self.time_embed = nn.Sequential(
-            linear(time_channels, time_out_channels),
+            nn.Linear(time_channels, time_out_channels),
             nn.SiLU(),
-            linear(time_out_channels, time_out_channels),
+            nn.Linear(time_out_channels, time_out_channels),
         )
         self.style = nn.Identity()
 

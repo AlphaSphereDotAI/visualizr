@@ -14,7 +14,6 @@ from visualizr.anitalker.config_base import BaseConfig
 from visualizr.anitalker.model.nn import (
     avg_pool_nd,
     conv_nd,
-    linear,
     normalization,
     torch_checkpoint,
     zero_module,
@@ -133,13 +132,13 @@ class ResBlock(TimestepBlock):
             # condition layers for the `out_layers`
             self.emb_layers = nn.Sequential(
                 nn.SiLU(),
-                linear(conf.emb_channels, 2 * conf.out_channels),
+                nn.Linear(conf.emb_channels, 2 * conf.out_channels),
             )
 
             if conf.two_cond:
                 self.cond_emb_layers = nn.Sequential(
                     nn.SiLU(),
-                    linear(conf.cond_emb_channels, conf.out_channels),
+                    nn.Linear(conf.cond_emb_channels, conf.out_channels),
                 )
             #############################
             # OUT LAYERS (ignored when there is no condition)

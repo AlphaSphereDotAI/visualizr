@@ -1,7 +1,7 @@
 from math import log, sqrt
 
 from gradio import Info
-from torch import flip, float32, nn, randn, softmax, tensor, zeros, zeros_like, Tensor
+from torch import Tensor, flip, float32, nn, randn, softmax, tensor, zeros, zeros_like
 from torch.nn.functional import conv2d, leaky_relu, linear, pad
 
 from visualizr.settings import logger
@@ -240,17 +240,14 @@ class ResBlock(nn.Module):
     def forward(self, _input):
         out = self.conv1(_input)
         out = self.conv2(out)
-
         skip = self.skip(_input)
         out = (out + skip) / sqrt(2)
-
         return out
 
 
 class WeightedSumLayer(nn.Module):
     def __init__(self, num_tensors=8):
         super(WeightedSumLayer, self).__init__()
-
         self.weights = nn.Parameter(randn(num_tensors))
 
     def forward(self, tensor_list):
