@@ -2401,7 +2401,7 @@ requires-dist = [
     { name = "huggingface-hub", extras = ["hf-xet"], specifier = ">=0.34.4" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "moviepy", specifier = ">=1.0.3,<1.1.0" },
-    { name = "numpy", specifier = ">=1.26.3,<2.0.0" },
+    { name = "numpy", specifier = ">=1.26.4,<2.0.0" },
     { name = "python-speech-features", specifier = ">=0.6" },
     { name = "pytorch-lightning", specifier = ">=2.3.3" },
     { name = "realesrgan", specifier = ">=0.3.0" },
