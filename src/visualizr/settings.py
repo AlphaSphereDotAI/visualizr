@@ -6,7 +6,6 @@ from typing import Literal
 
 from dotenv import load_dotenv
 from gradio import Error, Info
-from loguru import logger
 from pydantic import (
     BaseModel,
     DirectoryPath,
@@ -18,12 +17,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from torch.cuda import is_available
 
 load_dotenv()
-
-logger.add(
-    sink=Path.cwd() / "logs" / "visualizr.log",
-    format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}",
-    colorize=True,
-)
 
 
 class DirectorySettings(BaseModel):
@@ -67,7 +60,6 @@ class DirectorySettings(BaseModel):
             self.video,
         ]:
             directory.mkdir(exist_ok=True)
-            logger.info(f"Created directory: {directory}")
             Info(f"Created directory: {directory}")
         return self
 
@@ -129,11 +121,9 @@ class ModelSettings(BaseModel):
     @model_validator(mode="after")
     def check_image_path(self) -> "ModelSettings":
         if self.image_path and not self.image_path.exists():
-            logger.error("Image path does not exist.")
             Error("Image path does not exist.")
             exit(0)
         if self.audio_path and not self.audio_path.exists():
-            logger.error("Audio path does not exist.")
             Error("Audio path does not exist.")
             exit(0)
         return self
