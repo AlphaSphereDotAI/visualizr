@@ -512,7 +512,7 @@ class Direction(nn.Module):
         # input: (bs*t) x 512
         weight = self.weight + 1e-8
         # get eigenvector, orthogonal [n1, n2, n3, n4]
-        q, _ = torch.qr(weight)
+        q, _ = torch.linalg.qr(weight)
         if _input is None:
             return q
         input_diag = torch.diag_embed(_input)  # alpha, diagonal matrix
