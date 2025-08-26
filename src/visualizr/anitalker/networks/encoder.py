@@ -289,15 +289,17 @@ class EncoderApp(nn.Module):
         self.convs.append(EqualConv2d(in_channel, self.w_dim, 4, bias=False))
 
         self.fusion_type = fusion_type
-        assert self.fusion_type == "weighted_sum"
-        if self.fusion_type == "weighted_sum":
-            logger.info("HAL layer is enabled!")
-            Info("HAL layer is enabled!")
-            self.adaptive_pool = nn.AdaptiveAvgPool2d((1, 1))
-            self.fc1 = EqualLinear(64, 512)
-            self.fc2 = EqualLinear(128, 512)
-            self.fc3 = EqualLinear(256, 512)
-            self.ws = WeightedSumLayer()
+        if self.fusion_type != "weighted_sum":
+            raise ValueError(
+                f"Unsupported `fusion_type`: {self.fusion_type}. Expected 'weighted_sum'."
+            )
+        logger.info("HAL layer is enabled!")
+        Info("HAL layer is enabled!")
+        self.adaptive_pool = nn.AdaptiveAvgPool2d((1, 1))
+        self.fc1 = EqualLinear(64, 512)
+        self.fc2 = EqualLinear(128, 512)
+        self.fc3 = EqualLinear(256, 512)
+        self.ws = WeightedSumLayer()
 
     def forward(self, x):
         res = []

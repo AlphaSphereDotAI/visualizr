@@ -287,9 +287,10 @@ class BeatGANsUNetModel(nn.Module):
 
     def forward(self, x, t, y=None, **kwargs):
         """Apply the model to an input batch."""
-        assert (y is not None) == (self.conf.num_classes is not None), (
-            "must specify y if and only if the model is class-conditional"
-        )
+        if (y is not None) != (self.conf.num_classes is not None):
+            raise ValueError(
+                "must specify y if and only if the model is class-conditional"
+            )
 
         hs = [[] for _ in range(len(self.conf.channel_mult))]
         emb = self.time_embed(timestep_embedding(t, self.time_emb_channels))
@@ -305,7 +306,8 @@ class BeatGANsUNetModel(nn.Module):
                 h = self.input_blocks[k](h, emb=emb)
                 hs[i].append(h)
                 k += 1
-        assert k == len(self.input_blocks)
+        if k != len(self.input_blocks):
+            raise ValueError(f"expected {len(self.input_blocks)} blocks, got {k}")
 
         h = self.middle_block(h, emb=emb)
         k = 0
