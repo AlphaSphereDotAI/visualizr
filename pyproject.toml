@@ -6,7 +6,7 @@ readme = "README.md"
 authors = [
     { name = "Mohamed Hisham Abdelzaher", email = "mohamed.hisham.abdelzaher@gmail.com" },
 ]
-requires-python = "==3.11.*"
+requires-python = ">=3.11,<3.12"
 keywords = ["anitalker", "video"]
 dependencies = [
     "espnet>=202207,<202209",
@@ -55,18 +55,8 @@ url = "https://download.pytorch.org/whl/cu118"
 
 [dependency-groups]
 dev = [
-    "build>=1.2.1",
     "hatchling>=1.27.0",
     "pytest-emoji>=0.2.0",
     "pytest-md>=0.2.0",
     "pytest-mergify>=2025.8.20.1",
-    "tox>=4.28.4",
-    "wheel>=0.45.1",
 ]
-
-[tool.hatch.build]
-packages = ["src/visualizr"]
-include = ["LICENSE*", "README.md", "src/visualizr/**"]
-
-[tool.hatch.build.targets.wheel]
-python-tag = "cp311"

@@ -11,3 +11,5 @@ outputs/
 assets/
 .vscode/
 test.http
+build/
+**.egg-info
