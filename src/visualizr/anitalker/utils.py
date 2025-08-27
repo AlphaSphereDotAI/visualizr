@@ -4,7 +4,7 @@ from typing import Literal
 
 from gradio import Error, Info
 from imageio import mimsave
-from moviepy.editor import (
+from moviepy import (
     AudioFileClip,
     ImageClip,
     VideoFileClip,
@@ -33,10 +33,10 @@ def frames_to_video(
     fps: int = 25,
 ):
     image_files = [input_path / img for img in sorted(input_path.iterdir())]
-    clips = [ImageClip(m.as_posix()).set_duration(1 / fps) for m in image_files]
+    clips = [ImageClip(m.as_posix()).with_duration(1 / fps) for m in image_files]
     video = concatenate_videoclips(clips, method="compose")
     audio = AudioFileClip(audio_path)
-    final_video = video.set_audio(audio)
+    final_video = video.with_audio(audio)
     final_video.write_videofile(
         output_path.as_posix(), fps, "libx264", audio_codec="aac"
     )
