@@ -14,7 +14,6 @@ from visualizr.anitalker.config_base import BaseConfig
 from visualizr.anitalker.model.nn import (
     avg_pool_nd,
     conv_nd,
-    linear,
     normalization,
     torch_checkpoint,
     zero_module,
@@ -107,7 +106,8 @@ class ResBlock(TimestepBlock):
         #############################
         # IN LAYERS
         #############################
-        assert conf.lateral_channels is None
+        if conf.lateral_channels is not None:  # TODO: remove this
+            raise ValueError("`lateral_channels` is not `None`")
         layers = [
             normalization(conf.channels),
             nn.SiLU(),
@@ -133,13 +133,13 @@ class ResBlock(TimestepBlock):
             # condition layers for the `out_layers`
             self.emb_layers = nn.Sequential(
                 nn.SiLU(),
-                linear(conf.emb_channels, 2 * conf.out_channels),
+                nn.Linear(conf.emb_channels, 2 * conf.out_channels),
             )
 
             if conf.two_cond:
                 self.cond_emb_layers = nn.Sequential(
                     nn.SiLU(),
-                    linear(conf.cond_emb_channels, conf.out_channels),
+                    nn.Linear(conf.cond_emb_channels, conf.out_channels),
                 )
             #############################
             # OUT LAYERS (ignored when there is no condition)
@@ -215,7 +215,8 @@ class ResBlock(TimestepBlock):
         if self.conf.has_lateral:
             # lateral may be supplied even if it doesn't require
             # the model will take the lateral only if `has_lateral`
-            assert lateral is not None
+            if lateral is None:
+                raise ValueError("`lateral` is required")
             x = th.cat([x, lateral], dim=1)
 
         if self.updown:
@@ -351,7 +352,10 @@ class Upsample(nn.Module):
             self.conv = conv_nd(dims, self.channels, self.out_channels, 3, padding=1)
 
     def forward(self, x):
-        assert x.shape[1] == self.channels
+        if x.shape[1] != self.channels:
+            raise ValueError(
+                f"Input has {x.shape[1]} channels but layer has {self.channels}"
+            )
         if self.dims == 3:
             x = interpolate(x, (x.shape[2], x.shape[3] * 2, x.shape[4] * 2))
         else:
@@ -388,11 +392,18 @@ class Downsample(nn.Module):
                 padding=1,
             )
         else:
-            assert self.channels == self.out_channels
+            if self.channels != self.out_channels:
+                raise ValueError(
+                    "Downsampling with no convolution requires channel reduction. "
+                    + f"Layer has {self.channels} but `out_channels` is {self.out_channels}"
+                )
             self.op = avg_pool_nd(dims, kernel_size=stride, stride=stride)
 
     def forward(self, x):
-        assert x.shape[1] == self.channels
+        if x.shape[1] != self.channels:
+            raise ValueError(
+                f"Input has {x.shape[1]} channels but layer has {self.channels}"
+            )
         return self.op(x)
 
 
@@ -412,9 +423,10 @@ class AttentionBlock(nn.Module):
         if num_head_channels == -1:
             self.num_heads = num_heads
         else:
-            assert channels % num_head_channels == 0, (
-                f"q,k,v channels {channels} is not divisible by num_head_channels {num_head_channels}"
-            )
+            if channels % num_head_channels != 0:
+                raise ValueError(
+                    f"q,k,v channels {channels} is not divisible by `num_head_channels` {num_head_channels}"
+                )
             self.num_heads = channels // num_head_channels
         self.use_checkpoint = use_checkpoint
         self.norm = normalization(channels)
@@ -477,7 +489,8 @@ class QKVAttentionLegacy(nn.Module):
         :return: an `[N x (H × C) x T]` tensor after attention.
         """
         bs, width, length = qkv.shape
-        assert width % (3 * self.n_heads) == 0
+        if width % (3 * self.n_heads) != 0:
+            raise ValueError(f"Invalid qkv shape {qkv.shape}")
         ch = width // (3 * self.n_heads)
         q, k, v = qkv.reshape(bs * self.n_heads, ch * 3, length).split(ch, dim=1)
         scale = 1 / math.sqrt(math.sqrt(ch))
@@ -507,7 +520,8 @@ class QKVAttention(nn.Module):
         :return: An `[N x (H × C) x T]` tensor after attention.
         """
         bs, width, length = qkv.shape
-        assert width % (3 * self.n_heads) == 0
+        if width % (3 * self.n_heads) != 0:
+            raise ValueError(f"Invalid qkv shape {qkv.shape}")
         ch = width // (3 * self.n_heads)
         q, k, v = qkv.chunk(3, dim=1)
         scale = 1 / math.sqrt(math.sqrt(ch))

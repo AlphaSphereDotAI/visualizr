@@ -2,7 +2,7 @@ import math
 
 import numpy as np
 import torch
-from torch import nn
+from torch import Tensor, nn
 from torch.nn.functional import (
     conv2d,
     conv_transpose2d,
@@ -292,11 +292,11 @@ class ModulatedConv2d(nn.Module):
         batch, in_channel, height, width = _input.shape
 
         style = self.modulation(style).view(batch, 1, in_channel, 1, 1)
-        weight = self.scale * self.weight * style
+        weight: Tensor = self.scale * self.weight * style
 
         if self.demodulate:
             demod = torch.rsqrt(weight.pow(2).sum([2, 3, 4]) + 1e-8)
-            weight *= demod.view(batch, self.out_channel, 1, 1, 1)
+            weight = weight * demod.view(batch, self.out_channel, 1, 1, 1)
 
         weight = weight.view(
             batch * self.out_channel,
@@ -308,17 +308,10 @@ class ModulatedConv2d(nn.Module):
         if self.upsample:
             _input = _input.view(1, batch * in_channel, height, width)
             weight = weight.view(
-                batch,
-                self.out_channel,
-                in_channel,
-                self.kernel_size,
-                self.kernel_size,
+                batch, self.out_channel, in_channel, self.kernel_size, self.kernel_size
             )
             weight = weight.transpose(1, 2).reshape(
-                batch * in_channel,
-                self.out_channel,
-                self.kernel_size,
-                self.kernel_size,
+                batch * in_channel, self.out_channel, self.kernel_size, self.kernel_size
             )
             out = conv_transpose2d(_input, weight, stride=2, groups=batch)
             _, _, height, width = out.shape
@@ -519,7 +512,7 @@ class Direction(nn.Module):
         # input: (bs*t) x 512
         weight = self.weight + 1e-8
         # get eigenvector, orthogonal [n1, n2, n3, n4]
-        q, _ = torch.qr(weight)
+        q, _ = torch.linalg.qr(weight)
         if _input is None:
             return q
         input_diag = torch.diag_embed(_input)  # alpha, diagonal matrix

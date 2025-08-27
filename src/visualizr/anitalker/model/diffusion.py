@@ -2,6 +2,7 @@ import math
 
 import torch
 from einops import rearrange
+from torch import Tensor
 
 from visualizr.anitalker.model.base import BaseModule
 
@@ -299,8 +300,8 @@ class Diffusion(BaseModule):
             if stoc:  # adds stochastic term
                 dxt_det = 0.5 * (mu - xt) - self.estimator(xt, mask, mu, t, spk)
                 dxt_det = dxt_det * noise_t * h
-                dxt_stoc = torch.randn(z.shape, dtype=z.dtype, device=z.device)
-                dxt_stoc *= torch.sqrt(noise_t * h)
+                dxt_stoc: Tensor = torch.randn(z.shape, dtype=z.dtype, device=z.device)
+                dxt_stoc = dxt_stoc * torch.sqrt(noise_t * h)
                 dxt = dxt_det + dxt_stoc
             else:
                 dxt = 0.5 * (mu - xt - self.estimator(xt, mask, mu, t, spk))
@@ -316,7 +317,7 @@ class Diffusion(BaseModule):
         xt, z = self.forward_diffusion(x0, mask, mu, t)
         time = t.unsqueeze(-1).unsqueeze(-1)
         cum_noise = get_noise(time, self.beta_min, self.beta_max, cumulative=True)
-        noise_estimation = self.estimator(xt, mask, mu, t, spk)
+        noise_estimation: GradLogPEstimator2d = self.estimator(xt, mask, mu, t, spk)
         noise_estimation *= torch.sqrt(1.0 - torch.exp(-cum_noise))
         loss = torch.sum((noise_estimation + z) ** 2) / (torch.sum(mask) * self.n_feats)
         return loss, xt
