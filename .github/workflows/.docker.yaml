@@ -157,8 +157,8 @@ jobs:
           enable-cache: true
           cache-dependency-glob: "uv.lock"
           activate-environment: true
-      - name: Install the project
-        run: uv tool install --with pytest-mergify,pytest-md,pytest-emoji pytest
+      - name: Install deps
+        run: uv sync --only-dev
       - name: Test
         env:
           VISUALIZR_URL: http://localhost:${{ job.services.visualizr.ports['7860'] }}/
