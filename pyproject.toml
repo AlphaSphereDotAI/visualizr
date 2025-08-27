@@ -9,17 +9,17 @@ authors = [
 requires-python = ">=3.10,<3.11"
 keywords = ["anitalker", "video"]
 dependencies = [
-    "espnet>=202207",
-    "gradio[mcp]>=5.42.0",
+    "espnet>=202506",
+    "gradio[mcp]>=5.44.0",
     "huggingface-hub[hf-xet]>=0.34.4",
     "loguru>=0.7.3",
     "moviepy>=1.0.3,<1.1.0",
-    "numpy>=1.26.3,<2.0.0",
+    "numpy>=1.26.4,<2.0.0",
     "python-speech-features>=0.6",
-    "pytorch-lightning>=2.3.3",
+    "pytorch-lightning>=2.5.3",
     "realesrgan>=0.3.0",
     "torch>=2.1.0,<2.2.0",
-    "torchaudio>=2.1.0,<2.2.0",
+    "torchaudio>=2.1.0,<2.9.0",
     "torchvision>=0.16.2,<0.16.3",
     "transformers>=4.53.0,<4.54.0",
 ]
