@@ -9,8 +9,7 @@ RUN apk add --no-cache build-base
 USER nonroot
 
 RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=.python-version,target=.python-version \
-    uv tool install visualizr -p "$(cat .python-version)"
+    uv tool install visualizr
 
 FROM cgr.dev/chainguard/wolfi-base:latest@sha256:898e4f30d920607c58acc01eabdfc9ac0725fb83b780d695542b3c3a3d265e48 AS production
 
