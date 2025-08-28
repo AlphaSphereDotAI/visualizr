@@ -6,7 +6,7 @@ readme = "README.md"
 authors = [
     { name = "Mohamed Hisham Abdelzaher", email = "mohamed.hisham.abdelzaher@gmail.com" },
 ]
-requires-python = "==3.10.*"
+requires-python = "==3.11.*"
 keywords = ["anitalker", "video"]
 dependencies = [
     "espnet>=202207,<202209",
@@ -20,12 +20,12 @@ dependencies = [
     "torch>=2.1.0,<2.2.0",
     "torchaudio>=2.1.0,<2.9.0",
     "torchvision>=0.16.2,<0.16.3",
-    "transformers>=4.55.4,<4.55.5",
+    "transformers>=4.53.0,<4.54.0",
 ]
 classifiers = [
     'Environment :: GPU :: NVIDIA CUDA :: 11.8',
     'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
 ]
 
 [build-system]
