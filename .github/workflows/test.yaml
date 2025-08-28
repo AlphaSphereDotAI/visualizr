@@ -31,11 +31,15 @@ jobs:
         run: uv sync --frozen --no-install-project
       - name: Job Summary
         run: |
-          echo "# Job Summary" >> $GITHUB_STEP_SUMMARY
-          echo "## uv tree" >> $GITHUB_STEP_SUMMARY
+          echo '<details>' >> $GITHUB_STEP_SUMMARY
+          echo '<summary> Click me </summary>' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "# Dependency Tree" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           echo "$(uv tree)" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
+          echo '</details>' >> $GITHUB_STEP_SUMMARY
   lint:
     name: Lint
     permissions:
