@@ -3,7 +3,6 @@ from torch import load, nn
 
 from visualizr.anitalker.networks.encoder import Encoder
 from visualizr.anitalker.networks.styledecoder import Synthesis
-from visualizr.settings import logger
 
 
 class LiaModel(nn.Module):
@@ -41,18 +40,14 @@ class LiaModel(nn.Module):
             if name not in self_state:
                 name = name.replace("lia.", "")
             if name not in self_state:
-                logger.exception(f"{orig_name} is not in the model.")
                 Error(f"{orig_name} is not in the model.")
                 # You can ignore those errors as some parameters are only used for training.
                 continue
             if self_state[name].size() != state[orig_name].size():
-                _message: str = (
+                Error(
                     f"Wrong parameter length: {orig_name}, "
                     + f"model: {self_state[name].size()}, "
                     + f"loaded: {state[orig_name].size()}"
                 )
-
-                logger.exception(_message)
-                Error(_message)
                 continue
             self_state[name].copy_(param)
