@@ -9,7 +9,6 @@ from realesrgan import RealESRGANer
 from tqdm import tqdm
 
 from visualizr.anitalker.face_sr.videoio import load_video_to_cv2
-from visualizr.settings import logger
 
 
 class GeneratorWithLen(object):
@@ -52,7 +51,6 @@ def enhancer_generator_no_len(images, method="gfpgan", bg_upsampler="realesrgan"
     """
     if method not in ["gfpgan", "RestoreFormer", "codeformer"]:
         raise ValueError(f"Wrong model version {method}.")
-    logger.info("face enhancer....")
     Info("face enhancer....")
     if not isinstance(images, list) and os.path.isfile(
         images
