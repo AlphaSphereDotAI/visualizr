@@ -145,8 +145,8 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
             # if the noise is given, we predict the cond from noise.
             cond = self.noise_to_cond(noise)
         if cond is None:
-            if x is not None:
-                assert len(x) == len(x_start), f"{len(x)} != {len(x_start)}"
+            if x is not None and len(x) != len(x_start):
+                raise ValueError(f"{len(x)} != {len(x_start)}")
 
             tmp = self.encode(x_start)
             cond = tmp["cond"]
@@ -170,9 +170,10 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
             emb = res.emb
             cond_emb = None
 
-        assert (y is not None) == (self.conf.num_classes is not None), (
-            "must specify y if and only if the model is class-conditional"
-        )
+        if (y is not None) != (self.conf.num_classes is not None):
+            raise ValueError(
+                "must specify y if and only if the model is class-conditional"
+            )
 
         if self.conf.num_classes is not None:
             raise NotImplementedError()
@@ -198,7 +199,8 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
                     h = self.input_blocks[k](h, emb=enc_time_emb, cond=enc_cond_emb)
                     hs[i].append(h)
                     k += 1
-            assert k == len(self.input_blocks)
+            if k != len(self.input_blocks):
+                raise ValueError(f"expected {len(self.input_blocks)} blocks, got {k}")
 
             # middle blocks
             h = self.middle_block(h, emb=mid_time_emb, cond=mid_cond_emb)

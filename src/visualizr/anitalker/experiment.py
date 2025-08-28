@@ -22,7 +22,8 @@ from visualizr.anitalker.renderer import render_condition
 class LitModel(LightningModule):
     def __init__(self, conf: TrainConfig):
         super().__init__()
-        assert conf.train_mode != TrainMode.manipulate
+        if conf.train_mode == TrainMode.manipulate:
+            raise ValueError("`conf.train_mode` cannot be `manipulate`")
         if conf.seed is not None:
             seed_everything(conf.seed)
         self.save_hyperparameters(conf.as_dict_jsonable())
@@ -140,7 +141,8 @@ class LitModel(LightningModule):
         local batch size for each worker
         """
         ws = get_world_size()
-        assert self.conf.batch_size % ws == 0
+        if self.conf.batch_size % ws != 0:
+            raise ValueError("batch size must be divisible by world size")
         return self.conf.batch_size // ws
 
     @property
