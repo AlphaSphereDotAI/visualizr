@@ -11,20 +11,5 @@
     ]
   },
   "osvVulnerabilityAlerts": true,
-  "dependencyDashboardOSVVulnerabilitySummary": "all",
-  "packageRules": [
-    {
-      "matchManagers": [
-        "pep621"
-      ],
-      "matchPackageNames": [
-        "*"
-      ],
-      "rangeStrategy": "bump",
-      "labels": [
-        "PyProject",
-        "dependencies"
-      ]
-    }
-  ]
+  "dependencyDashboardOSVVulnerabilitySummary": "all"
 }
