@@ -9,7 +9,8 @@ RUN apk add --no-cache build-base
 USER nonroot
 
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv tool install visualizr
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv tool install visualizr --python "$(grep -E "requires-python" pyproject.toml | grep -o '[0-9]\+\.[0-9]\+')"
 
 FROM cgr.dev/chainguard/wolfi-base:latest@sha256:898e4f30d920607c58acc01eabdfc9ac0725fb83b780d695542b3c3a3d265e48 AS production
 
