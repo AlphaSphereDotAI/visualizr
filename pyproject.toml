@@ -6,13 +6,12 @@ readme = "README.md"
 authors = [
     { name = "Mohamed Hisham Abdelzaher", email = "mohamed.hisham.abdelzaher@gmail.com" },
 ]
-requires-python = ">=3.10,<3.11"
+requires-python = "==3.10.*"
 keywords = ["anitalker", "video"]
 dependencies = [
-    "espnet>=202506",
-    "gradio[mcp]>=5.42.0",
+    "espnet>=202207",
+    "gradio[mcp]>=5.43.1",
     "huggingface-hub[hf-xet]>=0.34.4",
-    "loguru>=0.7.3",
     "moviepy>=1.0.3,<1.1.0",
     "numpy>=1.26.3,<2.0.0",
     "python-speech-features>=0.6",
@@ -25,8 +24,14 @@ dependencies = [
 ]
 classifiers = [
     'Environment :: GPU :: NVIDIA CUDA :: 11.8',
-    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.10 :: Only',
     'Programming Language :: Python :: 3.10',
+    'Topic :: Multimedia :: Sound/Audio :: Analysis',
+    'Topic :: Multimedia :: Sound/Audio :: Sound Synthesis',
+    'Topic :: Multimedia :: Video :: Conversion',
+    'Topic :: Multimedia :: Video :: Display',
+    'Topic :: Multimedia :: Video',
+    'Topic :: Scientific/Engineering :: Artificial Intelligence',
 ]
 
 [build-system]
@@ -52,3 +57,11 @@ torchvision = [{ index = "pytorch-cu118" }]
 explicit = true
 name = "pytorch-cu118"
 url = "https://download.pytorch.org/whl/cu118"
+
+[dependency-groups]
+dev = [
+    "pytest-emoji>=0.2.0",
+    "pytest-md>=0.2.0",
+    "pytest-mergify>=2025.8.20.1",
+    "uv-build>=0.8.14",
+]

@@ -1,10 +1,8 @@
 from math import log, sqrt
 
 from gradio import Info
-from torch import flip, float32, nn, randn, softmax, tensor, zeros, zeros_like
+from torch import Tensor, flip, float32, nn, randn, softmax, tensor, zeros, zeros_like
 from torch.nn.functional import conv2d, leaky_relu, linear, pad
-
-from visualizr.settings import logger
 
 
 def fused_leaky_relu(_input, bias, negative_slope=0.2, scale=2**0.5):
@@ -240,25 +238,21 @@ class ResBlock(nn.Module):
     def forward(self, _input):
         out = self.conv1(_input)
         out = self.conv2(out)
-
         skip = self.skip(_input)
         out = (out + skip) / sqrt(2)
-
         return out
 
 
 class WeightedSumLayer(nn.Module):
     def __init__(self, num_tensors=8):
         super(WeightedSumLayer, self).__init__()
-
         self.weights = nn.Parameter(randn(num_tensors))
 
     def forward(self, tensor_list):
         weights = softmax(self.weights, dim=0)
-        weighted_sum = zeros_like(tensor_list[0])
+        weighted_sum: Tensor = zeros_like(tensor_list[0])
         for _tensor, weight in zip(tensor_list, weights):
             weighted_sum += _tensor * weight
-
         return weighted_sum
 
 
@@ -293,15 +287,17 @@ class EncoderApp(nn.Module):
         self.convs.append(EqualConv2d(in_channel, self.w_dim, 4, bias=False))
 
         self.fusion_type = fusion_type
-        assert self.fusion_type == "weighted_sum"
-        if self.fusion_type == "weighted_sum":
-            logger.info("HAL layer is enabled!")
-            Info("HAL layer is enabled!")
-            self.adaptive_pool = nn.AdaptiveAvgPool2d((1, 1))
-            self.fc1 = EqualLinear(64, 512)
-            self.fc2 = EqualLinear(128, 512)
-            self.fc3 = EqualLinear(256, 512)
-            self.ws = WeightedSumLayer()
+
+        if self.fusion_type != "weighted_sum":
+            raise ValueError(
+                f"Unsupported `fusion_type`: {self.fusion_type}. Expected 'weighted_sum'."
+            )
+        Info("HAL layer is enabled!")
+        self.adaptive_pool = nn.AdaptiveAvgPool2d((1, 1))
+        self.fc1 = EqualLinear(64, 512)
+        self.fc2 = EqualLinear(128, 512)
+        self.fc3 = EqualLinear(256, 512)
+        self.ws = WeightedSumLayer()
 
     def forward(self, x):
         res = []

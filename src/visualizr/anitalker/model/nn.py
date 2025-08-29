@@ -1,16 +1,26 @@
-import math
+from math import log
 
-import torch as th
-import torch.nn as nn
-import torch.utils.checkpoint
+from torch import (
+    Tensor,
+    arange,
+    cat,
+    cos,
+    exp,
+    float32,
+    nn,
+    sigmoid,
+    sin,
+    zeros_like,
+)
+from torch.utils.checkpoint import checkpoint
 
 
 # PyTorch 1.7 has SiLU, but we support PyTorch 1.5.
 class SiLU(nn.Module):
-    # @th.jit.script
+    # @torch.jit.script
     @staticmethod
     def forward(x):
-        return x * th.sigmoid(x)
+        return x * sigmoid(x)
 
 
 class GroupNorm32(nn.GroupNorm):
@@ -29,13 +39,6 @@ def conv_nd(dims, *args, **kwargs):
     elif dims == 3:
         return nn.Conv3d(*args, **kwargs)
     raise ValueError(f"unsupported dimensions: {dims}")
-
-
-def linear(*args, **kwargs):
-    """
-    Create a linear module.
-    """
-    return nn.Linear(*args, **kwargs)
 
 
 def avg_pool_nd(dims, *args, **kwargs):
@@ -82,7 +85,7 @@ def scale_module(module, scale):
     return module
 
 
-def mean_flat(tensor: th.Tensor) -> th.Tensor:
+def mean_flat(tensor: Tensor) -> Tensor:
     """
     Take the mean over all non-batch dimensions.
     """
@@ -103,28 +106,26 @@ def timestep_embedding(timesteps, dim, max_period=10000):
     """
     Create sinusoidal timestep embeddings.
 
-    :param timesteps: A 1-D Tensor of N indices, one per batch element.
+    :param timesteps: A 1D Tensor of N indexes, one per batch element.
                       These may be fractional.
     :param dim: The dimension of the output.
     :param max_period: Controls the minimum frequency of the embeddings.
     :return: An [N x dim] Tensor of positional embeddings.
     """
     half = dim // 2
-    freqs = th.exp(
-        -math.log(max_period) * th.arange(start=0, end=half, dtype=th.float32) / half
-    ).to(device=timesteps.device)
+    freqs = exp(-log(max_period) * arange(start=0, end=half, dtype=float32) / half).to(
+        device=timesteps.device
+    )
     args = timesteps[:, None].float() * freqs[None]
-    embedding = th.cat([th.cos(args), th.sin(args)], dim=-1)
+    embedding = cat([cos(args), sin(args)], dim=-1)
     if dim % 2:
-        embedding = th.cat([embedding, th.zeros_like(embedding[:, :1])], dim=-1)
+        embedding = cat([embedding, zeros_like(embedding[:, :1])], dim=-1)
     return embedding
 
 
 def torch_checkpoint(func, args, flag, preserve_rng_state=False):
     # torch's gradient checkpoint works with automatic mixed precision, given torch >= 1.8
     if flag:
-        return torch.utils.checkpoint.checkpoint(
-            func, *args, preserve_rng_state=preserve_rng_state
-        )
+        return checkpoint(func, *args, preserve_rng_state=preserve_rng_state)
     else:
         return func(*args)

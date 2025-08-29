@@ -24,34 +24,18 @@ from huggingface_hub import snapshot_download
 from librosa import load as librosa_load
 from numpy import (
     array as np_array,
-)
-from numpy import (
     hstack as np_hstack,
-)
-from numpy import (
     ndarray,
-)
-from numpy import (
     pad as np_pad,
-)
-from numpy import (
     squeeze as np_squeeze,
 )
 from python_speech_features import delta, mfcc
 from torch import (
     Tensor,
-    no_grad,
-)
-from torch import (
     cat as torch_cat,
-)
-from torch import (
     clamp as torch_clamp,
-)
-from torch import (
+    no_grad,
     randn as torch_randn,
-)
-from torch import (
     zeros as torch_zeros,
 )
 from tqdm import tqdm
@@ -69,7 +53,7 @@ from visualizr.anitalker.utils import (
     saved_image,
     super_resolution,
 )
-from visualizr.settings import Settings, logger
+from visualizr.settings import Settings
 
 
 class App:
@@ -102,7 +86,6 @@ class App:
         seed: int,
     ) -> tuple[Video | None, Video | None, Markdown]:
         if image_path is None or not Path(image_path).exists():
-            logger.error(f"{image_path} does not exist or is invalid!")
             Error(f"{image_path} does not exist or is invalid!")
             return (
                 None,
@@ -112,7 +95,6 @@ class App:
                 ),
             )
         if audio_path is None or not Path(audio_path).exists():
-            logger.error(f"{audio_path} does not exist or is invalid!")
             Error(f"{audio_path} does not exist or is invalid!")
             return (
                 None,
@@ -171,20 +153,12 @@ class App:
         elif conf.infer_type.startswith("hubert"):
             # Hubert features
             if not check_package_installed("transformers"):
-                logger.exception("Please install transformers module first.")
                 Error("Please install transformers module first.")
                 sys_exit(0)
             hubert_model_path = "ckpts/chinese-hubert-large"
             if not Path(hubert_model_path).exists():
-                logger.exception(
-                    "Please download the hubert weight into the ckpts path first."
-                )
                 Error("Please download the hubert weight into the ckpts path first.")
                 sys_exit(0)
-            logger.info(
-                "You did not extract the audio features in advance, "
-                + "extracting online now, which will increase processing delay"
-            )
             Info(
                 "You did not extract the audio features in advance, "
                 + "extracting online now, which will increase processing delay"
@@ -222,7 +196,6 @@ class App:
                 ws_feat_obj = np_pad(ws_feat_obj, ((0, 0), (0, 1), (0, 0)), "edge")
 
             execution_time = time() - start_time
-            logger.info(f"Extraction Audio Feature: {execution_time:.2f} Seconds")
             Info(f"Extraction Audio Feature: {execution_time:.2f} Seconds")
 
             audio_driven_obj = ws_feat_obj
@@ -271,7 +244,6 @@ class App:
         # =========================================
 
         execution_time = time() - start_time
-        logger.info(f"Motion Diffusion Model: {execution_time:.2f} Seconds")
         Info(f"Motion Diffusion Model: {execution_time:.2f} Seconds")
 
         generated_directions = generated_directions.detach().cpu().numpy()
@@ -292,9 +264,7 @@ class App:
         # ==============================================
 
         execution_time = time() - start_time
-        logger.info(f"Renderer Model: {execution_time:.2f} Seconds")
         Info(f"Renderer Model: {execution_time:.2f} Seconds")
-        logger.info(f"Saving video at {predicted_video_256_path}")
         Info(f"Saving video at {predicted_video_256_path}")
 
         frames_to_video(
@@ -333,7 +303,6 @@ class App:
         )
 
     def _load_stage_1_model(self) -> LiaModel:
-        logger.info("Loading stage 1 model")
         Info("Loading stage 1 model")
         lia: LiaModel = LiaModel(
             motion_dim=self.settings.model.motion_dim, fusion_type="weighted_sum"

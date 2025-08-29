@@ -17,13 +17,13 @@ from visualizr.anitalker.config import TrainConfig
 from visualizr.anitalker.dist_utils import get_world_size
 from visualizr.anitalker.model.seq2seq import DiffusionPredictor
 from visualizr.anitalker.renderer import render_condition
-from visualizr.settings import logger
 
 
 class LitModel(LightningModule):
     def __init__(self, conf: TrainConfig):
         super().__init__()
-        assert conf.train_mode != TrainMode.manipulate
+        if conf.train_mode == TrainMode.manipulate:
+            raise ValueError("`conf.train_mode` cannot be `manipulate`")
         if conf.seed is not None:
             seed_everything(conf.seed)
         self.save_hyperparameters(conf.as_dict_jsonable())
@@ -95,15 +95,12 @@ class LitModel(LightningModule):
             np.random.seed(seed)
             torch.manual_seed(seed)
             torch.cuda.manual_seed(seed)
-            logger.info(f"local seed: {seed}")
             Info(f"local seed: {seed}")
         ##############################################
 
         self.train_data = self.conf.make_dataset()
-        logger.info(f"train data: {len(self.train_data)}")
         Info(f"train data: {len(self.train_data)}")
         self.val_data = self.train_data
-        logger.info(f"val data: {len(self.val_data)}")
         Info(f"val data: {len(self.val_data)}")
 
     def _train_dataloader(self, drop_last=True):
@@ -119,7 +116,6 @@ class LitModel(LightningModule):
         return the dataloader if diffusion mode → return image dataset
         if latent mode → return the inferred latent dataset.
         """
-        logger.info("on train dataloader start ...")
         Info("on train dataloader start ...")
         if not self.conf.train_mode.require_dataset_infer():
             return self._train_dataloader()
@@ -131,7 +127,6 @@ class LitModel(LightningModule):
             # (1, c)
             self.conds_mean.data = self.conds.float().mean(dim=0, keepdim=True)
             self.conds_std.data = self.conds.float().std(dim=0, keepdim=True)
-        logger.info(f"mean: {self.conds_mean.mean()}, std: {self.conds_std.mean()}")
         Info(f"mean: {self.conds_mean.mean()}, std: {self.conds_std.mean()}")
 
         # return the dataset with pre-calculated conds
@@ -146,7 +141,8 @@ class LitModel(LightningModule):
         local batch size for each worker
         """
         ws = get_world_size()
-        assert self.conf.batch_size % ws == 0
+        if self.conf.batch_size % ws != 0:
+            raise ValueError("batch size must be divisible by world size")
         return self.conf.batch_size // ws
 
     @property
@@ -291,7 +287,6 @@ def is_time(num_samples, every, step_size):
 
 
 def train(conf: TrainConfig, gpus, nodes=1):
-    logger.info(f"conf: {conf.name}")
     Info(f"conf: {conf.name}")
     model = LitModel(conf)
 
@@ -304,11 +299,9 @@ def train(conf: TrainConfig, gpus, nodes=1):
         every_n_epochs=10,
     )
     checkpoint_path = f"{conf.logdir}/last.ckpt"
-    logger.info(f"ckpt path: {checkpoint_path}")
     Info(f"ckpt path: {checkpoint_path}")
     if os.path.exists(checkpoint_path):
         resume = checkpoint_path
-        logger.info("resume!")
         Info("resume!")
     else:
         resume = conf.continue_from.pathcd if conf.continue_from is not None else None
