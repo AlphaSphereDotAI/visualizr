@@ -9,6 +9,7 @@ RUN apk add --no-cache build-base
 USER nonroot
 
 SHELL ["/bin/ash", "-o", "pipefail", "-c"]
+
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     uv tool install visualizr --python "$(grep -E 'requires-python' pyproject.toml | grep -o '[0-9]\+\.[0-9]\+')"
