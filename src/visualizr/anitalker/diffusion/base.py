@@ -66,7 +66,7 @@ class GaussianDiffusionBeatGans:
         self.betas = betas
         if len(betas.shape) != 1:
             raise ValueError("betas must be 1D")
-        if not (0 < betas <= 1).all():
+        if not (betas > 0).all() and (betas <= 1).all():
             raise ValueError("betas must be positive and less than or equal to 1")
 
         self.num_timesteps = int(betas.shape[0])

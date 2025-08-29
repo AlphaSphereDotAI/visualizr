@@ -8,14 +8,15 @@ RUN apk add --no-cache build-base
 
 USER nonroot
 
+SHELL ["/bin/ash", "-o", "pipefail", "-c"]
+
 RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=.python-version,target=.python-version \
-    uv tool install visualizr -p "$(cat .python-version)"
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv tool install visualizr --python "$(grep -E 'requires-python' pyproject.toml | grep -o '[0-9]\+\.[0-9]\+')"
 
 FROM cgr.dev/chainguard/wolfi-base:latest@sha256:898e4f30d920607c58acc01eabdfc9ac0725fb83b780d695542b3c3a3d265e48 AS production
 
-ENV GRADIO_SERVER_PORT=7860 \
-    GRADIO_SERVER_NAME=0.0.0.0 \
+ENV GRADIO_SERVER_NAME=0.0.0.0 \
     PATH=/home/nonroot/.local/bin:$PATH
 
 # skipcq: DOK-DL3018
