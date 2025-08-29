@@ -60,8 +60,9 @@ url = "https://download.pytorch.org/whl/cu118"
 
 [dependency-groups]
 dev = [
+    "gradio-client>=1.12.1",
     "pytest-emoji>=0.2.0",
     "pytest-md>=0.2.0",
-    "pytest-mergify>=2025.8.20.1",
+    #    "pytest-mergify>=2025.8.20.1",
     "uv-build>=0.8.14",
 ]
