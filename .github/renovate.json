@@ -10,7 +10,7 @@
       "dependencies"
     ]
   },
-  "pep621": {
-    "enabled": false
-  }
+  "ignorePaths": [
+    "pyproject.toml"
+  ]
 }
