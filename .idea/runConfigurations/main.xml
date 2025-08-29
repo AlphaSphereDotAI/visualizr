@@ -5,7 +5,9 @@
     </option>
     <option name="checkSync" value="false" />
     <option name="env">
-      <map />
+      <map>
+        <entry key="UV_LINK_MODE" value="copy" />
+      </map>
     </option>
     <option name="runType" value="MODULE" />
     <option name="scriptOrModule" value="visualizr" />
