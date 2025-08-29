@@ -10,10 +10,7 @@
       "dependencies"
     ]
   },
-  "pep621": {
-    "enabled": false
-  },
-  "poetry": {
-    "enabled": false
-  }
+  "ignorePaths": [
+    "pyproject.toml"
+  ]
 }
