@@ -24,8 +24,14 @@ dependencies = [
 ]
 classifiers = [
     'Environment :: GPU :: NVIDIA CUDA :: 11.8',
-    'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.10 :: Only',
+    'Programming Language :: Python :: 3.10',
+    'Topic :: Multimedia :: Sound/Audio :: Analysis',
+    'Topic :: Multimedia :: Sound/Audio :: Sound Synthesis',
+    'Topic :: Multimedia :: Video :: Conversion',
+    'Topic :: Multimedia :: Video :: Display',
+    'Topic :: Multimedia :: Video',
+    'Topic :: Scientific/Engineering :: Artificial Intelligence',
 ]
 
 [build-system]
