@@ -2,7 +2,7 @@
 
 from os import getenv
 
-from requests import Response, head
+from gradio_client import Client
 
 
 def test_app() -> None:
@@ -12,7 +12,6 @@ def test_app() -> None:
     Returns:
         None
     """
-    response: Response = head(
-        getenv("VISUALIZR_URL", "http://localhost:7860/"), timeout=30
-    )
-    assert response.status_code == 200
+    client = Client(getenv("VISUALIZR_URL", "http://localhost:7860/"))
+    response = client.heartbeat
+    assert response.is_alive()
