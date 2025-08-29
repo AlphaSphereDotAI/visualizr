@@ -12,5 +12,8 @@
   },
   "pep621": {
     "enabled": false
+  },
+  "poetry": {
+    "enabled": false
   }
 }
