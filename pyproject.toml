@@ -6,7 +6,7 @@ readme = "README.md"
 authors = [
     { name = "Mohamed Hisham Abdelzaher", email = "mohamed.hisham.abdelzaher@gmail.com" },
 ]
-requires-python = "==3.10.*"
+requires-python = "==3.13.*"
 keywords = ["anitalker", "video"]
 dependencies = [
     "espnet>=202207",
