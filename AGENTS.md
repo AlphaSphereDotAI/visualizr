@@ -14,7 +14,7 @@
 - **Types**: Add type hints to all public APIs
 - **Naming**: snake_case for functions/variables, PascalCase for classes
 - **Errors**: Use specific exceptions, log errors with `logging` module
-- **Ruff**: Follow .trunk/ruff.toml rules (no unused imports, no F841)
+- **Ruff**: Follow `.trunk/ruff.toml` rules (no unused imports, no F841)
 
 ## Special Rules
 
