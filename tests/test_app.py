@@ -13,5 +13,4 @@ def test_app() -> None:
         None
     """
     client = Client(getenv("VISUALIZR_URL", "http://localhost:7860/"))
-    response = client.heartbeat
-    assert response.is_alive()
+    assert client.heartbeat.is_alive()
