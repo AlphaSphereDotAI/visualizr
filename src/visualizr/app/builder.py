@@ -469,7 +469,7 @@ class App:
                     step=1,
                     value=self.settings.model.step_t,
                 )
-            generate_button = generate_button.click(
+            generate_button_event = generate_button.click(
                 self.generate_video,
                 [
                     infer_type,
@@ -490,8 +490,8 @@ class App:
                     output_message,
                 ],
             )
-            stop_button.click(cancels=generate_button)
-            generate_from_name_button = generate_from_name_button.click(
+            stop_button.click(cancels=generate_button_event)
+            generate_from_name_button_event = generate_from_name_button.click(
                 self.generate_video_from_name,
                 [
                     name,
@@ -512,5 +512,5 @@ class App:
                     output_message,
                 ],
             )
-            stop_from_name_button.click(cancels=generate_from_name_button)
+            stop_from_name_button.click(cancels=generate_from_name_button_event)
             return app
