@@ -483,9 +483,7 @@ class App:
                         )
                         output_message_from_name = Markdown()
                 with Row():
-                    generate_from_name_button = Button(
-                        "Generate", variant="primary"
-                    )
+                    generate_from_name_button = Button("Generate", variant="primary")
                     stop_from_name_button: Button = Button("Stop", variant="stop")
             with Tab("Configuration"):
                 with Row():
