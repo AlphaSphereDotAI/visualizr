@@ -74,8 +74,8 @@ class App:
             "hubert_audio_only",
             "hubert_full_control",
         ],
-        image_path: str,
-        audio_path: str,
+        image_path: str | Path,
+        audio_path: str | Path,
         face_sr: bool,
         pose_yaw: float,
         pose_pitch: float,
@@ -302,6 +302,46 @@ class App:
             Markdown("Video (256*256 only) generated successfully!"),
         )
 
+    def generate_video_from_name(
+        self,
+        name: str,
+        infer_type: Literal[
+            "mfcc_full_control",
+            "mfcc_pose_only",
+            "hubert_pose_only",
+            "hubert_audio_only",
+            "hubert_full_control",
+        ],
+        audio_path: str | Path,
+        face_sr: bool,
+        pose_yaw: float,
+        pose_pitch: float,
+        pose_roll: float,
+        face_location: float,
+        face_scale: float,
+        step_t: int,
+        seed: int,
+    ) -> tuple[Video | None, Video | None, Markdown]:
+        return self.generate_video(
+            infer_type,
+            self._get_image_path(name),
+            audio_path,
+            face_sr,
+            pose_yaw,
+            pose_pitch,
+            pose_roll,
+            face_location,
+            face_scale,
+            step_t,
+            seed,
+        )
+
+    def _get_image_path(self, name: str) -> Path:
+        return self.settings.directory.image / f"{name}.jpg"
+
+    def _get_character_names(self) -> list[str]:
+        return [p.stem for p in self.settings.directory.image.glob("*.jpg")]
+
     def _load_stage_1_model(self) -> LiaModel:
         Info("Loading stage 1 model")
         lia: LiaModel = LiaModel(
@@ -336,7 +376,7 @@ class App:
     def gui(self) -> Blocks:
         """Create the Gradio interface for the voice generation web app."""
         with Blocks() as app:
-            with Tab("AniTalker"):
+            with Tab("AniTalker (Generate Video from Paths)"):
                 with Column():
                     with Row():
                         with Column():
@@ -358,6 +398,26 @@ class App:
                     with Row():
                         generate_button = Button(value="Generate", variant="primary")
                         stop_button: Button = Button(value="Stop", variant="stop")
+            with Tab("AniTalker (Generate Video from Name)"):
+                with Column():
+                    with Row():
+                        with Column():
+                            name = Dropdown(
+                                self._get_character_names(),
+                                label="Name",
+                                info="Enter the name of the person, Will add more characters later!",
+                            )
+                        with Column():
+                            output_video_256 = Video(label="Generated Video (256)")
+                            output_video_512 = Video(label="Generated Video (512)")
+                            output_message = Markdown()
+                    with Row():
+                        generate_from_name_button = Button(
+                            value="Generate", variant="primary"
+                        )
+                        stop_from_name_button: Button = Button(
+                            value="Stop", variant="stop"
+                        )
             with Tab("Configuration"):
                 infer_type = Dropdown(
                     label="Inference Type",
@@ -431,4 +491,26 @@ class App:
                 ],
             )
             stop_button.click(cancels=generate_button)
+            generate_from_name_button = generate_from_name_button.click(
+                self.generate_video_from_name,
+                [
+                    name,
+                    infer_type,
+                    audio_path,
+                    face_sr,
+                    pose_yaw,
+                    pose_pitch,
+                    pose_roll,
+                    face_location,
+                    face_scale,
+                    step_t,
+                    seed,
+                ],
+                [
+                    output_video_256,
+                    output_video_512,
+                    output_message,
+                ],
+            )
+            stop_from_name_button.click(cancels=generate_from_name_button)
             return app
