@@ -323,6 +323,26 @@ class App:
         step_t: int,
         seed: int,
     ) -> tuple[Video | None, Video | None, Markdown]:
+        """
+        Generate a video for a character by name using the provided settings and audio.
+
+        Args:
+            name (str): The base name of the character image (without extension).
+            infer_type (Literal['mfcc_full_control', 'mfcc_pose_only', 'hubert_pose_only', 'hubert_audio_only', 'hubert_full_control']): The type of inference mode.
+            audio_path (str | Path): Path to the input audio file.
+            face_sr (bool): Whether to apply face super-resolution.
+            pose_yaw (float): Yaw angle for the character's pose.
+            pose_pitch (float): Pitch angle for the character's pose.
+            pose_roll (float): Roll angle for the character's pose.
+            face_location (float): Relative location parameter for face positioning.
+            face_scale (float): Scaling factor for the face.
+            step_t (int): Number of diffusion steps.
+            seed (int): Random seed for reproducibility.
+
+        Returns:
+            tuple[Video | None, Video | None, Markdown]: A tuple containing the generated 256x256 video,
+            the high-resolution video (if face_sr is True), and a Markdown status message.
+        """
         return self.generate_video(
             infer_type,
             self._get_image_path(name),
@@ -338,6 +358,15 @@ class App:
         )
 
     def _get_image_path(self, name: str) -> Path:
+        """
+        Retrieve the image file path for a given character name by checking supported extensions.
+
+        Args:
+            name (str): The base name of the image file (without extension).
+
+        Returns:
+            Path: The path to the existing image file. Defaults to .jpg if none found.
+        """
         for ext in (".jpg", ".jpeg", ".png"):
             path = self.settings.directory.image / f"{name}{ext}"
             if path.is_file():
@@ -345,6 +374,12 @@ class App:
         return self.settings.directory.image / f"{name}.jpg"
 
     def _get_character_names(self) -> list[str]:
+        """
+        List all character names available in the image directory.
+
+        Returns:
+            list[str]: Sorted list of unique character names (file stems) from supported image files.
+        """
         extensions = ("*.jpg", "*.jpeg", "*.png")
         paths = (
             p for ext in extensions for p in self.settings.directory.image.glob(ext)
