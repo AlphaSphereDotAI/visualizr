@@ -21,3 +21,4 @@
 - No `print()` statements in production code
 - All public functions must have Google-style docstrings
 - Tests must achieve >90% branch coverage
+- Use `pathlib` for file paths instead of `os.path`
