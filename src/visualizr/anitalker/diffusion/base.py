@@ -161,7 +161,7 @@ class GaussianDiffusionBeatGans:
                 ModelMeanType.eps: noise,
             }
             target = target_types[self.model_mean_type]
-            if not (predicted_direction.shape == target.shape == motion_target.shape):
+            if not predicted_direction.shape == target.shape == motion_target.shape:
                 raise ValueError(
                     f"Shape mismatch: predicted_direction {predicted_direction.shape},"
                     + f" target {target.shape}, motion_target {motion_target.shape}"
@@ -1136,7 +1136,7 @@ def discretized_gaussian_log_likelihood(x, *, means, log_scales):
     :param log_scales: The Gaussian log stddev Tensor.
     :return: A tensor like x of log probabilities (in nats).
     """
-    if not (x.shape == means.shape == log_scales.shape):
+    if not x.shape == means.shape == log_scales.shape:
         raise ValueError(
             f"Shape mismatch: x {x.shape}, means {means.shape}, log_scales {log_scales.shape}"
         )
