@@ -445,7 +445,7 @@ class App:
         """Create the Gradio interface for the voice generation web app."""
         with Blocks() as app:
             with Tab("AniTalker (Generate Video from Paths)"):
-                with Column(), Row():
+                with Row():
                     with Column():
                         image_path: Image = Image(
                             value=self.settings.model.image_path.as_posix(),
@@ -466,7 +466,7 @@ class App:
                     generate_button = Button("Generate", variant="primary")
                     stop_button: Button = Button("Stop", variant="stop")
             with Tab("AniTalker (Generate Video from Name)"):
-                with Column(), Row():
+                with Row():
                     with Column():
                         name = Dropdown(
                             self._get_character_names(),
