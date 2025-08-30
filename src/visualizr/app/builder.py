@@ -340,7 +340,7 @@ class App:
             seed (int): Random seed for reproducibility.
 
         Returns:
-            tuple[Video | None, Video | None, Markdown]: A tuple containing the generated 256x256 video, 
+            tuple[Video | None, Video | None, Markdown]: A tuple containing the generated 256x256 video,
             the high-resolution video (if face_sr is True), and a Markdown status message.
         """
         return self.generate_video(
