@@ -322,6 +322,29 @@ class App:
         step_t: int,
         seed: int,
     ) -> tuple[Video | None, Video | None, Markdown]:
+        """
+        Generate a video for a given character name by delegating to generate_video.
+
+        Args:
+            name (str): The character name to generate the image path.
+            infer_type (Literal["mfcc_full_control", "mfcc_pose_only", "hubert_pose_only", "hubert_audio_only", "hubert_full_control"]): The type of inference to perform.
+            audio_path (str | Path): Path to the input audio file.
+            face_sr (bool): Whether to apply face super-resolution.
+            pose_yaw (float): Yaw angle for the pose.
+            pose_pitch (float): Pitch angle for the pose.
+            pose_roll (float): Roll angle for the pose.
+            face_location (float): Location parameter for the face.
+            face_scale (float): Scale parameter for the face.
+            step_t (int): Step size for temporal interpolation.
+            seed (int): Random seed for reproducibility.
+
+        Returns:
+            tuple[
+                Video | None,
+                Video | None,
+                Markdown,
+            ]: The generated video(s) and status message.
+        """
         return self.generate_video(
             infer_type,
             self._get_image_path(name),
@@ -337,9 +360,24 @@ class App:
         )
 
     def _get_image_path(self, name: str) -> Path:
+        """
+        Get the file path of the character image based on its name.
+
+        Args:
+            name (str): The character name.
+
+        Returns:
+            Path: The path to the character image file.
+        """
         return self.settings.directory.image / f"{name}.jpg"
 
     def _get_character_names(self) -> list[str]:
+        """
+        Retrieve all character names from image files in the image directory.
+
+        Returns:
+            list[str]: A list of character names derived from image file stems.
+        """
         return [p.stem for p in self.settings.directory.image.glob("*.jpg")]
 
     def _load_stage_1_model(self) -> LiaModel:
