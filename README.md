@@ -5,7 +5,7 @@
 ## Installations (uv)
 
 ```bash
-uvx visualizr -p 3.10
+uvx --python 3.10 visualizr
 ```
 
 ## Installations (docker)
