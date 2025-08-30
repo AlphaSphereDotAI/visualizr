@@ -214,24 +214,25 @@ class GaussianDiffusionBeatGans:
                 model_kwargs["x_start"] = x_start
                 model_kwargs["cond"] = cond
 
-        if self.conf.gen_type == GenerativeType.ddpm:
-            return self.p_sample_loop(
-                model,
-                shape=shape,
-                noise=noise,
-                clip_denoised=clip_denoised,
-                model_kwargs=model_kwargs,
-                progress=progress,
-            )
-        elif self.conf.gen_type == GenerativeType.ddim:
-            return self.ddim_sample_loop(
-                model,
-                shape=shape,
-                noise=noise,
-                clip_denoised=clip_denoised,
-                model_kwargs=model_kwargs,
-                progress=progress,
-            )
+        match self.conf.gen_type:
+            case GenerativeType.ddpm:
+                return self.p_sample_loop(
+                    model,
+                    shape=shape,
+                    noise=noise,
+                    clip_denoised=clip_denoised,
+                    model_kwargs=model_kwargs,
+                    progress=progress,
+                )
+            case GenerativeType.ddim:
+                return self.ddim_sample_loop(
+                    model,
+                    shape=shape,
+                    noise=noise,
+                    clip_denoised=clip_denoised,
+                    model_kwargs=model_kwargs,
+                    progress=progress,
+                )
 
     def q_mean_variance(self, x_start, t):
         """
