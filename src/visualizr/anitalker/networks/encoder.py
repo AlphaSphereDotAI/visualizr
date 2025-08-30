@@ -290,7 +290,8 @@ class EncoderApp(nn.Module):
 
         if self.fusion_type != "weighted_sum":
             raise ValueError(
-                f"Unsupported `fusion_type`: {self.fusion_type}. Expected 'weighted_sum'."
+                f"Unsupported `fusion_type`: {self.fusion_type}. "
+                + f"Expected 'weighted_sum'."
             )
         Info("HAL layer is enabled!")
         self.adaptive_pool = nn.AdaptiveAvgPool2d((1, 1))

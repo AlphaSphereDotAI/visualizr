@@ -32,7 +32,7 @@ def enhancer_list(images, method="gfpgan", bg_upsampler="realesrgan"):
 
 def enhancer_generator_with_len(images, method="gfpgan", bg_upsampler="realesrgan"):
     """
-    Provide a generator with a __len__ method so that it can be passed to functions that
+    Provide a generator with a `__len__` method so that it can be passed to functions that
     call `len()`
     """
 
@@ -66,17 +66,26 @@ def enhancer_generator_no_len(images, method="gfpgan", bg_upsampler="realesrgan"
             arch = "clean"
             channel_multiplier = 2
             model_name = "GFPGANv1.4"
-            url = "https://github.com/TencentARC/GFPGAN/releases/download/v1.3.0/GFPGANv1.4.pth"
+            url = (
+                "https://github.com/TencentARC/GFPGAN/releases/download/"
+                + "v1.3.0/GFPGANv1.4.pth"
+            )
         case "RestoreFormer":
             arch = "RestoreFormer"
             channel_multiplier = 2
             model_name = "RestoreFormer"
-            url = "https://github.com/TencentARC/GFPGAN/releases/download/v1.3.4/RestoreFormer.pth"
+            url = (
+                "https://github.com/TencentARC/GFPGAN/releases/download/"
+                + "v1.3.4/RestoreFormer.pth"
+            )
         case "codeformer":
             arch = "CodeFormer"
             channel_multiplier = 2
             model_name = "CodeFormer"
-            url = "https://github.com/sczhou/CodeFormer/releases/download/v0.1.0/codeformer.pth"
+            url = (
+                "https://github.com/sczhou/CodeFormer/releases/download/"
+                + "v0.1.0/codeformer.pth"
+            )
     # ------------------------ set up background upsampler ------------------------
     if bg_upsampler == "realesrgan":
         if not torch.cuda.is_available():  # CPU
@@ -84,7 +93,7 @@ def enhancer_generator_no_len(images, method="gfpgan", bg_upsampler="realesrgan"
 
             warnings.warn(
                 "The unoptimized RealESRGAN is slow on CPU. We do not use it. "
-                "If you really want to use it, please modify the corresponding codes."
+                + "If you really want to use it, please modify the corresponding codes."
             )
             bg_upsampler = None
         else:

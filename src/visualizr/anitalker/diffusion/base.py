@@ -294,7 +294,10 @@ class GaussianDiffusionBeatGans:
             == x_start.shape[0]
         ):
             raise ValueError(
-                f"Shape mismatch: {posterior_mean.shape} vs {posterior_variance.shape} vs {posterior_log_variance_clipped.shape} vs {x_start.shape}"
+                f"Shape mismatch: {posterior_mean.shape} "
+                + f"vs {posterior_variance.shape} "
+                + f"vs {posterior_log_variance_clipped.shape} "
+                + f"vs {x_start.shape}"
             )
         return (
             posterior_mean,
@@ -402,7 +405,10 @@ class GaussianDiffusionBeatGans:
             model_mean.shape == model_log_variance.shape == pred_xstart.shape == x.shape
         ):
             raise ValueError(
-                f"Shape mismatch: {model_mean.shape} vs {model_log_variance.shape} vs {pred_xstart.shape} vs {x.shape}"
+                f"Shape mismatch: {model_mean.shape} "
+                + f"vs {model_log_variance.shape} "
+                + f"vs {pred_xstart.shape} "
+                + f"vs {x.shape}"
             )
         return {
             "mean": model_mean,
@@ -1121,7 +1127,9 @@ def discretized_gaussian_log_likelihood(x, *, means, log_scales):
     """
     if not (x.shape == means.shape == log_scales.shape):
         raise ValueError(
-            f"Shape mismatch: x {x.shape}, means {means.shape}, log_scales {log_scales.shape}"
+            f"Shape mismatch: x {x.shape}, "
+            + f"means {means.shape}, "
+            + f"log_scales {log_scales.shape}"
         )
     centered_x = x - means
     inv_stdv = th.exp(-log_scales)

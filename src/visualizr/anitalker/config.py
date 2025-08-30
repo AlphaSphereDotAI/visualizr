@@ -195,7 +195,10 @@ class TrainConfig(BaseConfig):
     def fid_cache(self):
         # we try to use the local dirs to reduce the load over network drives
         # hopefully, this would reduce the disconnection problems with sshfs.
-        return f"{self.work_cache_dir}/eval_images/{self.data_name}_size{self.img_size}_{self.eval_num_images}"
+        return (
+            f"{self.work_cache_dir}/eval_images/{self.data_name}"
+            + f"_size{self.img_size}_{self.eval_num_images}"
+        )
 
     @property
     def logdir(self):
