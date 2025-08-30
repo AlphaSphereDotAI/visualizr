@@ -337,10 +337,19 @@ class App:
         )
 
     def _get_image_path(self, name: str) -> Path:
+        for ext in (".jpg", ".jpeg", ".png"):
+            path = self.settings.directory.image / f"{name}{ext}"
+            if path.is_file():
+                return path
         return self.settings.directory.image / f"{name}.jpg"
 
     def _get_character_names(self) -> list[str]:
-        return sorted([p.stem for p in self.settings.directory.image.glob("*.jpg")])
+        extensions = ("*.jpg", "*.jpeg", "*.png")
+        paths = (
+            p for ext in extensions for p in self.settings.directory.image.glob(ext)
+        )
+        # Use a set to handle cases where an image exists with multiple supported extensions (for example, napoleon.jpg, napoleon.png)
+        return sorted({p.stem for p in paths})
 
     def _load_stage_1_model(self) -> LiaModel:
         Info("Loading stage 1 model")
