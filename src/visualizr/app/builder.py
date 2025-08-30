@@ -11,6 +11,7 @@ from gradio import (
     Column,
     Dropdown,
     Error,
+    Group,
     Image,
     Info,
     Markdown,
@@ -74,8 +75,8 @@ class App:
             "hubert_audio_only",
             "hubert_full_control",
         ],
-        image_path: str,
-        audio_path: str,
+        image_path: str | Path,
+        audio_path: str | Path,
         face_sr: bool,
         pose_yaw: float,
         pose_pitch: float,
@@ -121,10 +122,18 @@ class App:
 
         img_source: Tensor = img_preprocessing(image_path, 256).to("cuda")
         one_shot_lia_start, one_shot_lia_direction, feats = (
-            lia.get_start_direction_code(img_source, img_source, img_source, img_source)
+            lia.get_start_direction_code(
+                img_source,
+                img_source,
+                img_source,
+                img_source,
+            )
         )
 
-        model = load_stage_2_model(conf, self._get_checkpoint_stage_2_path(infer_type))
+        model = load_stage_2_model(
+            conf,
+            self._get_checkpoint_stage_2_path(infer_type),
+        )
 
         frame_end: int = 0
         audio_driven: Optional[Tensor] = None
@@ -259,7 +268,8 @@ class App:
             ori_img_recon = ori_img_recon.clamp(-1, 1)
             wav_pred = (ori_img_recon.detach() + 1) / 2
             saved_image(
-                wav_pred, self.settings.directory.frames / f"{pred_index:06d}.png"
+                wav_pred,
+                self.settings.directory.frames / f"{pred_index:06d}.png",
             )
         # ==============================================
 
@@ -268,7 +278,9 @@ class App:
         Info(f"Saving video at {predicted_video_256_path}")
 
         frames_to_video(
-            self.settings.directory.frames, audio_path, predicted_video_256_path
+            self.settings.directory.frames,
+            audio_path,
+            predicted_video_256_path,
         )
 
         remove_frames(self.settings.directory.frames)
@@ -301,6 +313,102 @@ class App:
             None,
             Markdown("Video (256*256 only) generated successfully!"),
         )
+
+    def generate_video_from_name(
+        self,
+        name: str,
+        infer_type: Literal[
+            "mfcc_full_control",
+            "mfcc_pose_only",
+            "hubert_pose_only",
+            "hubert_audio_only",
+            "hubert_full_control",
+        ],
+        audio_path: str | Path,
+        face_sr: bool,
+        pose_yaw: float,
+        pose_pitch: float,
+        pose_roll: float,
+        face_location: float,
+        face_scale: float,
+        step_t: int,
+        seed: int,
+    ) -> tuple[Video | None, Video | None, Markdown]:
+        """
+        Generate a video for a character by name using the provided settings and audio.
+
+        Args:
+            name (str): The base name of the character image (without extension).
+            infer_type (Literal[
+                'mfcc_full_control',
+                'mfcc_pose_only',
+                'hubert_pose_only',
+                'hubert_audio_only',
+                'hubert_full_control',
+            ]): The type of inference mode.
+            audio_path (str | Path): Path to the input audio file.
+            face_sr (bool): Whether to apply a face super-resolution.
+            pose_yaw (float): Yaw angle for the character's pose.
+            pose_pitch (float): Pitch angle for the character's pose.
+            pose_roll (float): Roll angle for the character's pose.
+            face_location (float): Relative location parameter for a face positioning.
+            face_scale (float): Scaling factor for the face.
+            step_t (int): Number of diffusion steps.
+            seed (int): Random seed for reproducibility.
+
+        Returns:
+            tuple[Video | None, Video | None, Markdown]: A tuple
+                        containing the generated 256x256 video,
+                        the high-resolution video (if `face_sr` is True),
+                        and a Markdown status message.
+        """
+        return self.generate_video(
+            infer_type,
+            self._get_image_path(name),
+            audio_path,
+            face_sr,
+            pose_yaw,
+            pose_pitch,
+            pose_roll,
+            face_location,
+            face_scale,
+            step_t,
+            seed,
+        )
+
+    def _get_image_path(self, name: str) -> Path:
+        """
+        Retrieve the image path for a given character name by checking
+        supported extensions.
+
+        Args:
+            name (str): The base name of the image file (without extension).
+
+        Returns:
+            Path: The path to the existing image file.
+                  Defaults to .jpg if none is found.
+        """
+        for ext in (".jpg", ".jpeg", ".png"):
+            path = self.settings.directory.image / f"{name}{ext}"
+            if path.is_file():
+                return path
+        return self.settings.directory.image / f"{name}.jpg"
+
+    def _get_character_names(self) -> list[str]:
+        """
+        List all character names available in the image directory.
+
+        Returns:
+            list[str]: Sorted list of unique character names (file stems)
+                       from supported image files.
+        """
+        extensions = ("*.jpg", "*.jpeg", "*.png")
+        paths = (
+            p for ext in extensions for p in self.settings.directory.image.glob(ext)
+        )
+        # Use a set to handle cases where an image exists with multiple supported
+        # extensions (for example, napoleon.jpg, napoleon.png)
+        return sorted({p.stem for p in paths})
 
     def _load_stage_1_model(self) -> LiaModel:
         Info("Loading stage 1 model")
@@ -336,80 +444,100 @@ class App:
     def gui(self) -> Blocks:
         """Create the Gradio interface for the voice generation web app."""
         with Blocks() as app:
-            with Tab("AniTalker"):
-                with Column():
-                    with Row():
-                        with Column():
-                            image_path: Image = Image(
-                                value=self.settings.model.image_path.as_posix(),
-                                type="filepath",
-                                label="Reference Image",
-                            )
-                            audio_path = Audio(
-                                value=self.settings.model.audio_path.as_posix(),
-                                type="filepath",
-                                label="Input Audio",
-                                show_download_button=True,
-                            )
-                        with Column():
-                            output_video_256 = Video(label="Generated Video (256)")
-                            output_video_512 = Video(label="Generated Video (512)")
-                            output_message = Markdown()
-                    with Row():
-                        generate_button = Button(value="Generate", variant="primary")
-                        stop_button: Button = Button(value="Stop", variant="stop")
+            with Tab("AniTalker (Generate Video from Paths)"):
+                with Row():
+                    with Column():
+                        image_path: Image = Image(
+                            value=self.settings.model.image_path.as_posix(),
+                            type="filepath",
+                            label="Reference Image",
+                        )
+                        audio_path = Audio(
+                            value=self.settings.model.audio_path.as_posix(),
+                            type="filepath",
+                            label="Input Audio",
+                            show_download_button=True,
+                        )
+                    with Column():
+                        output_video_256 = Video(label="Generated Video (256)")
+                        output_video_512 = Video(label="Generated Video (512)")
+                        output_message = Markdown()
+                with Row():
+                    generate_button = Button("Generate", variant="primary")
+                    stop_button: Button = Button("Stop", variant="stop")
+            with Tab("AniTalker (Generate Video from Name)"):
+                with Row():
+                    with Column():
+                        name = Dropdown(
+                            self._get_character_names(),
+                            label="Character",
+                            info="Choose character,"
+                            + "More characters will be added later.",
+                        )
+                    with Column():
+                        output_video_256_from_name = Video(
+                            label="Generated Video (256)"
+                        )
+                        output_video_512_from_name = Video(
+                            label="Generated Video (512)"
+                        )
+                        output_message_from_name = Markdown()
+                with Row():
+                    generate_from_name_button = Button("Generate", variant="primary")
+                    stop_from_name_button: Button = Button("Stop", variant="stop")
             with Tab("Configuration"):
-                infer_type = Dropdown(
-                    label="Inference Type",
-                    choices=[
-                        "mfcc_full_control",
-                        "mfcc_pose_only",
-                        "hubert_pose_only",
-                        "hubert_audio_only",
-                        "hubert_full_control",
-                    ],
-                    value="hubert_audio_only",
-                )
-                face_sr = Checkbox(label="Enable Face Super-Resolution (512*512)")
-                seed = Number(
-                    label="Seed",
-                    value=self.settings.model.seed,
-                )
-                pose_yaw = Slider(
-                    label="pose_yaw",
-                    minimum=-1,
-                    maximum=1,
-                    value=self.settings.model.pose_yaw,
-                )
-                pose_pitch = Slider(
-                    label="pose_pitch",
-                    minimum=-1,
-                    maximum=1,
-                    value=self.settings.model.pose_pitch,
-                )
-                pose_roll = Slider(
-                    label="pose_roll",
-                    minimum=-1,
-                    maximum=1,
-                    value=self.settings.model.pose_roll,
-                )
-                face_location = Slider(
-                    label="face_location",
-                    maximum=1,
-                    value=self.settings.model.face_location,
-                )
-                face_scale = Slider(
-                    label="face_scale",
-                    maximum=1,
-                    value=self.settings.model.face_scale,
-                )
-                step_t = Slider(
-                    label="step_T",
-                    minimum=1,
-                    step=1,
-                    value=self.settings.model.step_t,
-                )
-            generate_button = generate_button.click(
+                with Row():
+                    infer_type = Dropdown(
+                        [
+                            "mfcc_full_control",
+                            "mfcc_pose_only",
+                            "hubert_pose_only",
+                            "hubert_audio_only",
+                            "hubert_full_control",
+                        ],
+                        value="hubert_audio_only",
+                        label="Inference Type",
+                    )
+                    seed = Number(self.settings.model.seed, label="Seed")
+                    face_sr = Checkbox(label="Enable Face Super-Resolution (512*512)")
+                with Row():
+                    with Group(), Row():
+                        pose_yaw = Slider(
+                            -1,
+                            1,
+                            self.settings.model.pose_yaw,
+                            label="pose_yaw",
+                        )
+                        pose_pitch = Slider(
+                            -1,
+                            1,
+                            self.settings.model.pose_pitch,
+                            label="pose_pitch",
+                        )
+                        pose_roll = Slider(
+                            -1,
+                            1,
+                            self.settings.model.pose_roll,
+                            label="pose_roll",
+                        )
+                    with Row():
+                        face_location = Slider(
+                            maximum=1,
+                            value=self.settings.model.face_location,
+                            label="face_location",
+                        )
+                        face_scale = Slider(
+                            maximum=1,
+                            value=self.settings.model.face_scale,
+                            label="face_scale",
+                        )
+                        step_t = Slider(
+                            minimum=1,
+                            step=1,
+                            value=self.settings.model.step_t,
+                            label="step_T",
+                        )
+            generate_button_event = generate_button.click(
                 self.generate_video,
                 [
                     infer_type,
@@ -430,5 +558,27 @@ class App:
                     output_message,
                 ],
             )
-            stop_button.click(cancels=generate_button)
+            stop_button.click(cancels=generate_button_event)
+            generate_from_name_button_event = generate_from_name_button.click(
+                self.generate_video_from_name,
+                [
+                    name,
+                    infer_type,
+                    audio_path,
+                    face_sr,
+                    pose_yaw,
+                    pose_pitch,
+                    pose_roll,
+                    face_location,
+                    face_scale,
+                    step_t,
+                    seed,
+                ],
+                [
+                    output_video_256_from_name,
+                    output_video_512_from_name,
+                    output_message_from_name,
+                ],
+            )
+            stop_from_name_button.click(cancels=generate_from_name_button_event)
             return app
