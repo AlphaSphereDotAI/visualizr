@@ -391,13 +391,13 @@ class Downsample(nn.Module):
                 stride=stride,
                 padding=1,
             )
-        else:
-            if self.channels != self.out_channels:
-                raise ValueError(
-                    "Downsampling with no convolution requires channel reduction. "
-                    + f"Layer has {self.channels} but `out_channels` is {self.out_channels}"
-                )
+        elif self.channels == self.out_channels:
             self.op = avg_pool_nd(dims, kernel_size=stride, stride=stride)
+        else:
+            raise ValueError(
+                "Downsampling with no convolution requires channel reduction. "
+                + f"Layer has {self.channels} but `out_channels` is {self.out_channels}"
+            )
 
     def forward(self, x):
         if x.shape[1] != self.channels:
@@ -422,12 +422,12 @@ class AttentionBlock(nn.Module):
         self.channels = channels
         if num_head_channels == -1:
             self.num_heads = num_heads
-        else:
-            if channels % num_head_channels != 0:
-                raise ValueError(
-                    f"q,k,v channels {channels} is not divisible by `num_head_channels` {num_head_channels}"
-                )
+        elif channels % num_head_channels == 0:
             self.num_heads = channels // num_head_channels
+        else:
+            raise ValueError(
+                f"q,k,v channels {channels} is not divisible by `num_head_channels` {num_head_channels}"
+            )
         self.use_checkpoint = use_checkpoint
         self.norm = normalization(channels)
         self.qkv = conv_nd(1, channels, channels * 3, 1)
