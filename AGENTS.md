@@ -3,7 +3,7 @@
 ## Build/Lint/Test Commands
 
 - Build: `uv build`
-- Lint: `ruff check .` and `ruff fmt .` and `trunk check`
+- Lint/Format: `ruff check` and `ruff format` and `trunk check`
 - Test: `pytest tests/test_app.py` (single test)
 - Type check: `mypy src/`
 
