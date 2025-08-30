@@ -11,6 +11,7 @@ from gradio import (
     Column,
     Dropdown,
     Error,
+    Group,
     Image,
     Info,
     Markdown,
@@ -405,8 +406,8 @@ class App:
                             output_video_512 = Video(label="Generated Video (512)")
                             output_message = Markdown()
                     with Row():
-                        generate_button = Button(value="Generate", variant="primary")
-                        stop_button: Button = Button(value="Stop", variant="stop")
+                        generate_button = Button("Generate", variant="primary")
+                        stop_button: Button = Button("Stop", variant="stop")
             with Tab("AniTalker (Generate Video from Name)"):
                 with Column():
                     with Row():
@@ -417,67 +418,65 @@ class App:
                                 info="Choose character, Will add more characters later!",
                             )
                         with Column():
-                            output_video_256 = Video(label="Generated Video (256)")
-                            output_video_512 = Video(label="Generated Video (512)")
-                            output_message = Markdown()
+                            output_video_256_from_name = Video(
+                                label="Generated Video (256)"
+                            )
+                            output_video_512_from_name = Video(
+                                label="Generated Video (512)"
+                            )
+                            output_message_from_name = Markdown()
                     with Row():
                         generate_from_name_button = Button(
-                            value="Generate", variant="primary"
+                            "Generate", variant="primary"
                         )
-                        stop_from_name_button: Button = Button(
-                            value="Stop", variant="stop"
-                        )
+                        stop_from_name_button: Button = Button("Stop", variant="stop")
             with Tab("Configuration"):
-                infer_type = Dropdown(
-                    label="Inference Type",
-                    choices=[
-                        "mfcc_full_control",
-                        "mfcc_pose_only",
-                        "hubert_pose_only",
-                        "hubert_audio_only",
-                        "hubert_full_control",
-                    ],
-                    value="hubert_audio_only",
-                )
-                face_sr = Checkbox(label="Enable Face Super-Resolution (512*512)")
-                seed = Number(
-                    label="Seed",
-                    value=self.settings.model.seed,
-                )
-                pose_yaw = Slider(
-                    label="pose_yaw",
-                    minimum=-1,
-                    maximum=1,
-                    value=self.settings.model.pose_yaw,
-                )
-                pose_pitch = Slider(
-                    label="pose_pitch",
-                    minimum=-1,
-                    maximum=1,
-                    value=self.settings.model.pose_pitch,
-                )
-                pose_roll = Slider(
-                    label="pose_roll",
-                    minimum=-1,
-                    maximum=1,
-                    value=self.settings.model.pose_roll,
-                )
-                face_location = Slider(
-                    label="face_location",
-                    maximum=1,
-                    value=self.settings.model.face_location,
-                )
-                face_scale = Slider(
-                    label="face_scale",
-                    maximum=1,
-                    value=self.settings.model.face_scale,
-                )
-                step_t = Slider(
-                    label="step_T",
-                    minimum=1,
-                    step=1,
-                    value=self.settings.model.step_t,
-                )
+                with Row():
+                    infer_type = Dropdown(
+                        [
+                            "mfcc_full_control",
+                            "mfcc_pose_only",
+                            "hubert_pose_only",
+                            "hubert_audio_only",
+                            "hubert_full_control",
+                        ],
+                        value="hubert_audio_only",
+                        label="Inference Type",
+                    )
+                    seed = Number(self.settings.model.seed, label="Seed")
+                    face_sr = Checkbox(label="Enable Face Super-Resolution (512*512)")
+                with Row():
+                    with Group():
+                        with Row():
+                            pose_yaw = Slider(
+                                -1, 1, self.settings.model.pose_yaw, label="pose_yaw"
+                            )
+                            pose_pitch = Slider(
+                                -1,
+                                1,
+                                self.settings.model.pose_pitch,
+                                label="pose_pitch",
+                            )
+                            pose_roll = Slider(
+                                -1, 1, self.settings.model.pose_roll, label="pose_roll"
+                            )
+                        with Row():
+                            face_location = Slider(
+                                maximum=1,
+                                value=self.settings.model.face_location,
+                                label="face_location",
+                            )
+                            face_scale = Slider(
+                                maximum=1,
+                                value=self.settings.model.face_scale,
+                                label="face_scale",
+                            )
+                            step_t = Slider(
+                                minimum=1,
+                                step=1,
+                                value=self.settings.model.step_t,
+                                label="step_T",
+                            )
             generate_button_event = generate_button.click(
                 self.generate_video,
                 [
@@ -516,9 +515,9 @@ class App:
                     seed,
                 ],
                 [
-                    output_video_256,
-                    output_video_512,
-                    output_message,
+                    output_video_256_from_name,
+                    output_video_512_from_name,
+                    output_message_from_name,
                 ],
             )
             stop_from_name_button.click(cancels=generate_from_name_button_event)
