@@ -340,7 +340,7 @@ class App:
         return self.settings.directory.image / f"{name}.jpg"
 
     def _get_character_names(self) -> list[str]:
-        return [p.stem for p in self.settings.directory.image.glob("*.jpg")]
+        return sorted([p.stem for p in self.settings.directory.image.glob("*.jpg")])
 
     def _load_stage_1_model(self) -> LiaModel:
         Info("Loading stage 1 model")
