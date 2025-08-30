@@ -404,8 +404,8 @@ class App:
                         with Column():
                             name = Dropdown(
                                 self._get_character_names(),
-                                label="Name",
-                                info="Enter the name of the person, Will add more characters later!",
+                                label="Character",
+                                info="Choose character, Will add more characters later!",
                             )
                         with Column():
                             output_video_256 = Video(label="Generated Video (256)")
