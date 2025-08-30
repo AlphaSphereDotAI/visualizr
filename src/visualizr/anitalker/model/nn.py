@@ -129,5 +129,4 @@ def torch_checkpoint(func, args, flag, preserve_rng_state=False):
     # torch's gradient checkpoint works with automatic mixed precision, given `torch>=1.8`
     if flag:
         return checkpoint(func, *args, preserve_rng_state=preserve_rng_state)
-    else:
-        return func(*args)
+    return func(*args)
