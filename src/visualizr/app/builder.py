@@ -268,7 +268,8 @@ class App:
             ori_img_recon = ori_img_recon.clamp(-1, 1)
             wav_pred = (ori_img_recon.detach() + 1) / 2
             saved_image(
-                wav_pred, self.settings.directory.frames / f"{pred_index:06d}.png"
+                wav_pred,
+                self.settings.directory.frames / f"{pred_index:06d}.png",
             )
         # ==============================================
 
@@ -277,7 +278,9 @@ class App:
         Info(f"Saving video at {predicted_video_256_path}")
 
         frames_to_video(
-            self.settings.directory.frames, audio_path, predicted_video_256_path
+            self.settings.directory.frames,
+            audio_path,
+            predicted_video_256_path,
         )
 
         remove_frames(self.settings.directory.frames)
@@ -505,7 +508,10 @@ class App:
                     with Group():
                         with Row():
                             pose_yaw = Slider(
-                                -1, 1, self.settings.model.pose_yaw, label="pose_yaw"
+                                -1,
+                                1,
+                                self.settings.model.pose_yaw,
+                                label="pose_yaw",
                             )
                             pose_pitch = Slider(
                                 -1,
@@ -514,7 +520,10 @@ class App:
                                 label="pose_pitch",
                             )
                             pose_roll = Slider(
-                                -1, 1, self.settings.model.pose_roll, label="pose_roll"
+                                -1,
+                                1,
+                                self.settings.model.pose_roll,
+                                label="pose_roll",
                             )
                         with Row():
                             face_location = Slider(
