@@ -1005,49 +1005,65 @@ def get_named_beta_schedule(schedule_name, num_diffusion_timesteps):
     Beta schedules may be added but shouldn't be removed or changed once
     they're committed to maintain backwards compatibility.
     """
-    if schedule_name == "linear":
-        # Linear schedule from Ho et al., extended to work for any number of
-        # diffusion steps.
-        scale = 1000 / num_diffusion_timesteps
-        beta_start = scale * 0.0001
-        beta_end = scale * 0.02
-        return np.linspace(
-            beta_start, beta_end, num_diffusion_timesteps, dtype=np.float64
-        )
-    elif schedule_name == "cosine":
-        return betas_for_alpha_bar(
-            num_diffusion_timesteps,
-            lambda t: math.cos((t + 0.008) / 1.008 * math.pi / 2) ** 2,
-        )
-    elif schedule_name == "const0.01":
-        scale = 1000 / num_diffusion_timesteps
-        return np.array([scale * 0.01] * num_diffusion_timesteps, dtype=np.float64)
-    elif schedule_name == "const0.015":
-        scale = 1000 / num_diffusion_timesteps
-        return np.array([scale * 0.015] * num_diffusion_timesteps, dtype=np.float64)
-    elif schedule_name == "const0.008":
-        scale = 1000 / num_diffusion_timesteps
-        return np.array([scale * 0.008] * num_diffusion_timesteps, dtype=np.float64)
-    elif schedule_name == "const0.0065":
-        scale = 1000 / num_diffusion_timesteps
-        return np.array([scale * 0.0065] * num_diffusion_timesteps, dtype=np.float64)
-    elif schedule_name == "const0.0055":
-        scale = 1000 / num_diffusion_timesteps
-        return np.array([scale * 0.0055] * num_diffusion_timesteps, dtype=np.float64)
-    elif schedule_name == "const0.0045":
-        scale = 1000 / num_diffusion_timesteps
-        return np.array([scale * 0.0045] * num_diffusion_timesteps, dtype=np.float64)
-    elif schedule_name == "const0.0035":
-        scale = 1000 / num_diffusion_timesteps
-        return np.array([scale * 0.0035] * num_diffusion_timesteps, dtype=np.float64)
-    elif schedule_name == "const0.0025":
-        scale = 1000 / num_diffusion_timesteps
-        return np.array([scale * 0.0025] * num_diffusion_timesteps, dtype=np.float64)
-    elif schedule_name == "const0.0015":
-        scale = 1000 / num_diffusion_timesteps
-        return np.array([scale * 0.0015] * num_diffusion_timesteps, dtype=np.float64)
-    else:
-        raise NotImplementedError(f"unknown beta schedule: {schedule_name}")
+    match schedule_name:
+        case "linear":
+            # Linear schedule from Ho et al., extended to work for any number of
+            # diffusion steps.
+            scale = 1000 / num_diffusion_timesteps
+            beta_start = scale * 0.0001
+            beta_end = scale * 0.02
+            return np.linspace(
+                beta_start,
+                beta_end,
+                num_diffusion_timesteps,
+                dtype=np.float64,
+            )
+        case "cosine":
+            return betas_for_alpha_bar(
+                num_diffusion_timesteps,
+                lambda t: math.cos((t + 0.008) / 1.008 * math.pi / 2) ** 2,
+            )
+        case "const0.01":
+            scale = 1000 / num_diffusion_timesteps
+            return np.array([scale * 0.01] * num_diffusion_timesteps, dtype=np.float64)
+        case "const0.015":
+            scale = 1000 / num_diffusion_timesteps
+            return np.array([scale * 0.015] * num_diffusion_timesteps, dtype=np.float64)
+        case "const0.008":
+            scale = 1000 / num_diffusion_timesteps
+            return np.array([scale * 0.008] * num_diffusion_timesteps, dtype=np.float64)
+        case "const0.0065":
+            scale = 1000 / num_diffusion_timesteps
+            return np.array(
+                [scale * 0.0065] * num_diffusion_timesteps, dtype=np.float64
+            )
+        case "const0.0055":
+            scale = 1000 / num_diffusion_timesteps
+            return np.array(
+                [scale * 0.0055] * num_diffusion_timesteps, dtype=np.float64
+            )
+        case "const0.0045":
+            scale = 1000 / num_diffusion_timesteps
+            return np.array(
+                [scale * 0.0045] * num_diffusion_timesteps, dtype=np.float64
+            )
+        case "const0.0035":
+            scale = 1000 / num_diffusion_timesteps
+            return np.array(
+                [scale * 0.0035] * num_diffusion_timesteps, dtype=np.float64
+            )
+        case "const0.0025":
+            scale = 1000 / num_diffusion_timesteps
+            return np.array(
+                [scale * 0.0025] * num_diffusion_timesteps, dtype=np.float64
+            )
+        case "const0.0015":
+            scale = 1000 / num_diffusion_timesteps
+            return np.array(
+                [scale * 0.0015] * num_diffusion_timesteps, dtype=np.float64
+            )
+        case _:
+            raise NotImplementedError(f"unknown beta schedule: {schedule_name}")
 
 
 def betas_for_alpha_bar(num_diffusion_timesteps, alpha_bar, max_beta=0.999):
