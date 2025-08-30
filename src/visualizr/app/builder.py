@@ -445,50 +445,48 @@ class App:
         """Create the Gradio interface for the voice generation web app."""
         with Blocks() as app:
             with Tab("AniTalker (Generate Video from Paths)"):
-                with Column():
-                    with Row():
-                        with Column():
-                            image_path: Image = Image(
-                                value=self.settings.model.image_path.as_posix(),
-                                type="filepath",
-                                label="Reference Image",
-                            )
-                            audio_path = Audio(
-                                value=self.settings.model.audio_path.as_posix(),
-                                type="filepath",
-                                label="Input Audio",
-                                show_download_button=True,
-                            )
-                        with Column():
-                            output_video_256 = Video(label="Generated Video (256)")
-                            output_video_512 = Video(label="Generated Video (512)")
-                            output_message = Markdown()
-                    with Row():
-                        generate_button = Button("Generate", variant="primary")
-                        stop_button: Button = Button("Stop", variant="stop")
-            with Tab("AniTalker (Generate Video from Name)"):
-                with Column():
-                    with Row():
-                        with Column():
-                            name = Dropdown(
-                                self._get_character_names(),
-                                label="Character",
-                                info="Choose character,"
-                                + "More characters will be added later.",
-                            )
-                        with Column():
-                            output_video_256_from_name = Video(
-                                label="Generated Video (256)"
-                            )
-                            output_video_512_from_name = Video(
-                                label="Generated Video (512)"
-                            )
-                            output_message_from_name = Markdown()
-                    with Row():
-                        generate_from_name_button = Button(
-                            "Generate", variant="primary"
+                with Column(), Row():
+                    with Column():
+                        image_path: Image = Image(
+                            value=self.settings.model.image_path.as_posix(),
+                            type="filepath",
+                            label="Reference Image",
                         )
-                        stop_from_name_button: Button = Button("Stop", variant="stop")
+                        audio_path = Audio(
+                            value=self.settings.model.audio_path.as_posix(),
+                            type="filepath",
+                            label="Input Audio",
+                            show_download_button=True,
+                        )
+                    with Column():
+                        output_video_256 = Video(label="Generated Video (256)")
+                        output_video_512 = Video(label="Generated Video (512)")
+                        output_message = Markdown()
+                with Row():
+                    generate_button = Button("Generate", variant="primary")
+                    stop_button: Button = Button("Stop", variant="stop")
+            with Tab("AniTalker (Generate Video from Name)"):
+                with Column(), Row():
+                    with Column():
+                        name = Dropdown(
+                            self._get_character_names(),
+                            label="Character",
+                            info="Choose character,"
+                            + "More characters will be added later.",
+                        )
+                    with Column():
+                        output_video_256_from_name = Video(
+                            label="Generated Video (256)"
+                        )
+                        output_video_512_from_name = Video(
+                            label="Generated Video (512)"
+                        )
+                        output_message_from_name = Markdown()
+                with Row():
+                    generate_from_name_button = Button(
+                        "Generate", variant="primary"
+                    )
+                    stop_from_name_button: Button = Button("Stop", variant="stop")
             with Tab("Configuration"):
                 with Row():
                     infer_type = Dropdown(
@@ -505,43 +503,42 @@ class App:
                     seed = Number(self.settings.model.seed, label="Seed")
                     face_sr = Checkbox(label="Enable Face Super-Resolution (512*512)")
                 with Row():
-                    with Group():
-                        with Row():
-                            pose_yaw = Slider(
-                                -1,
-                                1,
-                                self.settings.model.pose_yaw,
-                                label="pose_yaw",
-                            )
-                            pose_pitch = Slider(
-                                -1,
-                                1,
-                                self.settings.model.pose_pitch,
-                                label="pose_pitch",
-                            )
-                            pose_roll = Slider(
-                                -1,
-                                1,
-                                self.settings.model.pose_roll,
-                                label="pose_roll",
-                            )
-                        with Row():
-                            face_location = Slider(
-                                maximum=1,
-                                value=self.settings.model.face_location,
-                                label="face_location",
-                            )
-                            face_scale = Slider(
-                                maximum=1,
-                                value=self.settings.model.face_scale,
-                                label="face_scale",
-                            )
-                            step_t = Slider(
-                                minimum=1,
-                                step=1,
-                                value=self.settings.model.step_t,
-                                label="step_T",
-                            )
+                    with Group(), Row():
+                        pose_yaw = Slider(
+                            -1,
+                            1,
+                            self.settings.model.pose_yaw,
+                            label="pose_yaw",
+                        )
+                        pose_pitch = Slider(
+                            -1,
+                            1,
+                            self.settings.model.pose_pitch,
+                            label="pose_pitch",
+                        )
+                        pose_roll = Slider(
+                            -1,
+                            1,
+                            self.settings.model.pose_roll,
+                            label="pose_roll",
+                        )
+                    with Row():
+                        face_location = Slider(
+                            maximum=1,
+                            value=self.settings.model.face_location,
+                            label="face_location",
+                        )
+                        face_scale = Slider(
+                            maximum=1,
+                            value=self.settings.model.face_scale,
+                            label="face_scale",
+                        )
+                        step_t = Slider(
+                            minimum=1,
+                            step=1,
+                            value=self.settings.model.step_t,
+                            label="step_T",
+                        )
             generate_button_event = generate_button.click(
                 self.generate_video,
                 [
