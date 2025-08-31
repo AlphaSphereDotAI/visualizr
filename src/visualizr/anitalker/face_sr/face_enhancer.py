@@ -68,7 +68,7 @@ def enhancer_generator_no_len(images, method="gfpgan", bg_upsampler="realesrgan"
             model_name = "GFPGANv1.4"
             url = (
                 "https://github.com/TencentARC/GFPGAN/releases/download/"
-                + "v1.3.0/GFPGANv1.4.pth"
+                "v1.3.0/GFPGANv1.4.pth"
             )
         case "RestoreFormer":
             arch = "RestoreFormer"
@@ -76,7 +76,7 @@ def enhancer_generator_no_len(images, method="gfpgan", bg_upsampler="realesrgan"
             model_name = "RestoreFormer"
             url = (
                 "https://github.com/TencentARC/GFPGAN/releases/download/"
-                + "v1.3.4/RestoreFormer.pth"
+                "v1.3.4/RestoreFormer.pth"
             )
         case "codeformer":
             arch = "CodeFormer"
