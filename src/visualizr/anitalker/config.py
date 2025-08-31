@@ -197,7 +197,7 @@ class TrainConfig(BaseConfig):
         # hopefully, this would reduce the disconnection problems with sshfs.
         return (
             f"{self.work_cache_dir}/eval_images/{self.data_name}"
-            + f"_size{self.img_size}_{self.eval_num_images}"
+            f"_size{self.img_size}_{self.eval_num_images}"
         )
 
     @property
