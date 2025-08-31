@@ -9,7 +9,7 @@ from torchvision.transforms import Compose, Normalize, Resize, ToTensor
 from tqdm import tqdm
 
 
-class LatentDataLoader(object):
+class LatentDataLoader:
     def __init__(
         self,
         window_size,

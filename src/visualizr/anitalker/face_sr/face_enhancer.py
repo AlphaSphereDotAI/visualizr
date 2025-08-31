@@ -11,7 +11,7 @@ from tqdm import tqdm
 from visualizr.anitalker.face_sr.videoio import load_video_to_cv2
 
 
-class GeneratorWithLen(object):
+class GeneratorWithLen:
     """From https://stackoverflow.com/a/7460929"""
 
     def __init__(self, gen, length):
