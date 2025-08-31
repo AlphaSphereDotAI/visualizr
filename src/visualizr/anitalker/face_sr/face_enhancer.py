@@ -84,7 +84,7 @@ def enhancer_generator_no_len(images, method="gfpgan", bg_upsampler="realesrgan"
             model_name = "CodeFormer"
             url = (
                 "https://github.com/sczhou/CodeFormer/releases/download/"
-                + "v0.1.0/codeformer.pth"
+                "v0.1.0/codeformer.pth"
             )
     # ------------------------ set up background upsampler ------------------------
     if bg_upsampler == "realesrgan":
