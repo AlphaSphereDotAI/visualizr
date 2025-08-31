@@ -32,12 +32,13 @@ def conv_nd(dims, *args, **kwargs):
     """
     Create a 1D, 2D, or 3D convolution module.
     """
-    if dims == 1:
-        return nn.Conv1d(*args, **kwargs)
-    elif dims == 2:
-        return nn.Conv2d(*args, **kwargs)
-    elif dims == 3:
-        return nn.Conv3d(*args, **kwargs)
+    match dims:
+        case 1:
+            return nn.Conv1d(*args, **kwargs)
+        case 2:
+            return nn.Conv2d(*args, **kwargs)
+        case 3:
+            return nn.Conv3d(*args, **kwargs)
     raise ValueError(f"unsupported dimensions: {dims}")
 
 
@@ -45,12 +46,13 @@ def avg_pool_nd(dims, *args, **kwargs):
     """
     Create a 1D, 2D, or 3D average pooling module.
     """
-    if dims == 1:
-        return nn.AvgPool1d(*args, **kwargs)
-    elif dims == 2:
-        return nn.AvgPool2d(*args, **kwargs)
-    elif dims == 3:
-        return nn.AvgPool3d(*args, **kwargs)
+    match dims:
+        case 1:
+            return nn.AvgPool1d(*args, **kwargs)
+        case 2:
+            return nn.AvgPool2d(*args, **kwargs)
+        case 3:
+            return nn.AvgPool3d(*args, **kwargs)
     raise ValueError(f"unsupported dimensions: {dims}")
 
 
@@ -124,8 +126,7 @@ def timestep_embedding(timesteps, dim, max_period=10000):
 
 
 def torch_checkpoint(func, args, flag, preserve_rng_state=False):
-    # torch's gradient checkpoint works with automatic mixed precision, given torch >= 1.8
+    # torch's gradient checkpoint works with automatic mixed precision, given `torch>=1.8`
     if flag:
         return checkpoint(func, *args, preserve_rng_state=preserve_rng_state)
-    else:
-        return func(*args)
+    return func(*args)

@@ -139,14 +139,15 @@ class Activation(Enum):
     silu = "silu"
     tanh = "tanh"
 
-    def get_act(self):
-        if self == Activation.none:
-            return Identity()
-        elif self == Activation.relu:
-            return ReLU()
-        elif self == Activation.lrelu:
-            return LeakyReLU(negative_slope=0.2)
-        elif self == Activation.silu:
-            return SiLU()
-        elif self == Activation.tanh:
-            return Tanh()
+    def get_act(self) -> Identity | ReLU | LeakyReLU | SiLU | Tanh:
+        match self:
+            case Activation.none:
+                return Identity()
+            case Activation.relu:
+                return ReLU()
+            case Activation.lrelu:
+                return LeakyReLU(negative_slope=0.2)
+            case Activation.silu:
+                return SiLU()
+            case Activation.tanh:
+                return Tanh()

@@ -5,7 +5,11 @@ services:
     ports:
       - "7860:7860"
     volumes:
+      - assets:/home/nonroot/assets
       - checkpoint:/home/nonroot/ckpts
+    post_start:
+      - command: chown -R nonroot:nonroot /home/nonroot
+        user: root
     restart: on-failure:3
     healthcheck:
       test:
@@ -28,4 +32,6 @@ services:
                 - gpu
 volumes:
   checkpoint:
-    name: checkpoint of AniTalker
+    name: Checkpoint of AniTalker
+  assets:
+    name: Assets of Visualizr

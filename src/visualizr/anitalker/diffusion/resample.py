@@ -11,10 +11,9 @@ def create_named_schedule_sampler(name, diffusion):
     :param name: The name of the sampler.
     :param diffusion: The diffusion object to sample for.
     """
-    if name == "uniform":
-        return UniformSampler(diffusion)
-    else:
+    if name != "uniform":
         raise NotImplementedError(f"unknown schedule sampler: {name}")
+    return UniformSampler(diffusion)
 
 
 class ScheduleSampler(ABC):
