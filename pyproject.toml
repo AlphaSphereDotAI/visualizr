@@ -24,7 +24,6 @@ dependencies = [
 ]
 classifiers = [
     'Environment :: GPU :: NVIDIA CUDA :: 11.8',
-    'Programming Language :: Python :: 3.10 :: Only',
     'Programming Language :: Python :: 3.10',
     'Topic :: Multimedia :: Sound/Audio :: Analysis',
     'Topic :: Multimedia :: Sound/Audio :: Sound Synthesis',
