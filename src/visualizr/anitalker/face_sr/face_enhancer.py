@@ -26,20 +26,21 @@ class GeneratorWithLen:
 
 
 def enhancer_list(images, method="gfpgan", bg_upsampler="realesrgan"):
-    gen = enhancer_generator_no_len(images, method=method, bg_upsampler=bg_upsampler)
+    gen = enhancer_generator_no_len(images, method, bg_upsampler)
     return list(gen)
 
 
 def enhancer_generator_with_len(images, method="gfpgan", bg_upsampler="realesrgan"):
     """
-    Provide a generator with a `__len__` method so that it can be passed to functions that
+    Provide a generator with a `__len__` method
+    so that it can be passed to functions that
     call `len()`
     """
 
     if os.path.isfile(images):  # handle video to images
         images = load_video_to_cv2(images)
 
-    gen = enhancer_generator_no_len(images, method=method, bg_upsampler=bg_upsampler)
+    gen = enhancer_generator_no_len(images, method, bg_upsampler)
     return GeneratorWithLen(gen, len(images))
 
 
@@ -92,15 +93,22 @@ def enhancer_generator_no_len(images, method="gfpgan", bg_upsampler="realesrgan"
             import warnings
 
             warnings.warn(
-                "The unoptimized RealESRGAN is slow on CPU. We do not use it. "
-                + "If you really want to use it, please modify the corresponding codes."
+                (
+                    "The unoptimized RealESRGAN is slow on CPU. "
+                    "We do not use it. "
+                    "If you really want to use it, "
+                    "please modify the corresponding codes."
+                )
             )
             bg_upsampler = None
         else:
             model = RRDBNet(num_in_ch=3, num_out_ch=3, scale=2)
             bg_upsampler = RealESRGANer(
                 scale=2,
-                model_path="https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.1/RealESRGAN_x2plus.pth",
+                model_path=(
+                    "https://github.com/xinntao/Real-ESRGAN/releases/download/"
+                    "v0.2.1/RealESRGAN_x2plus.pth"
+                ),
                 model=model,
                 tile=400,
                 pre_pad=0,

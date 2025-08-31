@@ -17,6 +17,7 @@ from visualizr.anitalker.choices import (
 from visualizr.anitalker.config_base import BaseConfig
 from visualizr.anitalker.model import Model
 from visualizr.anitalker.model.nn import mean_flat
+from visualizr.anitalker.model.seq2seq import DiffusionPredictor
 
 
 @dataclass
@@ -106,7 +107,7 @@ class GaussianDiffusionBeatGans:
 
     def training_losses(
         self,
-        model,
+        model: DiffusionPredictor,
         motion_direction_start: th.Tensor,
         motion_target: th.Tensor,
         motion_start: th.Tensor,
