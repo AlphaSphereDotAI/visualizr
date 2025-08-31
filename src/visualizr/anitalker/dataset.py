@@ -163,7 +163,7 @@ class LatentDataLoader(object):
         if not all(isinstance(item, tuple) and len(item) == 2 for item in multi_ranges):
             raise ValueError(
                 "multi_ranges must be a list of (start, end) "
-                + "tuples with exactly two elements each"
+                "tuples with exactly two elements each"
             )
         extracted_elements = [lists[start:end] for start, end in multi_ranges]
         return [item for sublist in extracted_elements for item in sublist]
