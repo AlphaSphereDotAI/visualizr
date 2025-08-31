@@ -10,6 +10,11 @@ from tqdm import tqdm
 
 
 class LatentDataLoader:
+    """
+    Data loader for latent features that loads image frames, audio features, and motion
+    latents from specified directories. Applies image transformations, computes MFCC
+    features if enabled, and prepares data windows for training or evaluation.
+    """
     def __init__(
         self,
         window_size,
