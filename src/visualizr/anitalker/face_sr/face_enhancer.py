@@ -57,7 +57,6 @@ def enhancer_generator_with_len(images, method="gfpgan", bg_upsampler="realesrga
     so that it can be passed to functions that
     call `len()`
     """
-
     if os.path.isfile(images):  # handle video to images
         images = load_video_to_cv2(images)
 
