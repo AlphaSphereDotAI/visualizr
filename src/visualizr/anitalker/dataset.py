@@ -44,30 +44,34 @@ class LatentDataLoader:
         )
 
         self.data = []
-        for db_name in ["VoxCeleb2", "HDTF"]:
-            db_png_path = os.path.join(frame_jpgs, db_name)
+        for _db_name in ["VoxCeleb2", "HDTF"]:
+            db_png_path = os.path.join(frame_jpgs, _db_name)
             for clip_name in tqdm(os.listdir(db_png_path)):
                 item_dict: dict = {
                     "clip_name": clip_name,
                     "frame_count": len(
-                        list(os.listdir(os.path.join(frame_jpgs, db_name, clip_name)))
+                        list(
+                            os.listdir(
+                                os.path.join(frame_jpgs, _db_name, clip_name),
+                            ),
+                        )
                     ),
                     "hubert_path": os.path.join(
-                        audio_prefix, db_name, f"{clip_name}.npy"
+                        audio_prefix, _db_name, f"{clip_name}.npy"
                     ),
                     "wav_path": os.path.join(
-                        raw_audio_prefix, db_name, f"{clip_name}.wav"
+                        raw_audio_prefix, _db_name, f"{clip_name}.wav"
                     ),
                     "yaw_pitch_roll_path": os.path.join(
                         pose_prefix,
-                        db_name,
+                        _db_name,
                         "raw_videos_pose_yaw_pitch_roll",
                         f"{clip_name}.npy",
                     ),
                 }
 
                 if not os.path.exists(item_dict["yaw_pitch_roll_path"]):
-                    print(f"{db_name}'s {clip_name} miss yaw_pitch_roll_path")
+                    print(f"{_db_name}'s {clip_name} miss yaw_pitch_roll_path")
                     continue
 
                 item_dict["yaw_pitch_roll"] = np.load(item_dict["yaw_pitch_roll_path"])
@@ -76,11 +80,11 @@ class LatentDataLoader:
                 )
 
                 if not os.path.exists(item_dict["wav_path"]):
-                    print(f"{db_name}'s {clip_name} miss wav_path")
+                    print(f"{_db_name}'s {clip_name} miss wav_path")
                     continue
 
                 if not os.path.exists(item_dict["hubert_path"]):
-                    print(f"{db_name}'s {clip_name} miss hubert_path")
+                    print(f"{_db_name}'s {clip_name} miss hubert_path")
                     continue
 
                 if self.mfcc_mode:
@@ -95,27 +99,27 @@ class LatentDataLoader:
                         item_dict["hubert_path"], mmap_mode="r"
                     )
                 item_dict["lmd_path"] = os.path.join(
-                    lmd_feats_prefix, db_name, f"{clip_name}.txt"
+                    lmd_feats_prefix, _db_name, f"{clip_name}.txt"
                 )
                 item_dict["lmd_obj_full"] = self.read_landmark_info(
                     item_dict["lmd_path"], upper_face=False
                 )
 
                 motion_start_path = os.path.join(
-                    motion_latents_prefix, db_name, "motions", f"{clip_name}.npy"
+                    motion_latents_prefix, _db_name, "motions", f"{clip_name}.npy"
                 )
                 motion_direction_path = os.path.join(
                     motion_latents_prefix,
-                    db_name,
+                    _db_name,
                     "directions",
                     f"{clip_name}.npy",
                 )
 
                 if not os.path.exists(motion_start_path):
-                    print(f"{db_name}'s {clip_name} miss motion_start_path")
+                    print(f"{_db_name}'s {clip_name} miss motion_start_path")
                     continue
                 if not os.path.exists(motion_direction_path):
-                    print(f"{db_name}'s {clip_name} miss motion_direction_path")
+                    print(f"{_db_name}'s {clip_name} miss motion_direction_path")
                     continue
 
                 item_dict["motion_start_obj"] = np.load(motion_start_path)
