@@ -1128,8 +1128,8 @@ def discretized_gaussian_log_likelihood(x, *, means, log_scales):
     if not (x.shape == means.shape == log_scales.shape):
         raise ValueError(
             f"Shape mismatch: x {x.shape}, "
-            + f"means {means.shape}, "
-            + f"log_scales {log_scales.shape}"
+            f"means {means.shape}, "
+            f"log_scales {log_scales.shape}"
         )
     centered_x = x - means
     inv_stdv = th.exp(-log_scales)
