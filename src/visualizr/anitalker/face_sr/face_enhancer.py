@@ -52,7 +52,8 @@ def enhancer_list(images, method="gfpgan", bg_upsampler="realesrgan"):
 
 
 def enhancer_generator_with_len(images, method="gfpgan", bg_upsampler="realesrgan"):
-    """ Provide a generator with a `__len__` method"""
+    """
+    Provide a generator with a `__len__` method
     so that it can be passed to functions that
     call `len()`
     """
