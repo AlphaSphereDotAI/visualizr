@@ -153,8 +153,6 @@ jobs:
         image: ${{ needs.build_image.outputs.image_tag }}
         ports:
           - 7860:7860
-        env:
-          FASTEMBED_CACHE_PATH: "/home/nonroot/fastembed" # TODO
         options: >-
           --health-cmd "curl -o /dev/null -f -s -w 'Status: %{http_code}, Time: %{time_total}s' http://localhost:7860/" --health-interval 10s
           --health-timeout 10s --health-start-period 20s --health-retries 15
