@@ -1,6 +1,12 @@
 # Visualizr: Video Generator part of the Chatacter Backend
 
 [![PyPI - Version](https://img.shields.io/pypi/v/visualizr)](https://pypi.org/project/visualizr)
+[![Build](https://github.com/AlphaSphereDotAI/visualizr/actions/workflows/build.yaml/badge.svg)](https://github.com/AlphaSphereDotAI/visualizr/actions/workflows/build.yaml)
+[![CI Tools](https://github.com/AlphaSphereDotAI/visualizr/actions/workflows/ci_tools.yaml/badge.svg)](https://github.com/AlphaSphereDotAI/visualizr/actions/workflows/ci_tools.yaml)
+[![CodeQL](https://github.com/AlphaSphereDotAI/visualizr/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/AlphaSphereDotAI/visualizr/actions/workflows/github-code-scanning/codeql)
+[![Dependabot Updates](https://github.com/AlphaSphereDotAI/visualizr/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/AlphaSphereDotAI/visualizr/actions/workflows/dependabot/dependabot-updates)
+[![Release](https://github.com/AlphaSphereDotAI/visualizr/actions/workflows/release.yaml/badge.svg)](https://github.com/AlphaSphereDotAI/visualizr/actions/workflows/release.yaml)
+[![Test](https://github.com/AlphaSphereDotAI/visualizr/actions/workflows/test.yaml/badge.svg)](https://github.com/AlphaSphereDotAI/visualizr/actions/workflows/test.yaml)
 
 ## Installations (uv)
 
