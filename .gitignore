@@ -10,4 +10,5 @@ ckpts/
 outputs/
 assets/
 .vscode/
+dist/
 test.http
