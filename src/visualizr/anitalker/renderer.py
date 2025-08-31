@@ -2,6 +2,7 @@
 This module provides rendering functionality for the AniTalker model, generating
 samples conditioned on various inputs using a diffusion sampler.
 """
+
 from visualizr.anitalker.choices import TrainMode
 from visualizr.anitalker.config import TrainConfig
 
