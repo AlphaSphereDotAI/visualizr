@@ -18,6 +18,10 @@ from visualizr.anitalker.config_base import BaseConfig
 from visualizr.anitalker.model import Model
 from visualizr.anitalker.model.nn import mean_flat
 
+NO_PARAMETERS_ERROR: str = (
+    "Cannot infer device from model parameters: model has no parameters"
+)
+
 
 @dataclass
 class GaussianDiffusionBeatGansConfig(BaseConfig):
@@ -615,7 +619,10 @@ class GaussianDiffusionBeatGans:
         `p_sample()`.
         """
         if device is None:
-            device = next(model.parameters()).device
+            try:
+                device = next(model.parameters()).device
+            except StopIteration as e:
+                raise ValueError(NO_PARAMETERS_ERROR) from e
         if noise is not None:
             img = noise
         else:
@@ -746,7 +753,10 @@ class GaussianDiffusionBeatGans:
         device=None,
     ):
         if device is None:
-            device = next(model.parameters()).device
+            try:
+                device = next(model.parameters()).device
+            except StopIteration as e:
+                raise ValueError(NO_PARAMETERS_ERROR) from e
         sample_t = []
         xstart_t = []
         _t = []
@@ -831,7 +841,10 @@ class GaussianDiffusionBeatGans:
         Same usage as `p_sample_loop_progressive()`.
         """
         if device is None:
-            device = next(model.parameters()).device
+            try:
+                device = next(model.parameters()).device
+            except StopIteration as e:
+                raise ValueError(NO_PARAMETERS_ERROR) from e
         if noise is not None:
             img = noise
         else:

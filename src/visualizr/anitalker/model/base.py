@@ -21,7 +21,12 @@ class BaseModule(torch.nn.Module):
         """
         Relocates provided tensors to the same device set for the module.
         """
-        device = next(self.parameters()).device
+        try:
+            device = next(self.parameters()).device
+        except StopIteration as e:
+            raise ValueError(
+                "Cannot infer device from model parameters: model has no parameters"
+            ) from e
         for i in range(len(x)):
             if isinstance(x[i], torch.Tensor) and x[i].device != device:
                 x[i] = x[i].to(device)
