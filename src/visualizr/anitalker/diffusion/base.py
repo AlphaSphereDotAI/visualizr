@@ -295,9 +295,9 @@ class GaussianDiffusionBeatGans:
         ):
             raise ValueError(
                 f"Shape mismatch: {posterior_mean.shape} "
-                + f"vs {posterior_variance.shape} "
-                + f"vs {posterior_log_variance_clipped.shape} "
-                + f"vs {x_start.shape}"
+                f"vs {posterior_variance.shape} "
+                f"vs {posterior_log_variance_clipped.shape} "
+                f"vs {x_start.shape}"
             )
         return (
             posterior_mean,
@@ -406,9 +406,9 @@ class GaussianDiffusionBeatGans:
         ):
             raise ValueError(
                 f"Shape mismatch: {model_mean.shape} "
-                + f"vs {model_log_variance.shape} "
-                + f"vs {pred_xstart.shape} "
-                + f"vs {x.shape}"
+                f"vs {model_log_variance.shape} "
+                f"vs {pred_xstart.shape} "
+                f"vs {x.shape}"
             )
         return {
             "mean": model_mean,
