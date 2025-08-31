@@ -18,10 +18,6 @@ from visualizr.anitalker.config_base import BaseConfig
 from visualizr.anitalker.model import Model
 from visualizr.anitalker.model.nn import mean_flat
 
-NO_PARAMETERS_ERROR: str = (
-    "Cannot infer device from model parameters: model has no parameters"
-)
-
 
 @dataclass
 class GaussianDiffusionBeatGansConfig(BaseConfig):
@@ -165,7 +161,7 @@ class GaussianDiffusionBeatGans:
                 ModelMeanType.eps: noise,
             }
             target = target_types[self.model_mean_type]
-            if not (predicted_direction.shape == target.shape == motion_target.shape):
+            if not predicted_direction.shape == target.shape == motion_target.shape:
                 raise ValueError(
                     f"Shape mismatch: predicted_direction {predicted_direction.shape},"
                     + f" target {target.shape}, motion_target {motion_target.shape}"
@@ -218,24 +214,25 @@ class GaussianDiffusionBeatGans:
                 model_kwargs["x_start"] = x_start
                 model_kwargs["cond"] = cond
 
-        if self.conf.gen_type == GenerativeType.ddpm:
-            return self.p_sample_loop(
-                model,
-                shape=shape,
-                noise=noise,
-                clip_denoised=clip_denoised,
-                model_kwargs=model_kwargs,
-                progress=progress,
-            )
-        elif self.conf.gen_type == GenerativeType.ddim:
-            return self.ddim_sample_loop(
-                model,
-                shape=shape,
-                noise=noise,
-                clip_denoised=clip_denoised,
-                model_kwargs=model_kwargs,
-                progress=progress,
-            )
+        match self.conf.gen_type:
+            case GenerativeType.ddpm:
+                return self.p_sample_loop(
+                    model,
+                    shape=shape,
+                    noise=noise,
+                    clip_denoised=clip_denoised,
+                    model_kwargs=model_kwargs,
+                    progress=progress,
+                )
+            case GenerativeType.ddim:
+                return self.ddim_sample_loop(
+                    model,
+                    shape=shape,
+                    noise=noise,
+                    clip_denoised=clip_denoised,
+                    model_kwargs=model_kwargs,
+                    progress=progress,
+                )
 
     def q_mean_variance(self, x_start, t):
         """
@@ -298,10 +295,7 @@ class GaussianDiffusionBeatGans:
             == x_start.shape[0]
         ):
             raise ValueError(
-                f"Shape mismatch: {posterior_mean.shape} "
-                f"vs {posterior_variance.shape} "
-                f"vs {posterior_log_variance_clipped.shape} "
-                f"vs {x_start.shape}"
+                f"Shape mismatch: {posterior_mean.shape} vs {posterior_variance.shape} vs {posterior_log_variance_clipped.shape} vs {x_start.shape}"
             )
         return (
             posterior_mean,
@@ -409,10 +403,7 @@ class GaussianDiffusionBeatGans:
             model_mean.shape == model_log_variance.shape == pred_xstart.shape == x.shape
         ):
             raise ValueError(
-                f"Shape mismatch: {model_mean.shape} "
-                f"vs {model_log_variance.shape} "
-                f"vs {pred_xstart.shape} "
-                f"vs {x.shape}"
+                f"Shape mismatch: {model_mean.shape} vs {model_log_variance.shape} vs {pred_xstart.shape} vs {x.shape}"
             )
         return {
             "mean": model_mean,
@@ -619,10 +610,7 @@ class GaussianDiffusionBeatGans:
         `p_sample()`.
         """
         if device is None:
-            try:
-                device = next(model.parameters()).device
-            except StopIteration as e:
-                raise ValueError(NO_PARAMETERS_ERROR) from e
+            device = next(model.parameters()).device
         if noise is not None:
             img = noise
         else:
@@ -753,10 +741,7 @@ class GaussianDiffusionBeatGans:
         device=None,
     ):
         if device is None:
-            try:
-                device = next(model.parameters()).device
-            except StopIteration as e:
-                raise ValueError(NO_PARAMETERS_ERROR) from e
+            device = next(model.parameters()).device
         sample_t = []
         xstart_t = []
         _t = []
@@ -841,10 +826,7 @@ class GaussianDiffusionBeatGans:
         Same usage as `p_sample_loop_progressive()`.
         """
         if device is None:
-            try:
-                device = next(model.parameters()).device
-            except StopIteration as e:
-                raise ValueError(NO_PARAMETERS_ERROR) from e
+            device = next(model.parameters()).device
         if noise is not None:
             img = noise
         else:
@@ -1023,49 +1005,65 @@ def get_named_beta_schedule(schedule_name, num_diffusion_timesteps):
     Beta schedules may be added but shouldn't be removed or changed once
     they're committed to maintain backwards compatibility.
     """
-    if schedule_name == "linear":
-        # Linear schedule from Ho et al., extended to work for any number of
-        # diffusion steps.
-        scale = 1000 / num_diffusion_timesteps
-        beta_start = scale * 0.0001
-        beta_end = scale * 0.02
-        return np.linspace(
-            beta_start, beta_end, num_diffusion_timesteps, dtype=np.float64
-        )
-    elif schedule_name == "cosine":
-        return betas_for_alpha_bar(
-            num_diffusion_timesteps,
-            lambda t: math.cos((t + 0.008) / 1.008 * math.pi / 2) ** 2,
-        )
-    elif schedule_name == "const0.01":
-        scale = 1000 / num_diffusion_timesteps
-        return np.array([scale * 0.01] * num_diffusion_timesteps, dtype=np.float64)
-    elif schedule_name == "const0.015":
-        scale = 1000 / num_diffusion_timesteps
-        return np.array([scale * 0.015] * num_diffusion_timesteps, dtype=np.float64)
-    elif schedule_name == "const0.008":
-        scale = 1000 / num_diffusion_timesteps
-        return np.array([scale * 0.008] * num_diffusion_timesteps, dtype=np.float64)
-    elif schedule_name == "const0.0065":
-        scale = 1000 / num_diffusion_timesteps
-        return np.array([scale * 0.0065] * num_diffusion_timesteps, dtype=np.float64)
-    elif schedule_name == "const0.0055":
-        scale = 1000 / num_diffusion_timesteps
-        return np.array([scale * 0.0055] * num_diffusion_timesteps, dtype=np.float64)
-    elif schedule_name == "const0.0045":
-        scale = 1000 / num_diffusion_timesteps
-        return np.array([scale * 0.0045] * num_diffusion_timesteps, dtype=np.float64)
-    elif schedule_name == "const0.0035":
-        scale = 1000 / num_diffusion_timesteps
-        return np.array([scale * 0.0035] * num_diffusion_timesteps, dtype=np.float64)
-    elif schedule_name == "const0.0025":
-        scale = 1000 / num_diffusion_timesteps
-        return np.array([scale * 0.0025] * num_diffusion_timesteps, dtype=np.float64)
-    elif schedule_name == "const0.0015":
-        scale = 1000 / num_diffusion_timesteps
-        return np.array([scale * 0.0015] * num_diffusion_timesteps, dtype=np.float64)
-    else:
-        raise NotImplementedError(f"unknown beta schedule: {schedule_name}")
+    match schedule_name:
+        case "linear":
+            # Linear schedule from Ho et al., extended to work for any number of
+            # diffusion steps.
+            scale = 1000 / num_diffusion_timesteps
+            beta_start = scale * 0.0001
+            beta_end = scale * 0.02
+            return np.linspace(
+                beta_start,
+                beta_end,
+                num_diffusion_timesteps,
+                dtype=np.float64,
+            )
+        case "cosine":
+            return betas_for_alpha_bar(
+                num_diffusion_timesteps,
+                lambda t: math.cos((t + 0.008) / 1.008 * math.pi / 2) ** 2,
+            )
+        case "const0.01":
+            scale = 1000 / num_diffusion_timesteps
+            return np.array([scale * 0.01] * num_diffusion_timesteps, dtype=np.float64)
+        case "const0.015":
+            scale = 1000 / num_diffusion_timesteps
+            return np.array([scale * 0.015] * num_diffusion_timesteps, dtype=np.float64)
+        case "const0.008":
+            scale = 1000 / num_diffusion_timesteps
+            return np.array([scale * 0.008] * num_diffusion_timesteps, dtype=np.float64)
+        case "const0.0065":
+            scale = 1000 / num_diffusion_timesteps
+            return np.array(
+                [scale * 0.0065] * num_diffusion_timesteps, dtype=np.float64
+            )
+        case "const0.0055":
+            scale = 1000 / num_diffusion_timesteps
+            return np.array(
+                [scale * 0.0055] * num_diffusion_timesteps, dtype=np.float64
+            )
+        case "const0.0045":
+            scale = 1000 / num_diffusion_timesteps
+            return np.array(
+                [scale * 0.0045] * num_diffusion_timesteps, dtype=np.float64
+            )
+        case "const0.0035":
+            scale = 1000 / num_diffusion_timesteps
+            return np.array(
+                [scale * 0.0035] * num_diffusion_timesteps, dtype=np.float64
+            )
+        case "const0.0025":
+            scale = 1000 / num_diffusion_timesteps
+            return np.array(
+                [scale * 0.0025] * num_diffusion_timesteps, dtype=np.float64
+            )
+        case "const0.0015":
+            scale = 1000 / num_diffusion_timesteps
+            return np.array(
+                [scale * 0.0015] * num_diffusion_timesteps, dtype=np.float64
+            )
+        case _:
+            raise NotImplementedError(f"unknown beta schedule: {schedule_name}")
 
 
 def betas_for_alpha_bar(num_diffusion_timesteps, alpha_bar, max_beta=0.999):
@@ -1138,11 +1136,9 @@ def discretized_gaussian_log_likelihood(x, *, means, log_scales):
     :param log_scales: The Gaussian log stddev Tensor.
     :return: A tensor like x of log probabilities (in nats).
     """
-    if not (x.shape == means.shape == log_scales.shape):
+    if not x.shape == means.shape == log_scales.shape:
         raise ValueError(
-            f"Shape mismatch: x {x.shape}, "
-            f"means {means.shape}, "
-            f"log_scales {log_scales.shape}"
+            f"Shape mismatch: x {x.shape}, means {means.shape}, log_scales {log_scales.shape}"
         )
     centered_x = x - means
     inv_stdv = th.exp(-log_scales)
