@@ -1,3 +1,8 @@
+"""
+This module provides functions and classes for filtering, up/down sampling, and
+LeakyReLU activation operations for image processing and neural networks.
+"""
+
 import math
 
 import numpy as np
@@ -14,6 +19,18 @@ from torch.nn.functional import (
 
 
 def fused_leaky_relu(_input, bias, negative_slope=0.2, scale=2**0.5):
+    """
+    Apply fused leaky ReLU activation with bias and scaling.
+
+    Args:
+        _input (Tensor): Input tensor.
+        bias (Tensor): Bias tensor to add to input.
+        negative_slope (float): Negative slope for leaky ReLU.
+        scale (float): Scaling factor after activation.
+
+    Returns:
+        Tensor: Activated and scaled output tensor.
+    """
     return leaky_relu(_input + bias, negative_slope) * scale
 
 
@@ -25,12 +42,39 @@ class FusedLeakyReLU(nn.Module):
         self.scale = scale
 
     def forward(self, _input):
+        """
+        Apply fused leaky ReLU activation on the input.
+
+        Args:
+            _input (Tensor): Input tensor.
+
+        Returns:
+            Tensor: Activated output tensor.
+        """
         return fused_leaky_relu(_input, self.bias, self.negative_slope, self.scale)
 
 
 def upfirdn2d_native(
     _input, kernel, up_x, up_y, down_x, down_y, pad_x0, pad_x1, pad_y0, pad_y1
 ):
+    """
+    Perform upsample, FIR filter, and downsample on 2D input tensor.
+
+    Args:
+        _input (Tensor): Input tensor of shape (N, C, H, W).
+        kernel (Tensor): FIR filter kernel.
+        up_x (int): Upsampling factor in width dimension.
+        up_y (int): Upsampling factor in height dimension.
+        down_x (int): Downsampling factor in width dimension.
+        down_y (int): Downsampling factor in height dimension.
+        pad_x0 (int): Left padding in width dimension.
+        pad_x1 (int): Right padding in width dimension.
+        pad_y0 (int): Top padding in height dimension.
+        pad_y1 (int): Bottom padding in height dimension.
+
+    Returns:
+        Tensor: Processed tensor after upfirdn operations.
+    """
     _, minor, in_h, in_w = _input.shape
     kernel_h, kernel_w = kernel.shape
 
@@ -61,6 +105,19 @@ def upfirdn2d_native(
 
 
 def upfirdn2d(_input, kernel, up=1, down=1, _pad=(0, 0)):
+    """
+    Wrapper for upfirdn2d_native with same up/down and symmetric padding.
+
+    Args:
+        _input (Tensor): Input tensor.
+        kernel (Tensor): FIR filter kernel.
+        up (int): Upsampling factor.
+        down (int): Downsampling factor.
+        _pad (tuple): Padding for both dimensions (pad_x, pad_y).
+
+    Returns:
+        Tensor: Processed tensor after upfirdn operations.
+    """
     return upfirdn2d_native(
         _input, kernel, up, up, down, down, _pad[0], _pad[1], _pad[0], _pad[1]
     )
@@ -85,6 +142,15 @@ class MotionPixelNorm(nn.Module):
 
 
 def make_kernel(k):
+    """
+    Create a 2D convolution kernel tensor from 1D or 2D input.
+
+    Args:
+        k (list or Tensor): 1D or 2D kernel coefficients.
+
+    Returns:
+        Tensor: Normalized 2D kernel tensor.
+    """
     k = torch.tensor(k, dtype=torch.float32)
 
     if k.ndim == 1:
@@ -173,6 +239,15 @@ class EqualConv2d(nn.Module):
         self.bias = nn.Parameter(torch.zeros(out_channel)) if bias else None
 
     def forward(self, _input):
+        """
+        Apply equalized learning rate 2D convolution to the input tensor.
+
+        Args:
+            _input (torch.Tensor): Input tensor of shape (N, C, H, W).
+
+        Returns:
+            torch.Tensor: Convolved output tensor.
+        """
         return conv2d(
             _input, self.weight * self.scale, self.bias, self.stride, self.padding
         )
@@ -194,6 +269,17 @@ class EqualLinear(nn.Module):
         lr_mul=1,
         activation=None,
     ):
+        """
+        Initialize the EqualLinear layer.
+
+        Args:
+            in_dim (int): Number of input features.
+            out_dim (int): Number of output features.
+            bias (bool): Whether to include bias term.
+            bias_init (float): Initial bias value.
+            lr_mul (float): Learning rate multiplier.
+            activation (callable, optional): Activation function to apply.
+        """
         super().__init__()
 
         self.weight = nn.Parameter(torch.randn(out_dim, in_dim).div_(lr_mul))
@@ -209,6 +295,15 @@ class EqualLinear(nn.Module):
         self.lr_mul = lr_mul
 
     def forward(self, _input):
+        """
+        Perform the forward pass of the EqualLinear layer.
+
+        Args:
+            _input (Tensor): Input tensor of shape (..., in_dim).
+
+        Returns:
+            Tensor: Output tensor of shape (..., out_dim).
+        """
         if self.activation:
             out = linear(_input, self.weight * self.scale)
             out = fused_leaky_relu(out, self.bias * self.lr_mul)
@@ -217,6 +312,12 @@ class EqualLinear(nn.Module):
         return out
 
     def __repr__(self):
+        """
+        Return a string representation of the EqualLinear layer.
+
+        Returns:
+            str: Representation string showing input and output dimensions.
+        """
         return (
             f"{self.__class__.__name__}({self.weight.shape[1]}, {self.weight.shape[0]})"
         )
@@ -224,11 +325,26 @@ class EqualLinear(nn.Module):
 
 class ScaledLeakyReLU(nn.Module):
     def __init__(self, negative_slope=0.2):
+        """
+        Initialize the ScaledLeakyReLU activation module.
+
+        Args:
+            negative_slope (float): Controls the angle of the negative slope for negative inputs.
+        """
         super().__init__()
 
         self.negative_slope = negative_slope
 
     def forward(self, _input):
+        """
+        Apply the scaled LeakyReLU activation to the input tensor.
+
+        Args:
+            _input (Tensor): Input tensor to apply activation.
+
+        Returns:
+            Tensor: Activated tensor after applying scaled LeakyReLU.
+        """
         return leaky_relu(_input, negative_slope=self.negative_slope)
 
 
