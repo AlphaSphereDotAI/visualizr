@@ -48,6 +48,12 @@ class GaussianDiffusionBeatGansConfig(BaseConfig):
     train_pred_xstart_detach: bool = True
 
     def make_sampler(self):
+        """
+        Create and return a GaussianDiffusionBeatGans sampler based on this configuration.
+
+        Returns:
+            GaussianDiffusionBeatGans: A diffusion sampler initialized with this config.
+        """
         return GaussianDiffusionBeatGans(self)
 
 

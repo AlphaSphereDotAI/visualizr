@@ -1,3 +1,7 @@
+"""
+This module provides rendering functionality for the AniTalker model, generating
+samples conditioned on various inputs using a diffusion sampler.
+"""
 from visualizr.anitalker.choices import TrainMode
 from visualizr.anitalker.config import TrainConfig
 
@@ -15,6 +19,29 @@ def render_condition(
     noisy_t,
     control_flag,
 ):
+    """
+    Render a conditional diffusion sample using the provided sampler and model.
+
+    Args:
+        conf (TrainConfig): Configuration for training specifying model and mode.
+        model: Autoencoder-capable model for diffusion sampling.
+        sampler: Sampler instance for generating diffusion samples.
+        start: Initial latent or frame to start the sampling process.
+        motion_direction_start: Initial motion direction data for conditioning.
+        audio_driven: Audio-driven control input for the sampler.
+        face_location: Coordinates of the face location for conditioning.
+        face_scale: Scale factor for the face region.
+        yaw_pitch_roll: Tuple specifying yaw, pitch, and roll angles for head pose.
+        noisy_t: Noise tensor representing the diffusion noise level.
+        control_flag: Flags controlling additional conditioning behavior.
+
+    Returns:
+        The generated sample from the sampler based on provided conditioning parameters.
+
+    Raises:
+        NotImplementedError: If the training mode in conf is not diffusion.
+        ValueError: If the model type is not autoencoder-capable.
+    """
     if conf.train_mode != TrainMode.diffusion:
         raise NotImplementedError()
     if not conf.model_type.has_autoenc():
