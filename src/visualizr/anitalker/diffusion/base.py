@@ -50,10 +50,12 @@ class GaussianDiffusionBeatGansConfig(BaseConfig):
 
     def make_sampler(self):
         """
-        Create and return a GaussianDiffusionBeatGans sampler based on this configuration.
+        Create and return a GaussianDiffusionBeatGans
+        sampler based on this configuration.
 
         Returns:
-            GaussianDiffusionBeatGans: A diffusion sampler initialized with this config.
+            GaussianDiffusionBeatGans: A diffusion sampler
+                                       initialized with this config.
         """
         return GaussianDiffusionBeatGans(self)
 

@@ -329,7 +329,8 @@ class ScaledLeakyReLU(nn.Module):
         Initialize the ScaledLeakyReLU activation module.
 
         Args:
-            negative_slope (float): Controls the angle of the negative slope for negative inputs.
+            negative_slope (float): Controls the angle of the negative
+                                    slope for negative inputs.
         """
         super().__init__()
 

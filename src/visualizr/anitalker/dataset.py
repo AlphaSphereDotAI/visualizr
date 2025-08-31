@@ -164,7 +164,8 @@ class LatentDataLoader:
 
     def get_single_image(self, image_path):
         """
-        Load an image from a given path, convert it to RGB format, apply the configured transform, and return the processed image.
+        Load an image from a given path, convert it to RGB format,
+        apply the configured transform, and return the processed image.
 
         Args:
             image_path (str): Path to the image file.
