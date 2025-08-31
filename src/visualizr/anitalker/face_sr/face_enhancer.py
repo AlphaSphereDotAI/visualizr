@@ -1,7 +1,8 @@
 """
-This module provides face image enhancement functionality using GFPGAN, RestoreFormer, and CodeFormer models,
-and background upsampling with RealESRGAN. It includes functions to generate enhanced images as lists
-or generators to optimize memory usage.
+This module provides face image enhancement functionality using GFPGAN,
+RestoreFormer, and CodeFormer models, and background upsampling with
+RealESRGAN. It includes functions to generate enhanced images as lists or
+generators to optimize memory usage.
 """
 
 import os
@@ -33,12 +34,14 @@ class GeneratorWithLen:
 
 def enhancer_list(images, method="gfpgan", bg_upsampler="realesrgan"):
     """
-    Generate a list of enhanced images from the input images using the specified face enhancement
-    method and background upsampler.
+    Generate a list of enhanced images from the input images using the specified
+    face enhancement method and background upsampler.
 
     Args:
-        images (Union[list, str]): A list of images or a file path to a video to be processed.
-        method (str): The face enhancement model to use ("gfpgan", "RestoreFormer", or "codeformer").
+        images (Union[list, str]): A list of images or a file path to a video
+            to be processed.
+        method (str): The face enhancement model to use ("gfpgan",
+            "RestoreFormer", or "codeformer").
         bg_upsampler (str): The background upsampler to use ("realesrgan").
 
     Returns:
@@ -49,8 +52,7 @@ def enhancer_list(images, method="gfpgan", bg_upsampler="realesrgan"):
 
 
 def enhancer_generator_with_len(images, method="gfpgan", bg_upsampler="realesrgan"):
-    """
-    Provide a generator with a `__len__` method
+    """ Provide a generator with a `__len__` method"""
     so that it can be passed to functions that
     call `len()`
     """
