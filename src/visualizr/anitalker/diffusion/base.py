@@ -19,6 +19,8 @@ from visualizr.anitalker.model import Model
 from visualizr.anitalker.model.nn import mean_flat
 from visualizr.anitalker.model.seq2seq import DiffusionPredictor
 
+STOP_ITERATION_ERROR: str = "Model has no parameters to determine device"
+
 
 @dataclass
 class GaussianDiffusionBeatGansConfig(BaseConfig):
@@ -618,7 +620,10 @@ class GaussianDiffusionBeatGans:
         `p_sample()`.
         """
         if device is None:
-            device = next(model.parameters()).device
+            try:
+                device = next(model.parameters()).device
+            except StopIteration as e:
+                raise ValueError(STOP_ITERATION_ERROR) from e
         if noise is not None:
             img = noise
         else:
@@ -749,7 +754,10 @@ class GaussianDiffusionBeatGans:
         device=None,
     ):
         if device is None:
-            device = next(model.parameters()).device
+            try:
+                device = next(model.parameters()).device
+            except StopIteration as e:
+                raise ValueError(STOP_ITERATION_ERROR) from e
         sample_t = []
         xstart_t = []
         _t = []
@@ -834,7 +842,10 @@ class GaussianDiffusionBeatGans:
         Same usage as `p_sample_loop_progressive()`.
         """
         if device is None:
-            device = next(model.parameters()).device
+            try:
+                device = next(model.parameters()).device
+            except StopIteration as e:
+                raise ValueError(STOP_ITERATION_ERROR) from e
         if noise is not None:
             img = noise
         else:

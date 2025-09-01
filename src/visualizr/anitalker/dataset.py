@@ -190,7 +190,7 @@ class LatentDataLoader:
             list: Flattened list of extracted elements from the specified ranges.
 
         Raises:
-            ValueError: If multi_ranges is not a list of (start, end) tuples.
+            ValueError: If `multi_ranges` is not a list of (start, end) tuples.
         """
         # Ensure that `multi_ranges` is a list of tuples
         if not all(isinstance(item, tuple) and len(item) == 2 for item in multi_ranges):
