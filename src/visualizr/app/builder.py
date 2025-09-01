@@ -117,7 +117,10 @@ class App:
         lia: LiaModel = self._load_stage_1_model()
 
         conf: TrainConfig = init_configuration(
-            infer_type, seed, 2, self.settings.model.motion_dim
+            infer_type,
+            seed,
+            2,
+            self.settings.model.motion_dim,
         )
 
         img_source: Tensor = img_preprocessing(image_path, 256).to("cuda")
@@ -289,7 +292,7 @@ class App:
         if face_sr and check_package_installed("gfpgan"):
             # Super-resolution
             super_resolution(
-                predicted_video_512_path / self.settings.directory.tmp_extension,
+                predicted_video_512_path.with_suffix(".tmp.mp4"),
                 predicted_video_256_path,
                 predicted_video_512_path,
             )

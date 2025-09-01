@@ -37,7 +37,6 @@ class DirectorySettings(BaseModel):
     video: DirectoryPath = Field(
         default_factory=lambda: Path.cwd() / "assets" / "video"
     )
-    tmp_extension: FilePath = Field(default=".tmp.mp4")
 
     @model_validator(mode="after")
     def create_missing_dirs(self) -> "DirectorySettings":

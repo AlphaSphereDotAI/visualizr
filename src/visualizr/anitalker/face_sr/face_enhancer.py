@@ -10,11 +10,11 @@ import os
 import cv2
 import torch
 from basicsr.archs.rrdbnet_arch import RRDBNet
-from gfpgan import GFPGANer
 from gradio import Info
 from realesrgan import RealESRGANer
 from tqdm import tqdm
 
+from gfpgan import GFPGANer
 from visualizr.anitalker.face_sr.videoio import load_video_to_cv2
 
 
@@ -38,10 +38,10 @@ def enhancer_list(images, method="gfpgan", bg_upsampler="realesrgan"):
     face enhancement method and background upsampler.
 
     Args:
-        images (Union[list, str]): A list of images or a file path to a video
+        images (Union[list, str]): A list of images, or a path to a video
             to be processed.
-        method (str): The face enhancement model to use ("gfpgan",
-            "RestoreFormer", or "codeformer").
+        method (str): The face enhancement model to use
+            ("gfpgan", "RestoreFormer", or "codeformer").
         bg_upsampler (str): The background upsampler to use ("realesrgan").
 
     Returns:
