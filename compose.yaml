@@ -7,6 +7,7 @@ services:
     volumes:
       - assets:/home/nonroot/assets
       - checkpoint:/home/nonroot/ckpts
+      - gfpgan:/home/nonroot/gfpgan
     post_start:
       - command: chown -R nonroot:nonroot /home/nonroot
         user: root
@@ -35,3 +36,5 @@ volumes:
     name: Checkpoint of AniTalker
   assets:
     name: Assets of Visualizr
+  gfpgan:
+    name: Weights of face enhancer
