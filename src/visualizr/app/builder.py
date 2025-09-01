@@ -453,16 +453,20 @@ class App:
                 with Row():
                     with Column():
                         image_path: Image = Image(
-                            value=self.settings.model.image_path.as_posix()
-                            if self.settings.model.image_path
-                            else None,
+                            value=(
+                                self.settings.model.image_path.as_posix()
+                                if self.settings.model.image_path
+                                else None
+                            ),
                             type="filepath",
                             label="Reference Image",
                         )
                         audio_path = Audio(
-                            value=self.settings.model.audio_path.as_posix()
-                            if self.settings.model.audio_path
-                            else None,
+                            value=(
+                                self.settings.model.audio_path.as_posix()
+                                if self.settings.model.audio_path
+                                else None
+                            ),
                             type="filepath",
                             label="Input Audio",
                             show_download_button=True,
