@@ -21,7 +21,7 @@ def test_generate_video() -> None:
     result = client.predict(
         infer_type="hubert_audio_only",
         image_path=handle_file(
-            "https://raw.githubusercontent.com/gradio-app/gradio/main/test/test_files/bus.png"
+            "https://raw.githubusercontent.com/AlphaSphereDotAI/chattr/main/assets/image/Napoleon.jpg"
         ),
         audio_path=handle_file(
             "https://github.com/gradio-app/gradio/raw/main/test/test_files/audio_sample.wav"
