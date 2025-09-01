@@ -151,9 +151,6 @@ jobs:
     services:
       visualizr:
         image: ${{ needs.build_image.outputs.image_tag }}
-        env:
-          MODEL__IMAGE_PATH: ${{ github.workspace }}/assets/image/napoleon.jpg
-          MODEL__AUDIO_PATH: ${{ github.workspace }}/assets/audio/a.wav
         ports:
           - 7860:7860
         options: >-
@@ -164,10 +161,6 @@ jobs:
         run: echo "Visualizr available on localhost:${{ job.services.visualizr.ports['7860'] }}"
       - name: Checkout repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
-      - name: Download test assets
-        run: |
-          curl -L -o ${{ github.workspace }}/assets/image/Napoleon.jpg https://github.com/AlphaSphereDotAI/chattr/raw/main/assets/image/Napoleon.jpg
-          curl -L -o ${{ github.workspace }}/assets/audio/audio_sample.wav https://github.com/gradio-app/gradio/raw/main/test/test_files/audio_sample.wav
       - name: Install uv
         uses: astral-sh/setup-uv@4959332f0f014c5280e7eac8b70c90cb574c9f9b # v6
         with:
