@@ -3,7 +3,6 @@ from typing import NamedTuple, Optional, Tuple
 
 import torch as th
 from torch import nn
-from torch.nn.functional import interpolate
 
 from visualizr.anitalker.config_base import BaseConfig
 from visualizr.anitalker.model.blocks import (
@@ -513,20 +512,3 @@ class BeatGANsEncoderModel(nn.Module):
         transform the last 2D feature into a flattened vector
         """
         return self.out(x)
-
-
-class SuperResModel(BeatGANsUNetModel):
-    """
-    A UNetModel that performs super-resolution.
-
-    Expects an extra kwarg `low_res` to condition on a low-resolution image.
-    """
-
-    def __init__(self, image_size, in_channels, *args, **kwargs):
-        super().__init__(image_size, in_channels * 2, *args, **kwargs)
-
-    def forward(self, x, timesteps, low_res=None, **kwargs):
-        _, _, new_height, new_width = x.shape
-        upsampled = interpolate(low_res, (new_height, new_width), mode="bilinear")
-        x = th.cat([x, upsampled], dim=1)
-        return super().forward(x, timesteps, **kwargs)
