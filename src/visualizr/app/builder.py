@@ -301,8 +301,10 @@ class App:
                 None,
                 None,
                 Markdown(
-                    "Error: Video generation failed. "
-                    + "Please check your inputs and try again."
+                    (
+                        "Error: Video generation failed. "
+                        "Please check your inputs and try again."
+                    )
                 ),
             )
         if face_sr:
@@ -314,7 +316,7 @@ class App:
         return (
             Video(value=predicted_video_256_path),
             None,
-            Markdown("Video (256*256 only) generated successfully!"),
+            Markdown("Video (256 ✕ 256 only) generated successfully!"),
         )
 
     def generate_video_from_name(
