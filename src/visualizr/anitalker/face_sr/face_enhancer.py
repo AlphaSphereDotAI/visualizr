@@ -8,10 +8,10 @@ generators to optimize memory usage.
 import os
 
 import cv2
-import torch
 from basicsr.archs.rrdbnet_arch import RRDBNet
 from gradio import Info
 from realesrgan import RealESRGANer
+from torch.cuda import is_available
 from tqdm import tqdm
 
 from gfpgan import GFPGANer
@@ -109,7 +109,7 @@ def enhancer_generator_no_len(images, method="gfpgan", bg_upsampler="realesrgan"
             )
     # ------------------------ set up background upsampler ------------------------
     if bg_upsampler == "realesrgan":
-        if not torch.cuda.is_available():  # CPU
+        if not is_available():  # CPU
             import warnings
 
             warnings.warn(
