@@ -301,10 +301,8 @@ class App:
                 None,
                 None,
                 Markdown(
-                    (
-                        "Error: Video generation failed. "
-                        "Please check your inputs and try again."
-                    )
+                    "Error: Video generation failed. "
+                    "Please check your inputs and try again."
                 ),
             )
         if face_sr:

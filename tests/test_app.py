@@ -21,6 +21,7 @@ def test_app() -> None:
 
 
 def test_generate_video_mfcc_full_control_no_face_sr() -> None:
+    """Test MFCC full-control inference without a face super-resolution."""
     client = Client(URL)
     result = client.predict(
         infer_type="mfcc_full_control",
@@ -35,6 +36,7 @@ def test_generate_video_mfcc_full_control_no_face_sr() -> None:
 
 
 def test_generate_video_mfcc_full_control_face_sr() -> None:
+    """Test MFCC full-control inference with a face super-resolution."""
     client = Client(URL)
     result = client.predict(
         infer_type="mfcc_full_control",
@@ -49,6 +51,7 @@ def test_generate_video_mfcc_full_control_face_sr() -> None:
 
 
 def test_generate_video_mfcc_pose_only_no_face_sr() -> None:
+    """Test MFCC pose-only inference without a face super-resolution."""
     client = Client(URL)
     result = client.predict(
         infer_type="mfcc_pose_only",
@@ -63,6 +66,7 @@ def test_generate_video_mfcc_pose_only_no_face_sr() -> None:
 
 
 def test_generate_video_mfcc_pose_only_face_sr() -> None:
+    """Test MFCC pose-only inference with a face super-resolution."""
     client = Client(URL)
     result = client.predict(
         infer_type="mfcc_pose_only",
@@ -77,6 +81,7 @@ def test_generate_video_mfcc_pose_only_face_sr() -> None:
 
 
 def test_generate_video_hubert_pose_only_no_face_sr() -> None:
+    """Test HuBERT pose-only inference without a face super-resolution."""
     client = Client(URL)
     result = client.predict(
         infer_type="hubert_pose_only",
@@ -91,6 +96,7 @@ def test_generate_video_hubert_pose_only_no_face_sr() -> None:
 
 
 def test_generate_video_hubert_pose_only_face_sr() -> None:
+    """Test HuBERT pose-only inference with a face super-resolution."""
     client = Client(URL)
     result = client.predict(
         infer_type="hubert_pose_only",
@@ -105,6 +111,7 @@ def test_generate_video_hubert_pose_only_face_sr() -> None:
 
 
 def test_generate_video_hubert_audio_only_no_face_sr() -> None:
+    """Test HuBERT audio-only inference without a face super-resolution."""
     client = Client(URL)
     result = client.predict(
         infer_type="hubert_audio_only",
@@ -119,6 +126,7 @@ def test_generate_video_hubert_audio_only_no_face_sr() -> None:
 
 
 def test_generate_video_hubert_audio_only_face_sr() -> None:
+    """Test HuBERT audio-only inference with a face super-resolution."""
     client = Client(URL)
     result = client.predict(
         infer_type="hubert_audio_only",
@@ -133,6 +141,7 @@ def test_generate_video_hubert_audio_only_face_sr() -> None:
 
 
 def test_generate_video_hubert_full_control_no_face_sr() -> None:
+    """Test HuBERT full-control inference without a face super-resolution."""
     client = Client(URL)
     result = client.predict(
         infer_type="hubert_full_control",
@@ -147,6 +156,7 @@ def test_generate_video_hubert_full_control_no_face_sr() -> None:
 
 
 def test_generate_video_hubert_full_control_face_sr() -> None:
+    """Test HuBERT full-control inference with a face super-resolution."""
     client = Client(URL)
     result = client.predict(
         infer_type="hubert_full_control",

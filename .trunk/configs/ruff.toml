@@ -1,8 +1,41 @@
 line-length = 88
 indent-width = 4
+target-version = "py310"
 
 [lint]
-select = ["I"]
+select = [
+    "B",
+    "C",
+    "D",
+    "E",
+    "ERA",
+    "F",
+    "FURB",
+    "I",
+    "NPY",
+    "PD",
+    "PL",
+    "Q",
+    "RUF",
+    "S",
+    "TRY",
+    "UP",
+    "W",
+]
+fixable = ["ALL"]
+unfixable = []
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
 [lint.isort]
 combine-as-imports = true
+
+[lint.per-file-ignores]
+"tests/**/*.py" = ["S101"]
+
+[format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = false
+docstring-code-line-length = "dynamic"
