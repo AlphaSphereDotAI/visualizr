@@ -9,7 +9,7 @@ from os.path import isfile, join
 
 import cv2
 from basicsr.archs.rrdbnet_arch import RRDBNet
-from gradio import Info
+from gradio import Info, Warning as grWarning
 from realesrgan import RealESRGANer
 from torch.cuda import is_available
 from tqdm import tqdm
@@ -109,15 +109,13 @@ def enhancer_generator_no_len(images, method="gfpgan", bg_upsampler="realesrgan"
     # ------------------------ set up background upsampler ------------------------
     if bg_upsampler == "realesrgan":
         if not is_available():  # CPU
-            import warnings
-
-            warnings.warn(
+            grWarning(
                 (
                     "The unoptimized RealESRGAN is slow on CPU. "
                     "We do not use it. "
                     "If you really want to use it, "
                     "please modify the corresponding codes."
-                )
+                ),
             )
             bg_upsampler = None
         else:

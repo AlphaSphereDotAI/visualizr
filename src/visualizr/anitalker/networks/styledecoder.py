@@ -55,7 +55,16 @@ class FusedLeakyReLU(nn.Module):
 
 
 def upfirdn2d_native(
-    _input, kernel, up_x, up_y, down_x, down_y, pad_x0, pad_x1, pad_y0, pad_y1
+    _input,
+    kernel,
+    up_x,
+    up_y,
+    down_x,
+    down_y,
+    pad_x0,
+    pad_x1,
+    pad_y0,
+    pad_y1,
 ):
     """
     Perform upsample, FIR filter, and downsample on 2D input tensor.
@@ -73,7 +82,7 @@ def upfirdn2d_native(
         pad_y1 (int): Bottom padding in height dimension.
 
     Returns:
-        Tensor: Processed tensor after upfirdn operations.
+        Tensor: A processed tensor after upfirdn operations.
     """
     _, minor, in_h, in_w = _input.shape
     kernel_h, kernel_w = kernel.shape
@@ -91,7 +100,7 @@ def upfirdn2d_native(
     ]
 
     out = out.reshape(
-        [-1, 1, in_h * up_y + pad_y0 + pad_y1, in_w * up_x + pad_x0 + pad_x1]
+        [-1, 1, in_h * up_y + pad_y0 + pad_y1, in_w * up_x + pad_x0 + pad_x1],
     )
     w = torch.flip(kernel, [0, 1]).view(1, 1, kernel_h, kernel_w)
     out = conv2d(out, w)
@@ -119,7 +128,16 @@ def upfirdn2d(_input, kernel, up=1, down=1, _pad=(0, 0)):
         Tensor: Processed tensor after upfirdn operations.
     """
     return upfirdn2d_native(
-        _input, kernel, up, up, down, down, _pad[0], _pad[1], _pad[0], _pad[1]
+        _input,
+        kernel,
+        up,
+        up,
+        down,
+        down,
+        _pad[0],
+        _pad[1],
+        _pad[0],
+        _pad[1],
     )
 
 
@@ -229,7 +247,7 @@ class EqualConv2d(nn.Module):
         super().__init__()
 
         self.weight = nn.Parameter(
-            torch.randn(out_channel, in_channel, kernel_size, kernel_size)
+            torch.randn(out_channel, in_channel, kernel_size, kernel_size),
         )
         self.scale = 1 / math.sqrt(in_channel * kernel_size**2)
 
@@ -249,13 +267,17 @@ class EqualConv2d(nn.Module):
             torch.Tensor: Convolved output tensor.
         """
         return conv2d(
-            _input, self.weight * self.scale, self.bias, self.stride, self.padding
+            _input,
+            self.weight * self.scale,
+            self.bias,
+            self.stride,
+            self.padding,
         )
 
     def __repr__(self) -> str:
         return (
             f"{self.__class__.__name__}({self.weight.shape[1]}, {self.weight.shape[0]},"
-            + f" {self.weight.shape[2]}, stride={self.stride}, padding={self.padding})"
+            f" {self.weight.shape[2]}, stride={self.stride}, padding={self.padding})"
         )
 
 
@@ -344,7 +366,7 @@ class ScaledLeakyReLU(nn.Module):
             _input (Tensor): Input tensor to apply activation.
 
         Returns:
-            Tensor: Activated tensor after applying scaled LeakyReLU.
+            Tensor: An activated tensor after applying scaled LeakyReLU.
         """
         return leaky_relu(_input, negative_slope=self.negative_slope)
 
@@ -393,17 +415,17 @@ class ModulatedConv2d(nn.Module):
         self.padding = kernel_size // 2
 
         self.weight = nn.Parameter(
-            torch.randn(1, out_channel, in_channel, kernel_size, kernel_size)
+            torch.randn(1, out_channel, in_channel, kernel_size, kernel_size),
         )
 
         self.modulation = EqualLinear(style_dim, in_channel, bias_init=1)
         self.demodulate = demodulate
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"{self.__class__.__name__}"
-            + f"({self.in_channel}, {self.out_channel}, {self.kernel_size}, "
-            + f"upsample={self.upsample}, downsample={self.downsample})"
+            f"({self.in_channel}, {self.out_channel}, {self.kernel_size}, "
+            f"upsample={self.upsample}, downsample={self.downsample})"
         )
 
     def forward(self, _input, style):
@@ -426,10 +448,17 @@ class ModulatedConv2d(nn.Module):
         if self.upsample:
             _input = _input.view(1, batch * in_channel, height, width)
             weight = weight.view(
-                batch, self.out_channel, in_channel, self.kernel_size, self.kernel_size
+                batch,
+                self.out_channel,
+                in_channel,
+                self.kernel_size,
+                self.kernel_size,
             )
             weight = weight.transpose(1, 2).reshape(
-                batch * in_channel, self.out_channel, self.kernel_size, self.kernel_size
+                batch * in_channel,
+                self.out_channel,
+                self.kernel_size,
+                self.kernel_size,
             )
             out = conv_transpose2d(_input, weight, stride=2, groups=batch)
             _, _, height, width = out.shape
@@ -545,7 +574,7 @@ class ConvLayer(nn.Sequential):
                 padding=self.padding,
                 stride=stride,
                 bias=bias and not activate,
-            )
+            ),
         )
 
         if activate:
@@ -655,10 +684,8 @@ class Synthesis(nn.Module):
         self.size = size
         self.style_dim = style_dim
         self.motion_dim = motion_dim
-
-        self.direction = Direction(
-            motion_dim
-        )  # Linear Motion Decomposition (LMD) from LIA
+        # Linear Motion Decomposition (LMD) from LIA
+        self.direction = Direction(motion_dim)
 
         self.channels = {
             4: 512,
@@ -703,7 +730,7 @@ class Synthesis(nn.Module):
                     style_dim,
                     upsample=True,
                     blur_kernel=blur_kernel,
-                )
+                ),
             )
             self.convs.append(
                 StyledConv(
@@ -712,7 +739,7 @@ class Synthesis(nn.Module):
                     3,
                     style_dim,
                     blur_kernel=blur_kernel,
-                )
+                ),
             )
             self.to_rgbs.append(ToRGB(out_channel))
 
@@ -741,6 +768,7 @@ class Synthesis(nn.Module):
             self.to_rgbs,
             self.to_flows,
             feats,
+            strict=False,
         ):
             out = conv1(out, latent[:, i])
             out = conv2(out, latent[:, i + 1])
@@ -749,7 +777,10 @@ class Synthesis(nn.Module):
                 skip = to_rgb(out_warp)
             else:
                 out_warp, out, skip_flow = to_flow(
-                    out, latent[:, i + 2], feat, skip_flow
+                    out,
+                    latent[:, i + 2],
+                    feat,
+                    skip_flow,
                 )
                 skip = to_rgb(out_warp, skip)
             i += 2

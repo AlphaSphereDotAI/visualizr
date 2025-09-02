@@ -10,8 +10,10 @@ from gradio import Info
 
 @dataclass
 class BaseConfig:
-    """BaseConfig provides methods to clone itself,
-    inherit settings from another config, propagate setting to nested configs,
+    """
+    Provides methods to clone itself.
+
+    Inherit settings from another config, propagate setting to nested configs,
     and serialize/deserialize configurations to/from JSON.
     """
 
@@ -20,20 +22,20 @@ class BaseConfig:
         return deepcopy(self)
 
     def inherit(self, another):
-        """inherit common keys from a given config"""
+        """Inherit common keys from a given config."""
         common_keys = set(self.__dict__.keys()) & set(another.__dict__.keys())
         for k in common_keys:
             setattr(self, k, getattr(another, k))
 
     def propagate(self):
-        """push down the configuration to all members"""
+        """Push down the configuration to all members."""
         for _, v in self.__dict__.items():
             if isinstance(v, BaseConfig):
                 v.inherit(self)
                 v.propagate()
 
     def save(self, save_path: Path):
-        """save a config to JSON file"""
+        """Save a config to JSON file."""
         if not save_path.exists():
             save_path.mkdir(parents=True, exist_ok=True)
         conf = self.as_dict_jsonable()
@@ -41,7 +43,7 @@ class BaseConfig:
             dump(conf, f)
 
     def load(self, load_path: Path):
-        """load json config"""
+        """Load json config."""
         if not load_path.exists():
             load_path.mkdir(parents=True, exist_ok=True)
         with open(load_path) as f:
@@ -50,8 +52,9 @@ class BaseConfig:
 
     def from_dict(self, config_dict, strict=False):
         """
-        Populate configuration attributes from a dictionary, optionally
-        enforcing strict key checking.
+        Populate configuration attributes from a dictionary.
+
+        Optionally, enforcing strict key checking.
         """
         for k, v in config_dict.items():
             if not hasattr(self, k):

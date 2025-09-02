@@ -1,7 +1,7 @@
 from pathlib import Path
 from sys import exit as sys_exit
 from time import time
-from typing import Literal, Optional
+from typing import Literal
 
 from gradio import (
     Audio,
@@ -92,7 +92,7 @@ class App:
                 None,
                 None,
                 Markdown(
-                    f"Error: image_path '{image_path}' does not exist or is invalid."
+                    f"Error: image_path '{image_path}' does not exist or is invalid.",
                 ),
             )
         if audio_path is None or not Path(audio_path).exists():
@@ -101,7 +101,7 @@ class App:
                 None,
                 None,
                 Markdown(
-                    f"Error: audio_path '{audio_path}' does not exist or is invalid."
+                    f"Error: audio_path '{audio_path}' does not exist or is invalid.",
                 ),
             )
 
@@ -139,7 +139,7 @@ class App:
         )
 
         frame_end: int = 0
-        audio_driven: Optional[Tensor] = None
+        audio_driven: Tensor | None = None  # TODO
 
         if conf.infer_type.startswith("mfcc"):
             # MFCC features
@@ -148,7 +148,7 @@ class App:
             d_mfcc_feat = delta(input_values, 1)
             d_mfcc_feat2 = delta(input_values, 2)
             audio_driven_obj: ndarray = np_hstack(
-                (input_values, d_mfcc_feat, d_mfcc_feat2)
+                (input_values, d_mfcc_feat, d_mfcc_feat2),
             )
             frame_start: int = 0
             frame_end: int = int(audio_driven_obj.shape[0] / 4)
@@ -172,15 +172,17 @@ class App:
                 Error("Please download the hubert weight into the ckpts path first.")
                 sys_exit(0)
             Info(
-                "You did not extract the audio features in advance, "
-                + "extracting online now, which will increase processing delay"
+                (
+                    "You did not extract the audio features in advance, "
+                    "extracting online now, which will increase processing delay"
+                ),
             )
 
             start_time = time()
 
             audio_model = HubertModel.from_pretrained(hubert_model_path).to("cuda")
             feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained(
-                hubert_model_path
+                hubert_model_path,
             )
             audio_model.feature_extractor._freeze_parameters()
             audio_model.eval()
@@ -301,8 +303,10 @@ class App:
                 None,
                 None,
                 Markdown(
-                    "Error: Video generation failed. "
-                    "Please check your inputs and try again."
+                    (
+                        "Error: Video generation failed. "
+                        "Please check your inputs and try again."
+                    ),
                 ),
             )
         if face_sr:
@@ -416,7 +420,8 @@ class App:
     def _load_stage_1_model(self) -> LiaModel:
         Info("Loading stage 1 model")
         lia: LiaModel = LiaModel(
-            motion_dim=self.settings.model.motion_dim, fusion_type="weighted_sum"
+            motion_dim=self.settings.model.motion_dim,
+            fusion_type="weighted_sum",
         )
         lia.load_lightning_model(self.settings.model.checkpoint.stage_1)
         lia.to("cuda")
@@ -482,15 +487,16 @@ class App:
                         name = Dropdown(
                             self._get_character_names(),
                             label="Character",
-                            info="Choose character,"
-                            + "More characters will be added later.",
+                            info=(
+                                "Choose character, More characters will be added later."
+                            ),
                         )
                     with Column():
                         output_video_256_from_name = Video(
-                            label="Generated Video (256)"
+                            label="Generated Video (256)",
                         )
                         output_video_512_from_name = Video(
-                            label="Generated Video (512)"
+                            label="Generated Video (512)",
                         )
                         output_message_from_name = Markdown()
                 with Row():

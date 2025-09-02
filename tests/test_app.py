@@ -7,10 +7,10 @@ from gradio_client import Client, handle_file
 
 URL = getenv("VISUALIZR_URL", "http://localhost:7860/")
 IMAGE_PATH = handle_file(
-    "https://github.com/AlphaSphereDotAI/chattr/raw/main/assets/image/Napoleon.jpg"
+    "https://github.com/AlphaSphereDotAI/chattr/raw/main/assets/image/Napoleon.jpg",
 )
 AUDIO_PATH = handle_file(
-    "https://github.com/gradio-app/gradio/raw/main/test/test_files/audio_sample.wav"
+    "https://github.com/gradio-app/gradio/raw/main/test/test_files/audio_sample.wav",
 )
 
 

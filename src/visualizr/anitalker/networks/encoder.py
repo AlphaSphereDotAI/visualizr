@@ -251,7 +251,7 @@ class WeightedSumLayer(nn.Module):
     def forward(self, tensor_list):
         weights = softmax(self.weights, dim=0)
         weighted_sum: Tensor = zeros_like(tensor_list[0])
-        for _tensor, weight in zip(tensor_list, weights):
+        for _tensor, weight in zip(tensor_list, weights, strict=False):
             weighted_sum += _tensor * weight
         return weighted_sum
 
