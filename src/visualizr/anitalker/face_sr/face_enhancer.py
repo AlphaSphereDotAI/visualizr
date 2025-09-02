@@ -5,16 +5,16 @@ RealESRGAN. It includes functions to generate enhanced images as lists or
 generators to optimize memory usage.
 """
 
-import os
+from os.path import isfile, join
 
 import cv2
-import torch
 from basicsr.archs.rrdbnet_arch import RRDBNet
-from gfpgan import GFPGANer
-from gradio import Info
+from gradio import Info, Warning as grWarning
 from realesrgan import RealESRGANer
+from torch.cuda import is_available
 from tqdm import tqdm
 
+from gfpgan import GFPGANer
 from visualizr.anitalker.face_sr.videoio import load_video_to_cv2
 
 
@@ -38,10 +38,10 @@ def enhancer_list(images, method="gfpgan", bg_upsampler="realesrgan"):
     face enhancement method and background upsampler.
 
     Args:
-        images (Union[list, str]): A list of images or a file path to a video
+        images (Union[list, str]): A list of images, or a path to a video
             to be processed.
-        method (str): The face enhancement model to use ("gfpgan",
-            "RestoreFormer", or "codeformer").
+        method (str): The face enhancement model to use
+            ("gfpgan", "RestoreFormer", or "codeformer").
         bg_upsampler (str): The background upsampler to use ("realesrgan").
 
     Returns:
@@ -57,7 +57,7 @@ def enhancer_generator_with_len(images, method="gfpgan", bg_upsampler="realesrga
     so that it can be passed to functions that
     call `len()`
     """
-    if os.path.isfile(images):  # handle video to images
+    if isfile(images):  # handle video to images
         images = load_video_to_cv2(images)
 
     gen = enhancer_generator_no_len(images, method, bg_upsampler)
@@ -73,9 +73,8 @@ def enhancer_generator_no_len(images, method="gfpgan", bg_upsampler="realesrgan"
     if method not in ["gfpgan", "RestoreFormer", "codeformer"]:
         raise ValueError(f"Wrong model version {method}.")
     Info("face enhancer....")
-    if not isinstance(images, list) and os.path.isfile(
-        images
-    ):  # handle video to images
+    if not isinstance(images, list) and isfile(images):
+        # handle video to images
         images = load_video_to_cv2(images)
     channel_multiplier = None
     model_name = None
@@ -109,16 +108,14 @@ def enhancer_generator_no_len(images, method="gfpgan", bg_upsampler="realesrgan"
             )
     # ------------------------ set up background upsampler ------------------------
     if bg_upsampler == "realesrgan":
-        if not torch.cuda.is_available():  # CPU
-            import warnings
-
-            warnings.warn(
+        if not is_available():  # CPU
+            grWarning(
                 (
                     "The unoptimized RealESRGAN is slow on CPU. "
                     "We do not use it. "
                     "If you really want to use it, "
                     "please modify the corresponding codes."
-                )
+                ),
             )
             bg_upsampler = None
         else:
@@ -138,12 +135,12 @@ def enhancer_generator_no_len(images, method="gfpgan", bg_upsampler="realesrgan"
         bg_upsampler = None
 
     # determine model paths
-    model_path = os.path.join("gfpgan/weights", f"{model_name}.pth")
+    model_path = join("gfpgan/weights", f"{model_name}.pth")
 
-    if not os.path.isfile(model_path):
-        model_path = os.path.join("checkpoints", f"{model_name}.pth")
+    if not isfile(model_path):
+        model_path = join("checkpoints", f"{model_name}.pth")
 
-    if not os.path.isfile(model_path):
+    if not isfile(model_path):
         # download pre-trained models from URL
         model_path = url
 

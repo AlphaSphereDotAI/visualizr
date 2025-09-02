@@ -139,14 +139,19 @@ def super_resolution(
     Info(f"Saving video at {tmp_predicted_video_512_path}")
     mimsave(
         tmp_predicted_video_512_path,
-        enhancer_list(predicted_video_256_path, bg_upsampler=None),
+        enhancer_list(
+            predicted_video_256_path,
+            bg_upsampler=None,
+        ),
         fps=25.0,
     )
     # Merge audio and video
-    video_clip = VideoFileClip(tmp_predicted_video_512_path)
-    audio_clip = AudioFileClip(predicted_video_256_path)
+    video_clip = VideoFileClip(tmp_predicted_video_512_path.as_posix())
+    audio_clip = AudioFileClip(predicted_video_256_path.as_posix())
     final_clip = video_clip.set_audio(audio_clip)
     final_clip.write_videofile(
-        predicted_video_512_path, codec="libx264", audio_codec="aac"
+        predicted_video_512_path.as_posix(),
+        codec="libx264",
+        audio_codec="aac",
     )
     tmp_predicted_video_512_path.unlink()

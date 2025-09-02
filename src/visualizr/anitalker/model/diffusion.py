@@ -143,7 +143,7 @@ class GradLogPEstimator2d(BaseModule):
         self.dim = dim
         self.dim_mults = dim_mults
         self.groups = groups
-        self.n_spks = 1 if isinstance(n_spks, type(None)) else n_spks
+        self.n_spks = 1 if (n_spks is None) else n_spks
         self.spk_emb_dim = spk_emb_dim
         self.pe_scale = pe_scale
 
@@ -164,7 +164,7 @@ class GradLogPEstimator2d(BaseModule):
             2 + (1 if n_spks > 1 else 0),
             *map(lambda m: dim * m, dim_mults),
         ]
-        in_out = list(zip(dims[:-1], dims[1:]))
+        in_out = list(zip(dims[:-1], dims[1:], strict=False))
         self.downs = torch.nn.ModuleList([])
         self.ups = torch.nn.ModuleList([])
         num_resolutions = len(in_out)
@@ -178,8 +178,8 @@ class GradLogPEstimator2d(BaseModule):
                         ResnetBlock(dim_out, dim_out, time_emb_dim=dim),
                         Residual(Rezero(LinearAttention(dim_out))),
                         torch.nn.Identity() if is_last else Downsample(dim_out),
-                    ]
-                )
+                    ],
+                ),
             )
 
         mid_dim = dims[-1]
@@ -195,14 +195,14 @@ class GradLogPEstimator2d(BaseModule):
                         ResnetBlock(dim_in, dim_in, time_emb_dim=dim),
                         Residual(Rezero(LinearAttention(dim_in))),
                         Upsample(dim_in),
-                    ]
-                )
+                    ],
+                ),
             )
         self.final_block = Block(dim, dim)
         self.final_conv = torch.nn.Conv2d(dim, 1, 1)
 
     def forward(self, x, mask, mu, t, spk=None):
-        s = None if isinstance(spk, type(None)) else self.spk_mlp(spk)
+        s = None if (spk is None) else self.spk_mlp(spk)
         t = self.time_pos_emb(t, scale=self.pe_scale)
         t = self.mlp(t)
 
@@ -273,7 +273,10 @@ class Diffusion(BaseModule):
         self.pe_scale = pe_scale
 
         self.estimator = GradLogPEstimator2d(
-            dim, n_spks=n_spks, spk_emb_dim=spk_emb_dim, pe_scale=pe_scale
+            dim,
+            n_spks=n_spks,
+            spk_emb_dim=spk_emb_dim,
+            pe_scale=pe_scale,
         )
 
     def forward_diffusion(self, x0, mask, mu, t):
@@ -293,7 +296,9 @@ class Diffusion(BaseModule):
         xt = z * mask
         for i in range(n_timesteps):
             t = (1.0 - (i + 0.5) * h) * torch.ones(
-                z.shape[0], dtype=z.dtype, device=z.device
+                z.shape[0],
+                dtype=z.dtype,
+                device=z.device,
             )
             time = t.unsqueeze(-1).unsqueeze(-1)
             noise_t = get_noise(time, self.beta_min, self.beta_max)

@@ -3,7 +3,6 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 from numbers import Number
-from typing import Optional
 
 import numpy as np
 import torch as th
@@ -52,7 +51,7 @@ class ResBlockConfig(BaseConfig):
     channels: int
     emb_channels: int
     dropout: float
-    out_channels: Optional[int] = None
+    out_channels: int | None = None
     # condition the resblock with time and encoder's output
     use_condition: bool = True
     # whether to use 3×3 conv for a skip path when the channels aren't matched.
@@ -66,10 +65,10 @@ class ResBlockConfig(BaseConfig):
     # whether to condition with both time and encoder's output
     two_cond: bool = False
     # number of encoders' output channels
-    cond_emb_channels: Optional[int] = None
+    cond_emb_channels: int | None = None
     # suggest: False
     has_lateral: bool = False
-    lateral_channels: Optional[int] = None
+    lateral_channels: int | None = None
     # if to init the convolution with zero weights,
     # this is defaulted from BeatGANs and seems to help learning.
     use_zero_module: bool = True
@@ -146,7 +145,11 @@ class ResBlock(TimestepBlock):
             #############################
             # original version
             conv = conv_nd(
-                conf.dims, conf.out_channels, conf.out_channels, 3, padding=1
+                conf.dims,
+                conf.out_channels,
+                conf.out_channels,
+                3,
+                padding=1,
             )
             if conf.use_zero_module:
                 # zero out the weights, it seems to help training
@@ -198,7 +201,9 @@ class ResBlock(TimestepBlock):
             lateral: lateral connection from the encoder
         """
         return torch_checkpoint(
-            self._forward, (x, emb, cond, lateral), self.conf.use_checkpoint
+            self._forward,
+            (x, emb, cond, lateral),
+            self.conf.use_checkpoint,
         )
 
     def _forward(
@@ -208,10 +213,7 @@ class ResBlock(TimestepBlock):
         cond=None,
         lateral=None,
     ):
-        """
-        Args:
-            lateral: required if `has_lateral` and non-gated, with gated, it can be supplied optionally.
-        """
+        # lateral: required if `has_lateral` and non-gated, with gated, it can be supplied optionally.
         if self.conf.has_lateral:
             # lateral may be supplied even if it doesn't require
             # the model will take the lateral only if `has_lateral`
@@ -268,7 +270,7 @@ def apply_conditions(
     up_down_layer: nn.Module = None,
 ):
     """
-    apply conditions on the feature maps
+    Apply conditions on the feature maps
 
     Args:
         emb: time conditional (ready to scale + shift)
@@ -353,9 +355,8 @@ class Upsample(nn.Module):
 
     def forward(self, x):
         if x.shape[1] != self.channels:
-            raise ValueError(
-                f"Input has {x.shape[1]} channels but layer has {self.channels}"
-            )
+            msg = f"Input has {x.shape[1]} channels but layer has {self.channels}"
+            raise ValueError(msg)
         if self.dims == 3:
             x = interpolate(x, (x.shape[2], x.shape[3] * 2, x.shape[4] * 2))
         else:
@@ -394,16 +395,16 @@ class Downsample(nn.Module):
         elif self.channels == self.out_channels:
             self.op = avg_pool_nd(dims, kernel_size=stride, stride=stride)
         else:
-            raise ValueError(
+            msg: str = (
                 "Downsampling with no convolution requires channel reduction. "
-                + f"Layer has {self.channels} but `out_channels` is {self.out_channels}"
+                f"Layer has {self.channels} but `out_channels` is {self.out_channels}"
             )
+            raise ValueError(msg)
 
     def forward(self, x):
         if x.shape[1] != self.channels:
-            raise ValueError(
-                f"Input has {x.shape[1]} channels but layer has {self.channels}"
-            )
+            msg = f"Input has {x.shape[1]} channels but layer has {self.channels}"
+            raise ValueError(msg)
         return self.op(x)
 
 
@@ -541,9 +542,7 @@ class QKVAttention(nn.Module):
 
 
 class AttentionPool2d(nn.Module):
-    """
-    Adapted from CLIP: https://github.com/openai/CLIP/blob/main/clip/model.py
-    """
+    """Adapted from CLIP: https://github.com/openai/CLIP/blob/main/clip/model.py"""
 
     def __init__(
         self,
@@ -554,7 +553,7 @@ class AttentionPool2d(nn.Module):
     ):
         super().__init__()
         self.positional_embedding = nn.Parameter(
-            th.randn(embed_dim, spacial_dim**2 + 1) / embed_dim**0.5
+            th.randn(embed_dim, spacial_dim**2 + 1) / embed_dim**0.5,
         )
         self.qkv_proj = conv_nd(1, embed_dim, 3 * embed_dim, 1)
         self.c_proj = conv_nd(1, embed_dim, output_dim or embed_dim, 1)

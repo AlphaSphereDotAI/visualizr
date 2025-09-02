@@ -3,9 +3,7 @@ from visualizr.anitalker.config import PretrainConfig, TrainConfig
 
 
 def ddpm():
-    """
-    base configuration for all DDIM-based models.
-    """
+    """Base configuration for all DDIM-based models."""
     conf = TrainConfig()
     conf.batch_size = 32
     conf.beatgans_gen_type = GenerativeType.ddim
@@ -30,9 +28,7 @@ def ddpm():
 
 
 def autoenc_base():
-    """
-    base configuration for all Diff-AE models.
-    """
+    """Base configuration for all Diff-AE models."""
     conf = TrainConfig()
     conf.batch_size = 32
     conf.beatgans_gen_type = GenerativeType.ddim
