@@ -228,10 +228,7 @@ class TrainConfig(BaseConfig):
             model_var_type=self.beatgans_model_var_type,
             loss_type=self.beatgans_loss_type,
             rescale_timesteps=self.beatgans_rescale_timesteps,
-            use_timesteps=space_timesteps(
-                num_timesteps=self.T,
-                section_counts=section_counts,
-            ),
+            use_timesteps=space_timesteps(self.T, section_counts),
             fp16=self.fp16,
         )
 
@@ -254,10 +251,7 @@ class TrainConfig(BaseConfig):
             model_var_type=self.latent_model_var_type,
             loss_type=self.latent_loss_type,
             rescale_timesteps=self.latent_rescale_timesteps,
-            use_timesteps=space_timesteps(
-                num_timesteps=self.T,
-                section_counts=section_counts,
-            ),
+            use_timesteps=space_timesteps(self.T, section_counts),
             fp16=self.fp16,
         )
 
