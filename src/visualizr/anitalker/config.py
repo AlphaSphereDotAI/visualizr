@@ -210,12 +210,13 @@ class TrainConfig(BaseConfig):
         # hopefully, this would reduce the disconnection problems with sshfs.
         return f"{self.work_cache_dir}/gen_images/{self.name}"
 
-    def _make_diffusion_conf(self, t: int):
+    def _make_diffusion_conf(self, t: int) -> SpacedDiffusionBeatGansConfig:
         if self.diffusion_type != "beatgans":
             raise NotImplementedError
         # can use t < `self.t` for evaluation
         # follows the guided-diffusion repo conventions
         # `t` is evenly spaced.
+        section_counts = None
         if self.beatgans_gen_type == GenerativeType.ddpm:
             section_counts = [t]
         elif self.beatgans_gen_type == GenerativeType.ddim:
@@ -232,10 +233,11 @@ class TrainConfig(BaseConfig):
             fp16=self.fp16,
         )
 
-    def _make_latent_diffusion_conf(self, t: int):
+    def _make_latent_diffusion_conf(self, t: int) -> SpacedDiffusionBeatGansConfig:
         # can use `t` < `self.t` for evaluation
         # follows the guided-diffusion repo conventions
         # `t` is evenly spaced.
+        section_counts = None
         if self.latent_gen_type == GenerativeType.ddpm:
             section_counts = [t]
         elif self.latent_gen_type == GenerativeType.ddim:
