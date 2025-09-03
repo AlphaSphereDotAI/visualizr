@@ -4,7 +4,7 @@ from typing import Literal
 
 from torch import distributed
 from torch.multiprocessing import get_context
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, TensorDataset
 from torch.utils.data.distributed import DistributedSampler
 
 from visualizr.anitalker.choices import (
@@ -175,11 +175,11 @@ class TrainConfig(BaseConfig):
     decoder_layers = None
     motion_dim = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.batch_size_eval = self.batch_size_eval or self.batch_size
         self.data_val_name = self.data_val_name or self.data_name
 
-    def scale_up_gpus(self, num_gpus, num_nodes=1):
+    def scale_up_gpus(self, num_gpus: int, num_nodes: int = 1) -> "TrainConfig":
         self.eval_ema_every_samples *= num_gpus * num_nodes
         self.eval_every_samples *= num_gpus * num_nodes
         self.sample_every_samples *= num_gpus * num_nodes
@@ -188,7 +188,7 @@ class TrainConfig(BaseConfig):
         return self
 
     @property
-    def batch_size_effective(self):
+    def batch_size_effective(self) -> int:
         return self.batch_size * self.accum_batches
 
     @property
@@ -300,11 +300,11 @@ class TrainConfig(BaseConfig):
 
     def make_loader(
         self,
-        dataset,
+        dataset: TensorDataset,
         shuffle: bool,
-        num_worker: bool = None,
+        num_worker: bool | None = None,
         drop_last: bool = True,
-        batch_size: int = None,
+        batch_size: int | None = None,
         parallel: bool = False,
     ):
         sampler: DistributedSampler | None = None
@@ -349,9 +349,7 @@ class TrainConfig(BaseConfig):
                 resnet_two_cond=self.net_beatgans_resnet_two_cond,
                 resnet_use_zero_module=self.net_beatgans_resnet_use_zero_module,
             )
-        elif self.model_name in [
-            ModelName.beatgans_autoenc,
-        ]:
+        elif self.model_name in [ModelName.beatgans_autoenc]:
             cls = BeatGANsAutoencConfig
             # supports both autoenc and vaeddpm
             if self.model_name == ModelName.beatgans_autoenc:
@@ -409,5 +407,4 @@ class TrainConfig(BaseConfig):
             )
         else:
             raise NotImplementedError(self.model_name)
-
         return self.model_conf
