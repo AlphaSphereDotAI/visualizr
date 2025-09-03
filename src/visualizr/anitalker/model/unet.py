@@ -1,9 +1,8 @@
 from dataclasses import dataclass
-from typing import NamedTuple, Optional, Tuple
+from typing import NamedTuple
 
 import torch as th
 from torch import nn
-from torch.nn.functional import interpolate
 
 from visualizr.anitalker.config_base import BaseConfig
 from visualizr.anitalker.model.blocks import (
@@ -38,25 +37,25 @@ class BeatGANsUNetConfig(BaseConfig):
     num_res_blocks: int = 2
     # you can also set the number of resblocks specifically for the input blocks
     # default: None = above
-    num_input_res_blocks: Optional[int] = None
+    num_input_res_blocks: int | None = None
     # number of time embed channels and style channels
     embed_channels: int = 512
     # at what resolutions you want to do self-attention of the feature maps
     # attentions improve performance
     # default: [16]
     # beatgans: [32, 16, 8]
-    attention_resolutions: Tuple[int] = (16,)
+    attention_resolutions: tuple[int] = (16,)
     # number of time embed channels
-    time_embed_channels: Optional[int] = None
+    time_embed_channels: int | None = None
     # dropout applies to the resblocks (on feature maps)
     dropout: float = 0.1
-    channel_mult: Tuple[int] = (1, 2, 4, 8)
-    input_channel_mult: Optional[Tuple[int]] = None
+    channel_mult: tuple[int] = (1, 2, 4, 8)
+    input_channel_mult: tuple[int] | None = None
     conv_resample: bool = True
     # always 2 = 2D conv
     dims: int = 2
     # don't use this, legacy from BeatGANs
-    num_classes: Optional[int] = None
+    num_classes: int | None = None
     use_checkpoint: bool = False
     # number of attention heads
     num_heads: int = 1
@@ -70,7 +69,7 @@ class BeatGANsUNetConfig(BaseConfig):
     # never tried
     use_new_attention_order: bool = False
     resnet_two_cond: bool = False
-    resnet_cond_channels: Optional[int] = None
+    resnet_cond_channels: int | None = None
     # init the decoding conv layers with zero weights, this speeds up training
     # default: True (BeattGANs)
     resnet_use_zero_module: bool = True
@@ -105,9 +104,9 @@ class BeatGANsUNetModel(nn.Module):
         self.input_blocks = nn.ModuleList(
             [
                 TimestepEmbedSequential(
-                    conv_nd(conf.dims, conf.in_channels, ch, 3, padding=1)
-                )
-            ]
+                    conv_nd(conf.dims, conf.in_channels, ch, 3, padding=1),
+                ),
+            ],
         )
 
         kwargs: dict = {
@@ -140,7 +139,7 @@ class BeatGANsUNetModel(nn.Module):
                         dims=conf.dims,
                         use_checkpoint=conf.use_checkpoint,
                         **kwargs,
-                    ).make_model()
+                    ).make_model(),
                 ]
                 ch = int(mult * conf.model_channels)
                 if resolution in conf.attention_resolutions:
@@ -151,7 +150,7 @@ class BeatGANsUNetModel(nn.Module):
                             num_heads=conf.num_heads,
                             num_head_channels=conf.num_head_channels,
                             use_new_attention_order=conf.use_new_attention_order,
-                        )
+                        ),
                     )
                 self.input_blocks.append(TimestepEmbedSequential(*layers))
                 self._feature_size += ch
@@ -173,8 +172,8 @@ class BeatGANsUNetModel(nn.Module):
                             **kwargs,
                         ).make_model()
                         if conf.resblock_updown
-                        else Downsample(ch, conf.conv_resample, conf.dims, out_ch)
-                    )
+                        else Downsample(ch, conf.conv_resample, conf.dims, out_ch),
+                    ),
                 )
                 ch = out_ch
                 input_block_chans[level + 1].append(ch)
@@ -231,7 +230,7 @@ class BeatGANsUNetModel(nn.Module):
                         has_lateral=ich > 0,
                         lateral_channels=None,
                         **kwargs,
-                    ).make_model()
+                    ).make_model(),
                 ]
                 ch = int(conf.model_channels * mult)
                 if resolution in conf.attention_resolutions:
@@ -242,7 +241,7 @@ class BeatGANsUNetModel(nn.Module):
                             num_heads=self.num_heads_upsample,
                             num_head_channels=conf.num_head_channels,
                             use_new_attention_order=conf.use_new_attention_order,
-                        )
+                        ),
                     )
                 if level and i == conf.num_res_blocks:
                     resolution *= 2
@@ -264,7 +263,7 @@ class BeatGANsUNetModel(nn.Module):
                             conf.conv_resample,
                             dims=conf.dims,
                             out_channels=out_ch,
-                        )
+                        ),
                     )
                     ds //= 2
                 self.output_blocks.append(TimestepEmbedSequential(*layers))
@@ -275,7 +274,7 @@ class BeatGANsUNetModel(nn.Module):
                 normalization(ch),
                 nn.SiLU(),
                 zero_module(
-                    conv_nd(conf.dims, input_ch, conf.out_channels, 3, padding=1)
+                    conv_nd(conf.dims, input_ch, conf.out_channels, 3, padding=1),
                 ),
             )
         else:
@@ -289,14 +288,14 @@ class BeatGANsUNetModel(nn.Module):
         """Apply the model to an input batch."""
         if (y is not None) != (self.conf.num_classes is not None):
             raise ValueError(
-                "must specify y if and only if the model is class-conditional"
+                "must specify y if and only if the model is class-conditional",
             )
 
         hs = [[] for _ in range(len(self.conf.channel_mult))]
         emb = self.time_embed(timestep_embedding(t, self.time_emb_channels))
 
         if self.conf.num_classes is not None:
-            raise NotImplementedError()
+            raise NotImplementedError
 
         # the new code supports input_num_blocks != output_num_blocks
         h = x.type(self.dtype)
@@ -339,9 +338,9 @@ class BeatGANsEncoderConfig(BaseConfig):
     out_hid_channels: int
     out_channels: int
     num_res_blocks: int
-    attention_resolutions: Tuple[int]
+    attention_resolutions: tuple[int]
     dropout: float = 0
-    channel_mult: Tuple[int] = (1, 2, 4, 8)
+    channel_mult: tuple[int] = (1, 2, 4, 8)
     use_time_condition: bool = True
     conv_resample: bool = True
     dims: int = 2
@@ -382,9 +381,9 @@ class BeatGANsEncoderModel(nn.Module):
         self.input_blocks = nn.ModuleList(
             [
                 TimestepEmbedSequential(
-                    conv_nd(conf.dims, conf.in_channels, ch, 3, padding=1)
-                )
-            ]
+                    conv_nd(conf.dims, conf.in_channels, ch, 3, padding=1),
+                ),
+            ],
         )
         self._feature_size = ch
         input_block_chans = [ch]
@@ -401,7 +400,7 @@ class BeatGANsEncoderModel(nn.Module):
                         dims=conf.dims,
                         use_condition=conf.use_time_condition,
                         use_checkpoint=conf.use_checkpoint,
-                    ).make_model()
+                    ).make_model(),
                 ]
                 ch = int(mult * conf.model_channels)
                 if resolution in conf.attention_resolutions:
@@ -412,7 +411,7 @@ class BeatGANsEncoderModel(nn.Module):
                             num_heads=conf.num_heads,
                             num_head_channels=conf.num_head_channels,
                             use_new_attention_order=conf.use_new_attention_order,
-                        )
+                        ),
                     )
                 self.input_blocks.append(TimestepEmbedSequential(*layers))
                 self._feature_size += ch
@@ -438,8 +437,8 @@ class BeatGANsEncoderModel(nn.Module):
                             conf.conv_resample,
                             dims=conf.dims,
                             out_channels=out_ch,
-                        )
-                    )
+                        ),
+                    ),
                 )
                 ch = out_ch
                 input_block_chans.append(ch)
@@ -509,24 +508,5 @@ class BeatGANsEncoderModel(nn.Module):
         return (h, h_2d) if return_2d_feature else h
 
     def forward_flatten(self, x):
-        """
-        transform the last 2D feature into a flattened vector
-        """
+        """Transform the last 2D feature into a flattened vector."""
         return self.out(x)
-
-
-class SuperResModel(BeatGANsUNetModel):
-    """
-    A UNetModel that performs super-resolution.
-
-    Expects an extra kwarg `low_res` to condition on a low-resolution image.
-    """
-
-    def __init__(self, image_size, in_channels, *args, **kwargs):
-        super().__init__(image_size, in_channels * 2, *args, **kwargs)
-
-    def forward(self, x, timesteps, low_res=None, **kwargs):
-        _, _, new_height, new_width = x.shape
-        upsampled = interpolate(low_res, (new_height, new_width), mode="bilinear")
-        x = th.cat([x, upsampled], dim=1)
-        return super().forward(x, timesteps, **kwargs)

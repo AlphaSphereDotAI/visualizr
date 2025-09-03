@@ -29,9 +29,7 @@ class GroupNorm32(nn.GroupNorm):
 
 
 def conv_nd(dims, *args, **kwargs):
-    """
-    Create a 1D, 2D, or 3D convolution module.
-    """
+    """Create a 1D, 2D, or 3D convolution module."""
     match dims:
         case 1:
             return nn.Conv1d(*args, **kwargs)
@@ -39,13 +37,12 @@ def conv_nd(dims, *args, **kwargs):
             return nn.Conv2d(*args, **kwargs)
         case 3:
             return nn.Conv3d(*args, **kwargs)
-    raise ValueError(f"unsupported dimensions: {dims}")
+    msg = f"unsupported dimensions: {dims}"
+    raise ValueError(msg)
 
 
 def avg_pool_nd(dims, *args, **kwargs):
-    """
-    Create a 1D, 2D, or 3D average pooling module.
-    """
+    """Create a 1D, 2D, or 3D average pooling module."""
     match dims:
         case 1:
             return nn.AvgPool1d(*args, **kwargs)
@@ -53,7 +50,8 @@ def avg_pool_nd(dims, *args, **kwargs):
             return nn.AvgPool2d(*args, **kwargs)
         case 3:
             return nn.AvgPool3d(*args, **kwargs)
-    raise ValueError(f"unsupported dimensions: {dims}")
+    msg = f"unsupported dimensions: {dims}"
+    raise ValueError(msg)
 
 
 def update_ema(target_params, source_params, rate=0.99):
@@ -65,32 +63,26 @@ def update_ema(target_params, source_params, rate=0.99):
     :param source_params: The source parameter sequence.
     :param rate: The EMA rate (closer to 1 means slower).
     """
-    for targ, src in zip(target_params, source_params):
+    for targ, src in zip(target_params, source_params, strict=False):
         targ.detach().mul_(rate).add_(src, alpha=1 - rate)
 
 
 def zero_module(module):
-    """
-    Zero out the parameters of a module and return it.
-    """
+    """Zero out the parameters of a module and return it."""
     for p in module.parameters():
         p.detach().zero_()
     return module
 
 
 def scale_module(module, scale):
-    """
-    Scale the parameters of a module and return it.
-    """
+    """Scale the parameters of a module and return it."""
     for p in module.parameters():
         p.detach().mul_(scale)
     return module
 
 
 def mean_flat(tensor: Tensor) -> Tensor:
-    """
-    Take the mean over all non-batch dimensions.
-    """
+    """Take the mean over all non-batch dimensions."""
     return tensor.mean(dim=list(range(1, len(tensor.shape))))
 
 
@@ -116,7 +108,7 @@ def timestep_embedding(timesteps, dim, max_period=10000):
     """
     half = dim // 2
     freqs = exp(-log(max_period) * arange(start=0, end=half, dtype=float32) / half).to(
-        device=timesteps.device
+        device=timesteps.device,
     )
     args = timesteps[:, None].float() * freqs[None]
     embedding = cat([cos(args), sin(args)], dim=-1)
