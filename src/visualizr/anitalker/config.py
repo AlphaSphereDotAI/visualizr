@@ -202,6 +202,12 @@ class TrainConfig(BaseConfig):
 
     @property
     def logdir(self) -> Path:
+        """
+        Returns the directory path for logging and saving checkpoints.
+
+        Returns:
+            Path: The full path to the log directory.
+        """
         return self.base_dir / self.name
 
     @property
