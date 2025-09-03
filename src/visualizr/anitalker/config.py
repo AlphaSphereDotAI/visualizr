@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from os import path
+from pathlib import Path
 from typing import Literal
 
 from torch import distributed
@@ -157,10 +157,10 @@ class TrainConfig(BaseConfig):
     eval_programs: tuple[str] | None = None
     # if present, load the checkpoint from this path instead
     eval_path: str | None = None
-    base_dir: str = "checkpoints"
+    base_dir: Path = Path("checkpoints")
     use_cache_dataset: bool = False
-    data_cache_dir: str = path.expanduser("~/cache")
-    work_cache_dir: str = path.expanduser("~/mycache")
+    data_cache_dir: str = Path("~/cache").expanduser()  # TODO: rm
+    work_cache_dir: str = Path("~/mycache").expanduser()
     # to be overridden
     name: str = ""
     audio_hz = None
@@ -201,8 +201,8 @@ class TrainConfig(BaseConfig):
         )
 
     @property
-    def logdir(self):
-        return f"{self.base_dir}/{self.name}"
+    def logdir(self) -> Path:
+        return self.base_dir / self.name
 
     @property
     def generate_dir(self):
@@ -212,7 +212,7 @@ class TrainConfig(BaseConfig):
 
     def _make_diffusion_conf(self, t: int):
         if self.diffusion_type != "beatgans":
-            raise NotImplementedError()
+            raise NotImplementedError
         # can use t < `self.t` for evaluation
         # follows the guided-diffusion repo conventions
         # `t` is evenly spaced.
@@ -229,7 +229,8 @@ class TrainConfig(BaseConfig):
             loss_type=self.beatgans_loss_type,
             rescale_timesteps=self.beatgans_rescale_timesteps,
             use_timesteps=space_timesteps(
-                num_timesteps=self.T, section_counts=section_counts
+                num_timesteps=self.T,
+                section_counts=section_counts,
             ),
             fp16=self.fp16,
         )
@@ -254,7 +255,8 @@ class TrainConfig(BaseConfig):
             loss_type=self.latent_loss_type,
             rescale_timesteps=self.latent_rescale_timesteps,
             use_timesteps=space_timesteps(
-                num_timesteps=self.T, section_counts=section_counts
+                num_timesteps=self.T,
+                section_counts=section_counts,
             ),
             fp16=self.fp16,
         )
@@ -265,7 +267,7 @@ class TrainConfig(BaseConfig):
 
     def make_t_sampler(self) -> UniformSampler:
         if self.T_sampler != "uniform":
-            raise NotImplementedError()
+            raise NotImplementedError
         return UniformSampler(self.T)
 
     def make_diffusion_conf(self):
@@ -353,7 +355,7 @@ class TrainConfig(BaseConfig):
             if self.model_name == ModelName.beatgans_autoenc:
                 self.model_type = ModelType.autoencoder
             else:
-                raise NotImplementedError()
+                raise NotImplementedError
 
             if self.net_latent_net_type == LatentNetType.none:
                 latent_net_conf = None

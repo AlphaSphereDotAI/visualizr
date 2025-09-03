@@ -1,5 +1,4 @@
 import copy
-import os
 
 import numpy as np
 import torch
@@ -295,24 +294,22 @@ def train(conf: TrainConfig, gpus, nodes=1):
     Info(f"conf: {conf.name}")
     model = LitModel(conf)
 
-    if not os.path.exists(conf.logdir):
-        os.makedirs(conf.logdir)
+    if not conf.logdir.exists():
+        conf.logdir.mkdir(parents=True)
     checkpoint = ModelCheckpoint(
         dirpath=f"{conf.logdir}",
         save_last=True,
         save_top_k=-1,
         every_n_epochs=10,
     )
-    checkpoint_path = f"{conf.logdir}/last.ckpt"
+    checkpoint_path = conf.logdir / "last.ckpt"
     Info(f"ckpt path: {checkpoint_path}")
-    if os.path.exists(checkpoint_path):
+    if checkpoint_path.exists():
         resume = checkpoint_path
         Info("resume!")
     else:
         resume = conf.continue_from.pathcd if conf.continue_from is not None else None
     tb_logger = TensorBoardLogger(save_dir=conf.logdir, name=None, version="")
-
-    # from pytorch_lightning.
 
     plugins = []
     if len(gpus) == 1 and nodes == 1:
@@ -329,12 +326,8 @@ def train(conf: TrainConfig, gpus, nodes=1):
         num_nodes=nodes,
         accelerator=accelerator,
         precision=16 if conf.fp16 else 32,
-        callbacks=[
-            checkpoint,
-            LearningRateMonitor(),
-        ],
+        callbacks=[checkpoint, LearningRateMonitor()],
         # clip in the model instead
-        # gradient_clip_val=conf.grad_clip,
         replace_sampler_ddp=True,
         logger=tb_logger,
         accumulate_grad_batches=conf.accum_batches,

@@ -34,19 +34,19 @@ class BaseConfig:
                 v.inherit(self)
                 v.propagate()
 
-    def save(self, save_path: Path):
-        """Save a config to JSON file."""
+    def save(self, save_path: Path) -> None:
+        """Save a config to a JSON file."""
         if not save_path.exists():
             save_path.mkdir(parents=True, exist_ok=True)
         conf = self.as_dict_jsonable()
-        with open(save_path, "w") as f:
-            dump(conf, f)
+        with save_path.open("w", encoding="utf-8") as f:
+            dump(conf, f, indent=2, sort_keys=True)
 
-    def load(self, load_path: Path):
+    def load(self, load_path: Path) -> None:
         """Load json config."""
         if not load_path.exists():
             load_path.mkdir(parents=True, exist_ok=True)
-        with open(load_path) as f:
+        with load_path.open(encoding="utf-8") as f:
             conf = load(f)
         self.from_dict(conf)
 

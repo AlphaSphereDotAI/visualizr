@@ -1,4 +1,4 @@
-from os import listdir, path
+from pathlib import Path
 from random import randint
 
 import numpy as np
@@ -20,12 +20,12 @@ class LatentDataLoader:
     def __init__(
         self,
         window_size,
-        frame_jpgs,
-        lmd_feats_prefix,
-        audio_prefix,
-        raw_audio_prefix,
-        motion_latents_prefix,
-        pose_prefix,
+        frame_jpgs: Path,
+        lmd_feats_prefix: Path,
+        audio_prefix: Path,
+        raw_audio_prefix: Path,
+        motion_latents_prefix: Path,
+        pose_prefix: Path,
         db_name,
         video_fps: int = 25,
         audio_hz: int = 50,
@@ -52,36 +52,22 @@ class LatentDataLoader:
 
         self.data = []
         for _db_name in ["VoxCeleb2", "HDTF"]:
-            db_png_path = path.join(frame_jpgs, _db_name)
-            for clip_name in tqdm(listdir(db_png_path)):
+            db_png_path: Path = frame_jpgs / _db_name
+            for clip_name in tqdm(db_png_path.iterdir(), f"Loading {_db_name}"):
                 item_dict: dict = {
                     "clip_name": clip_name,
                     "frame_count": len(
-                        list(
-                            listdir(
-                                path.join(frame_jpgs, _db_name, clip_name),
-                            ),
-                        ),
+                        list((frame_jpgs / _db_name / clip_name).iterdir()),
                     ),
-                    "hubert_path": path.join(
-                        audio_prefix,
-                        _db_name,
-                        f"{clip_name}.npy",
-                    ),
-                    "wav_path": path.join(
-                        raw_audio_prefix,
-                        _db_name,
-                        f"{clip_name}.wav",
-                    ),
-                    "yaw_pitch_roll_path": path.join(
-                        pose_prefix,
-                        _db_name,
-                        "raw_videos_pose_yaw_pitch_roll",
-                        f"{clip_name}.npy",
-                    ),
+                    "hubert_path": audio_prefix / _db_name / f"{clip_name}.npy",
+                    "wav_path": raw_audio_prefix / _db_name / f"{clip_name}.wav",
+                    "yaw_pitch_roll_path": pose_prefix
+                    / _db_name
+                    / "raw_videos_pose_yaw_pitch_roll"
+                    / f"{clip_name}.npy",
                 }
 
-                if not path.exists(item_dict["yaw_pitch_roll_path"]):
+                if not item_dict["yaw_pitch_roll_path"].exists():
                     print(f"{_db_name}'s {clip_name} miss yaw_pitch_roll_path")
                     continue
 
@@ -90,53 +76,38 @@ class LatentDataLoader:
                     np.clip(item_dict["yaw_pitch_roll"], -90, 90) / 90.0
                 )
 
-                if not path.exists(item_dict["wav_path"]):
+                if not item_dict["wav_path"].exists():
                     print(f"{_db_name}'s {clip_name} miss wav_path")
                     continue
 
-                if not path.exists(item_dict["hubert_path"]):
+                if not item_dict["hubert_path"].exists():
                     print(f"{_db_name}'s {clip_name} miss hubert_path")
                     continue
 
                 if self.mfcc_mode:
                     wav, sr = librosa_load(item_dict["wav_path"], sr=16000)
-                    input_values = mfcc(signal=wav, samplerate=sr)
+                    input_values = mfcc(wav, sr)
                     d_mfcc_feat = delta(input_values, 1)
                     d_mfcc_feat2 = delta(input_values, 2)
                     input_values = np.hstack((input_values, d_mfcc_feat, d_mfcc_feat2))
                     item_dict["hubert_obj"] = input_values
                 else:
-                    item_dict["hubert_obj"] = np.load(
-                        item_dict["hubert_path"],
-                        mmap_mode="r",
-                    )
-                item_dict["lmd_path"] = path.join(
-                    lmd_feats_prefix,
-                    _db_name,
-                    f"{clip_name}.txt",
-                )
+                    item_dict["hubert_obj"] = np.load(item_dict["hubert_path"], "r")
+                item_dict["lmd_path"] = lmd_feats_prefix / _db_name / f"{clip_name}.txt"
                 item_dict["lmd_obj_full"] = self.read_landmark_info(
                     item_dict["lmd_path"],
                     upper_face=False,
                 )
-
-                motion_start_path = path.join(
-                    motion_latents_prefix,
-                    _db_name,
-                    "motions",
-                    f"{clip_name}.npy",
+                motion_start_path = (
+                    motion_latents_prefix / _db_name / "motions" / f"{clip_name}.npy"
                 )
-                motion_direction_path = path.join(
-                    motion_latents_prefix,
-                    _db_name,
-                    "directions",
-                    f"{clip_name}.npy",
+                motion_direction_path = (
+                    motion_latents_prefix / _db_name / "directions" / f"{clip_name}.npy"
                 )
-
-                if not path.exists(motion_start_path):
+                if not motion_start_path.exists():
                     print(f"{_db_name}'s {clip_name} miss motion_start_path")
                     continue
-                if not path.exists(motion_direction_path):
+                if not motion_direction_path.exists():
                     print(f"{_db_name}'s {clip_name} miss motion_direction_path")
                     continue
 
@@ -217,7 +188,7 @@ class LatentDataLoader:
         return [item for sublist in extracted_elements for item in sublist]
 
     def read_landmark_info(self, lmd_path, upper_face=True):
-        with open(lmd_path) as file:
+        with lmd_path.open(encoding="utf-8") as file:
             lmd_lines = file.readlines()
         lmd_lines.sort()
 
