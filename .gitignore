@@ -8,6 +8,7 @@
 assets/
 ckpts/
 dist/
+gfpgan/
 logs/
 outputs/
 results/

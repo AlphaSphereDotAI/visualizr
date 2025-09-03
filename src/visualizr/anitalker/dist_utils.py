@@ -1,5 +1,3 @@
-from typing import List
-
 from torch import distributed
 
 
@@ -13,7 +11,7 @@ def broadcast(data, src):
         distributed.broadcast(data, src)
 
 
-def all_gather(data: List, src):
+def all_gather(data: list, src):
     if distributed.is_initialized():
         distributed.all_gather(data, src)
     else:
