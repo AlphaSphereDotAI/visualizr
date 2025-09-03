@@ -37,7 +37,10 @@ def frames_to_video(
     audio = AudioFileClip(audio_path)
     final_video = video.set_audio(audio)
     final_video.write_videofile(
-        output_path.as_posix(), fps, "libx264", audio_codec="aac"
+        output_path.as_posix(),
+        fps,
+        "libx264",
+        audio_codec="aac",
     )
 
 
@@ -75,12 +78,14 @@ def remove_frames(frames_path: Path):
 def load_stage_2_model(conf: TrainConfig, stage_2_checkpoint_path: Path) -> LitModel:
     Info("Loading stage 2 model")
     if not stage_2_checkpoint_path.exists():
-        raise FileNotFoundError(f"Checkpoint not found: {stage_2_checkpoint_path}")
+        msg = f"Checkpoint not found: {stage_2_checkpoint_path}"
+        raise FileNotFoundError(msg)
     model = LitModel(conf)
     try:
         state = torch_load(stage_2_checkpoint_path, map_location="cpu")
     except Exception as e:
-        raise RuntimeError(f"Failed to load checkpoint: {e}") from e
+        msg = f"Failed to load checkpoint: {e}"
+        raise RuntimeError(msg) from e
     model.load_state_dict(state)
     model.ema_model.eval()
     model.ema_model.to("cuda")
