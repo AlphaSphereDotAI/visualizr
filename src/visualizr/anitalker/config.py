@@ -192,27 +192,12 @@ class TrainConfig(BaseConfig):
         return self.batch_size * self.accum_batches
 
     @property
-    def fid_cache(self):
-        # we try to use the local dirs to reduce the load over network drives
-        # hopefully, this would reduce the disconnection problems with sshfs.
-        return (
-            f"{self.work_cache_dir}/eval_images/{self.data_name}"
-            f"_size{self.img_size}_{self.eval_num_images}"
-        )
-
-    @property
     def logdir(self):
         return f"{self.base_dir}/{self.name}"
 
-    @property
-    def generate_dir(self):
-        # we try to use the local dirs to reduce the load over network drives
-        # hopefully, this would reduce the disconnection problems with sshfs.
-        return f"{self.work_cache_dir}/gen_images/{self.name}"
-
     def _make_diffusion_conf(self, t: int):
         if self.diffusion_type != "beatgans":
-            raise NotImplementedError()
+            raise NotImplementedError
         # can use t < `self.t` for evaluation
         # follows the guided-diffusion repo conventions
         # `t` is evenly spaced.
@@ -229,7 +214,8 @@ class TrainConfig(BaseConfig):
             loss_type=self.beatgans_loss_type,
             rescale_timesteps=self.beatgans_rescale_timesteps,
             use_timesteps=space_timesteps(
-                num_timesteps=self.T, section_counts=section_counts
+                num_timesteps=self.T,
+                section_counts=section_counts,
             ),
             fp16=self.fp16,
         )
@@ -254,7 +240,8 @@ class TrainConfig(BaseConfig):
             loss_type=self.latent_loss_type,
             rescale_timesteps=self.latent_rescale_timesteps,
             use_timesteps=space_timesteps(
-                num_timesteps=self.T, section_counts=section_counts
+                num_timesteps=self.T,
+                section_counts=section_counts,
             ),
             fp16=self.fp16,
         )
@@ -265,7 +252,7 @@ class TrainConfig(BaseConfig):
 
     def make_t_sampler(self) -> UniformSampler:
         if self.T_sampler != "uniform":
-            raise NotImplementedError()
+            raise NotImplementedError
         return UniformSampler(self.T)
 
     def make_diffusion_conf(self):
@@ -353,7 +340,7 @@ class TrainConfig(BaseConfig):
             if self.model_name == ModelName.beatgans_autoenc:
                 self.model_type = ModelType.autoencoder
             else:
-                raise NotImplementedError()
+                raise NotImplementedError
 
             if self.net_latent_net_type == LatentNetType.none:
                 latent_net_conf = None
