@@ -84,6 +84,7 @@ class LitModel(LightningModule):
 
     def forward(self, noise=None, x_start=None, ema_model: bool = False):
         with amp.autocast(False):
+            # TODO: check `self.disable_ema`
             model = self.model if self.disable_ema else self.ema_model
             return self.eval_sampler.sample(model=model, noise=noise, x_start=x_start)
 
