@@ -80,7 +80,7 @@ class TrainConfig(BaseConfig):
     latent_model_mean_type: ModelMeanType = ModelMeanType.eps
     latent_model_var_type: ModelVarType = ModelVarType.fixed_large
     latent_rescale_timesteps: bool = False
-    latent_T_eval: int = 1_000
+    latent_t_eval: int = 1_000
     latent_clip_sample: bool = False
     latent_beta_scheduler: str = "linear"
     beta_scheduler: str = "linear"
@@ -283,7 +283,7 @@ class TrainConfig(BaseConfig):
 
     def make_latent_eval_diffusion_conf(self):
         # latent can have different eval T
-        return self._make_latent_diffusion_conf(self.latent_T_eval)
+        return self._make_latent_diffusion_conf(self.latent_t_eval)
 
     def make_dataset(self):
         return LatentDataLoader(
