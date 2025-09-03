@@ -8,6 +8,7 @@ generators to optimize memory usage.
 
 from collections.abc import Generator, Iterator
 from pathlib import Path
+from typing import Literal
 
 import cv2
 from basicsr.archs.rrdbnet_arch import RRDBNet
@@ -130,9 +131,65 @@ def enhancer_generator_with_len(
     return GeneratorWithLen(gen, len(images))
 
 
+def setup_gfpgan_restorer(method: str):
+    channel_multiplier: int | None = None
+    model_name: str | None = None
+    url: str | None = None
+    arch: str | None = None
+    match method:
+        case "gfpgan":
+            arch = "clean"
+            channel_multiplier = 2
+            model_name = "GFPGANv1.4"
+            url = GFPGAN_V_1_4_MODEL_URL
+        case "RestoreFormer":
+            arch = "RestoreFormer"
+            channel_multiplier = 2
+            model_name = "RestoreFormer"
+            url = RESTORE_FORMER_MODEL_URL
+        case "codeformer":
+            arch = "CodeFormer"
+            channel_multiplier = 2
+            model_name = "CodeFormer"
+            url = CODE_FORMER_MODEL_URL
+    if model_name is None or url is None or arch is None or channel_multiplier is None:
+        msg: str = "`model_name`, `url`, `arch`, and `channel_multiplier` must be set"
+        raise ValueError(msg)
+    return channel_multiplier, model_name, url, arch
+
+
+def setup_background_upsampler(bg_upsampler: str) -> RealESRGANer | None:
+    _bg_upsampler: RealESRGANer | None = None
+    if bg_upsampler == "realesrgan":
+        if not is_available():  # CPU
+            grWarning(
+                (
+                    "The unoptimized RealESRGAN is slow on CPU. "
+                    "We do not use it. "
+                    "If you really want to use it, "
+                    "please modify the corresponding codes."
+                ),
+            )
+            _bg_upsampler = None
+        else:
+            model = RRDBNet(num_in_ch=3, num_out_ch=3, scale=2)
+            # need to set False in CPU mode
+            _bg_upsampler = RealESRGANer(
+                scale=2,
+                model_path=REAL_ESRGAN_X_2_PLUS_MODEL_PATH,
+                model=model,
+                tile=400,
+                pre_pad=0,
+                half=True,
+            )
+    else:
+        _bg_upsampler = None
+    return _bg_upsampler
+
+
 def enhancer_generator_no_len(
     images: Path,
-    method: str = "gfpgan",
+    method: Literal["gfpgan", "RestoreFormer", "codeformer"] = "gfpgan",
     bg_upsampler: str = "realesrgan",
 ) -> Generator[ndarray]:
     """
@@ -164,72 +221,15 @@ def enhancer_generator_no_len(
     if not isinstance(images, list) and images.is_file():
         # handle video to images
         images = load_video_to_cv2(images.as_posix())
-    channel_multiplier: int | None = None
-    model_name: str | None = None
-    url: str | None = None
-    arch: str | None = None
-    _bg_upsampler: RealESRGANer | None = None
-    # ------------------------ set up GFPGAN restorer ------------------------
-    match method:
-        case "gfpgan":
-            arch = "clean"
-            channel_multiplier = 2
-            model_name = "GFPGANv1.4"
-            url = GFPGAN_V_1_4_MODEL_URL
-        case "RestoreFormer":
-            arch = "RestoreFormer"
-            channel_multiplier = 2
-            model_name = "RestoreFormer"
-            url = RESTORE_FORMER_MODEL_URL
-        case "codeformer":
-            arch = "CodeFormer"
-            channel_multiplier = 2
-            model_name = "CodeFormer"
-            url = CODE_FORMER_MODEL_URL
-    # ------------------------ set up background upsampler ------------------------
-    if bg_upsampler == "realesrgan":
-        if not is_available():  # CPU
-            grWarning(
-                (
-                    "The unoptimized RealESRGAN is slow on CPU. "
-                    "We do not use it. "
-                    "If you really want to use it, "
-                    "please modify the corresponding codes."
-                ),
-            )
-            _bg_upsampler = None
-        else:
-            model = RRDBNet(num_in_ch=3, num_out_ch=3, scale=2)
-            # need to set False in CPU mode
-            _bg_upsampler = RealESRGANer(
-                scale=2,
-                model_path=REAL_ESRGAN_X_2_PLUS_MODEL_PATH,
-                model=model,
-                tile=400,
-                pre_pad=0,
-                half=True,
-            )
-    else:
-        _bg_upsampler = None
 
-    if (
-        model_name is None
-        or url is None
-        or arch is None
-        or _bg_upsampler is None
-        or channel_multiplier is None
-    ):
-        msg: str = (
-            "`model_name`, `url`, `arch`, `_bg_upsampler`, "
-            "and `channel_multiplier` must be set"
-        )
-        raise ValueError(msg)
+    # Setup GFPGAN restorer
+    channel_multiplier, model_name, url, arch = setup_gfpgan_restorer(method)
+
+    # Setup background upsampler
+    _bg_upsampler = setup_background_upsampler(bg_upsampler)
 
     # determine model paths
     model_path: Path = GFPGAN_WEIGHTS / f"{model_name}.pth"
-
-    if not model_path.is_file():
-        model_path = CHECKPOINTS / f"{model_name}.pth"
 
     if not model_path.is_file():
         # download pre-trained models from URL
@@ -242,11 +242,9 @@ def enhancer_generator_no_len(
         bg_upsampler=_bg_upsampler,
     )
 
-    # ------------------------ restore ------------------------
+    # restore
     for idx in tqdm(range(len(images)), "Face Enhancer:"):
         img = cv2.cvtColor(images[idx], cv2.COLOR_RGB2BGR)
-
         # restore faces and background if necessary
         _, _, r_img = restorer.enhance(img)
-
         yield cv2.cvtColor(r_img, cv2.COLOR_BGR2RGB)
