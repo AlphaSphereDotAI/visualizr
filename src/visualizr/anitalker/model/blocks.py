@@ -114,9 +114,7 @@ class ResBlock(TimestepBlock):
             conv_nd(conf.dims, conf.channels, conf.out_channels, 3, padding=1),
         ]
         self.in_layers = nn.Sequential(*layers)
-
         self.updown = conf.up or conf.down
-
         if conf.up:
             self.h_upd = Upsample(conf.channels, False, conf.dims)
             self.x_upd = Upsample(conf.channels, False, conf.dims)
@@ -303,7 +301,7 @@ def apply_conditions(
             a = each
             b = None
         scale_shifts[i] = (a, b)
-
+    biases: list[float] = []
     # condition scale bias could be a list
     if isinstance(scale_bias, Number):
         biases = [scale_bias] * len(scale_shifts)
@@ -342,12 +340,14 @@ class Upsample(nn.Module):
                  upsampling occurs in the inner-two dimensions.
     """
 
-    def __init__(self, channels, use_conv, dims=2, out_channels=None):
+    def __init__(
+        self, channels: int, use_conv: bool, dims: int = 2, out_channels: int = None
+    ):
         super().__init__()
-        self.channels = channels
-        self.out_channels = out_channels or channels
-        self.use_conv = use_conv
-        self.dims = dims
+        self.channels: int = channels
+        self.out_channels: int = out_channels or channels
+        self.use_conv: bool = use_conv
+        self.dims: int = dims
         if use_conv:
             self.conv = conv_nd(dims, self.channels, self.out_channels, 3, padding=1)
 

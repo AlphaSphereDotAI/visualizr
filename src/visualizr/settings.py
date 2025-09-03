@@ -1,7 +1,7 @@
 """This module contains the settings for the Visualizr app."""
 
 from pathlib import Path
-from sys import exit
+from sys import exit as sys_exit
 from typing import Literal
 
 from dotenv import load_dotenv
@@ -122,10 +122,10 @@ class ModelSettings(BaseModel):
     def check_image_path(self) -> "ModelSettings":
         if self.image_path and not self.image_path.exists():
             Error("Image path does not exist.")
-            exit(0)
+            sys_exit(0)
         if self.audio_path and not self.audio_path.exists():
             Error("Audio path does not exist.")
-            exit(0)
+            sys_exit(0)
         return self
 
 
