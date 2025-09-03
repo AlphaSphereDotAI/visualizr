@@ -1,4 +1,4 @@
-import os
+from os import listdir, path
 from random import randint
 
 import numpy as np
@@ -11,9 +11,10 @@ from tqdm import tqdm
 
 class LatentDataLoader:
     """
-    Data loader for latent features that loads image frames, audio features, and motion
-    latents from specified directories. Applies image transformations, computes MFCC
-    features if enabled, and prepares data windows for training or evaluation.
+    Data loader for latent features that loads image frames, audio features,
+    and motion latents from specified directories. Applies image transformations,
+    computes MFCC features if enabled,
+    and prepares data windows for training or evaluation.
     """
 
     def __init__(
@@ -46,29 +47,33 @@ class LatentDataLoader:
                 Resize((size, size)),
                 ToTensor(),
                 Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)),
-            ]
+            ],
         )
 
         self.data = []
         for _db_name in ["VoxCeleb2", "HDTF"]:
-            db_png_path = os.path.join(frame_jpgs, _db_name)
-            for clip_name in tqdm(os.listdir(db_png_path)):
+            db_png_path = path.join(frame_jpgs, _db_name)
+            for clip_name in tqdm(listdir(db_png_path)):
                 item_dict: dict = {
                     "clip_name": clip_name,
                     "frame_count": len(
                         list(
-                            os.listdir(
-                                os.path.join(frame_jpgs, _db_name, clip_name),
+                            listdir(
+                                path.join(frame_jpgs, _db_name, clip_name),
                             ),
-                        )
+                        ),
                     ),
-                    "hubert_path": os.path.join(
-                        audio_prefix, _db_name, f"{clip_name}.npy"
+                    "hubert_path": path.join(
+                        audio_prefix,
+                        _db_name,
+                        f"{clip_name}.npy",
                     ),
-                    "wav_path": os.path.join(
-                        raw_audio_prefix, _db_name, f"{clip_name}.wav"
+                    "wav_path": path.join(
+                        raw_audio_prefix,
+                        _db_name,
+                        f"{clip_name}.wav",
                     ),
-                    "yaw_pitch_roll_path": os.path.join(
+                    "yaw_pitch_roll_path": path.join(
                         pose_prefix,
                         _db_name,
                         "raw_videos_pose_yaw_pitch_roll",
@@ -76,7 +81,7 @@ class LatentDataLoader:
                     ),
                 }
 
-                if not os.path.exists(item_dict["yaw_pitch_roll_path"]):
+                if not path.exists(item_dict["yaw_pitch_roll_path"]):
                     print(f"{_db_name}'s {clip_name} miss yaw_pitch_roll_path")
                     continue
 
@@ -85,11 +90,11 @@ class LatentDataLoader:
                     np.clip(item_dict["yaw_pitch_roll"], -90, 90) / 90.0
                 )
 
-                if not os.path.exists(item_dict["wav_path"]):
+                if not path.exists(item_dict["wav_path"]):
                     print(f"{_db_name}'s {clip_name} miss wav_path")
                     continue
 
-                if not os.path.exists(item_dict["hubert_path"]):
+                if not path.exists(item_dict["hubert_path"]):
                     print(f"{_db_name}'s {clip_name} miss hubert_path")
                     continue
 
@@ -102,29 +107,36 @@ class LatentDataLoader:
                     item_dict["hubert_obj"] = input_values
                 else:
                     item_dict["hubert_obj"] = np.load(
-                        item_dict["hubert_path"], mmap_mode="r"
+                        item_dict["hubert_path"],
+                        mmap_mode="r",
                     )
-                item_dict["lmd_path"] = os.path.join(
-                    lmd_feats_prefix, _db_name, f"{clip_name}.txt"
+                item_dict["lmd_path"] = path.join(
+                    lmd_feats_prefix,
+                    _db_name,
+                    f"{clip_name}.txt",
                 )
                 item_dict["lmd_obj_full"] = self.read_landmark_info(
-                    item_dict["lmd_path"], upper_face=False
+                    item_dict["lmd_path"],
+                    upper_face=False,
                 )
 
-                motion_start_path = os.path.join(
-                    motion_latents_prefix, _db_name, "motions", f"{clip_name}.npy"
+                motion_start_path = path.join(
+                    motion_latents_prefix,
+                    _db_name,
+                    "motions",
+                    f"{clip_name}.npy",
                 )
-                motion_direction_path = os.path.join(
+                motion_direction_path = path.join(
                     motion_latents_prefix,
                     _db_name,
                     "directions",
                     f"{clip_name}.npy",
                 )
 
-                if not os.path.exists(motion_start_path):
+                if not path.exists(motion_start_path):
                     print(f"{_db_name}'s {clip_name} miss motion_start_path")
                     continue
-                if not os.path.exists(motion_direction_path):
+                if not path.exists(motion_direction_path):
                     print(f"{_db_name}'s {clip_name} miss motion_direction_path")
                     continue
 
@@ -154,7 +166,9 @@ class LatentDataLoader:
 
                     item_dict["frame_count"] = min_len
                     item_dict["hubert_obj"] = item_dict["hubert_obj"][
-                        :, : min_len * 2, :
+                        :,
+                        : min_len * 2,
+                        :,
                     ]
 
                 if min_len < self.window_size * self.video_fps + 5:
@@ -174,8 +188,7 @@ class LatentDataLoader:
             Tensor: Transformed image tensor in RGB format.
         """
         img_source = Image.open(image_path).convert("RGB")
-        img_source = self.transform(img_source)
-        return img_source
+        return self.transform(img_source)
 
     @staticmethod
     def get_multiple_ranges(lists, multi_ranges):
@@ -191,13 +204,15 @@ class LatentDataLoader:
 
         Raises:
             ValueError: If `multi_ranges` is not a list of (start, end) tuples.
+
         """
         # Ensure that `multi_ranges` is a list of tuples
         if not all(isinstance(item, tuple) and len(item) == 2 for item in multi_ranges):
-            raise ValueError(
+            msg: str = (
                 "multi_ranges must be a list of (start, end) "
                 "tuples with exactly two elements each"
             )
+            raise ValueError(msg)
         extracted_elements = [lists[start:end] for start, end in multi_ranges]
         return [item for sublist in extracted_elements for item in sublist]
 
@@ -215,7 +230,8 @@ class LatentDataLoader:
             if upper_face:
                 # Ensure that the coordinates are parsed as integers
                 for coord_pair in self.get_multiple_ranges(
-                    coords, [(0, 3), (14, 27), (36, 48)]
+                    coords,
+                    [(0, 3), (14, 27), (36, 48)],
                 ):  # 28
                     x, y = coord_pair.split("_")
                     lmd_obj.append((int(x) / 512, int(y) / 512))
@@ -243,7 +259,8 @@ class LatentDataLoader:
         motion_direction_obj = data_item["motion_direction_obj"]
 
         frame_end_index = randint(
-            self.window_size * self.video_fps + 1, frame_count - 1
+            self.window_size * self.video_fps + 1,
+            frame_count - 1,
         )
         frame_start_index = frame_end_index - self.window_size * self.video_fps
         frame_hint_index = frame_start_index - 1
@@ -268,14 +285,14 @@ class LatentDataLoader:
             "motion_start": motion_start,
             "motion_direction": motion_direction,
             "audio_feats": audio_feats,
-            # '1': means taking the first frame as the driven frame.
-            # '30': is the noise location,
-            # '0': means x coordinate.
+            # '1' → means taking the first frame as the driven frame.
+            # '30' → is the noise location,
+            # '0' → means x coordinate.
             "face_location": lmd_obj_full[1:, 30, 0],
             "face_scale": self.calculate_face_height(lmd_obj_full[1:, :, :]),
             "yaw_pitch_roll": yaw_pitch_roll,
             "motion_direction_start": motion_direction_start,
         }
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.data)

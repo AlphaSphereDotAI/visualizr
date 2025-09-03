@@ -1,6 +1,6 @@
 import math
 from dataclasses import dataclass
-from typing import NamedTuple, Tuple
+from typing import NamedTuple
 
 import numpy as np
 import torch as th
@@ -16,8 +16,8 @@ from visualizr.anitalker.choices import (
 )
 from visualizr.anitalker.config_base import BaseConfig
 from visualizr.anitalker.model import Model
+from visualizr.anitalker.model.base import BaseModule
 from visualizr.anitalker.model.nn import mean_flat
-from visualizr.anitalker.model.seq2seq import DiffusionPredictor
 
 STOP_ITERATION_ERROR: str = "Model has no parameters to determine device"
 
@@ -26,22 +26,23 @@ STOP_ITERATION_ERROR: str = "Model has no parameters to determine device"
 class GaussianDiffusionBeatGansConfig(BaseConfig):
     """
     Configuration for the `GaussianDiffusionBeatGans` diffusion process.
+
     This class holds all hyperparameters and settings required to initialize and
     control a Gaussian diffusion process for BeatGans models.
 
     Args:
-        betas: A 1-D numpy array of betas for each diffusion timestep,
-                  starting at T and going to 1.
+        betas: A 1D numpy array of betas for each diffusion timestep,
+               starting at T and going to 1.
         model_mean_type: A ModelMeanType determining what the model outputs.
         model_var_type: A ModelVarType determining how variance is output.
         loss_type: A LossType determining the loss function to use.
         rescale_timesteps: If True, pass floating point timesteps into the
-                              model so that they're always scaled like in the
-                              original paper (0 to 1000).
+                           model so that they're always scaled like in the
+                           original paper (0 to 1000).
     """
 
     gen_type: GenerativeType
-    betas: Tuple[float]
+    betas: tuple[float]
     model_type: ModelType
     model_mean_type: ModelMeanType
     model_var_type: ModelVarType
@@ -52,8 +53,7 @@ class GaussianDiffusionBeatGansConfig(BaseConfig):
 
     def make_sampler(self):
         """
-        Create and return a GaussianDiffusionBeatGans
-        sampler based on this configuration.
+        Create a `GaussianDiffusionBeatGans` sampler based on this configuration.
 
         Returns:
             GaussianDiffusionBeatGans: A diffusion sampler
@@ -86,9 +86,8 @@ class GaussianDiffusionBeatGans:
         self.alphas_cumprod_prev = np.append(1.0, self.alphas_cumprod[:-1])
         self.alphas_cumprod_next = np.append(self.alphas_cumprod[1:], 0.0)
         if self.alphas_cumprod_prev.shape != (self.num_timesteps,):
-            raise ValueError(
-                "`alphas_cumprod_prev` must have the same shape as `betas`"
-            )
+            msg: str = "`alphas_cumprod_prev` must have the same shape as `betas`"
+            raise ValueError(msg)
 
         # calculations for diffusion and others.
         self.sqrt_alphas_cumprod = np.sqrt(self.alphas_cumprod)
@@ -104,7 +103,7 @@ class GaussianDiffusionBeatGans:
         # log calculation clipped because the posterior variance is 0 at the
         # beginning of the diffusion chain.
         self.posterior_log_variance_clipped = np.log(
-            np.append(self.posterior_variance[1], self.posterior_variance[1:])
+            np.append(self.posterior_variance[1], self.posterior_variance[1:]),
         )
         self.posterior_mean_coef1 = (
             betas * np.sqrt(self.alphas_cumprod_prev) / (1.0 - self.alphas_cumprod)
@@ -117,7 +116,7 @@ class GaussianDiffusionBeatGans:
 
     def training_losses(
         self,
-        model: DiffusionPredictor,
+        model: BaseModule,
         motion_direction_start: th.Tensor,
         motion_target: th.Tensor,
         motion_start: th.Tensor,
@@ -172,16 +171,19 @@ class GaussianDiffusionBeatGans:
             }
             target = target_types[self.model_mean_type]
             if not predicted_direction.shape == target.shape == motion_target.shape:
-                raise ValueError(
-                    f"Shape mismatch: predicted_direction {predicted_direction.shape},"
-                    + f" target {target.shape}, motion_target {motion_target.shape}"
+                msg: str = (
+                    f"Shape mismatch: "
+                    f"predicted_direction {predicted_direction.shape}, "
+                    f"target {target.shape}, "
+                    f"motion_target {motion_target.shape}"
                 )
+                raise ValueError(msg)
 
             if self.loss_type == LossType.mse:
                 if self.model_mean_type == ModelMeanType.eps:
                     direction_loss = mean_flat((target - predicted_direction) ** 2)
                     location_loss = mean_flat(
-                        (face_location.unsqueeze(-1) - predicted_location) ** 2
+                        (face_location.unsqueeze(-1) - predicted_location) ** 2,
                     )
                     scale_loss = mean_flat((face_scale - predicted_scale) ** 2)
                     pose_loss = mean_flat((yaw_pitch_roll - predicted_pose) ** 2)
@@ -215,8 +217,23 @@ class GaussianDiffusionBeatGans:
         progress=False,
     ):
         """
+        Generate samples from the diffusion model using either DDPM or DDIM sampling.
+
+        This function selects the appropriate sampling loop based on
+        the generative type in the configuration.
+
         Args:
-            x_start: given for the autoencoder
+            model: The model to use for sampling.
+            shape: The shape of the samples to generate.
+            noise: Optional initial noise tensor for sampling.
+            cond: Optional conditioning input for the model.
+            x_start: Optional starting tensor for autoencoder models.
+            clip_denoised: If True, clip denoised outputs to [-1, 1].
+            model_kwargs: Optional dictionary of extra keyword arguments for the model.
+            progress: If True, display a progress bar during sampling.
+
+        Returns:
+            torch.Tensor: The generated samples from the model.
         """
         if model_kwargs is None:
             model_kwargs = {}
@@ -257,7 +274,9 @@ class GaussianDiffusionBeatGans:
         )
         variance = _extract_into_tensor(1.0 - self.alphas_cumprod, t, x_start.shape)
         log_variance = _extract_into_tensor(
-            self.log_one_minus_alphas_cumprod, t, x_start.shape
+            self.log_one_minus_alphas_cumprod,
+            t,
+            x_start.shape,
         )
         return mean, variance, log_variance
 
@@ -283,20 +302,26 @@ class GaussianDiffusionBeatGans:
 
     def q_posterior_mean_variance(self, x_start, x_t, t):
         """
-        Compute the mean and variance of the diffusion posterior:
+        Compute the mean and variance of the diffusion posterior.
 
-            q(x_{t-1} | x_t, x_0)
-
+            `q(x_{t-1} | x_t, x_0)`
         """
         if x_start.shape != x_t.shape:
-            raise ValueError(f"Shape mismatch: {x_start.shape} vs {x_t.shape}")
+            msg: str = f"Shape mismatch: {x_start.shape} vs {x_t.shape}"
+            raise ValueError(msg)
         posterior_mean = (
             _extract_into_tensor(self.posterior_mean_coef1, t, x_t.shape) * x_start
             + _extract_into_tensor(self.posterior_mean_coef2, t, x_t.shape) * x_t
         )
-        posterior_variance = _extract_into_tensor(self.posterior_variance, t, x_t.shape)
+        posterior_variance = _extract_into_tensor(
+            self.posterior_variance,
+            t,
+            x_t.shape,
+        )
         posterior_log_variance_clipped = _extract_into_tensor(
-            self.posterior_log_variance_clipped, t, x_t.shape
+            self.posterior_log_variance_clipped,
+            t,
+            x_t.shape,
         )
         if not (
             posterior_mean.shape[0]
@@ -304,9 +329,14 @@ class GaussianDiffusionBeatGans:
             == posterior_log_variance_clipped.shape[0]
             == x_start.shape[0]
         ):
-            raise ValueError(
-                f"Shape mismatch: {posterior_mean.shape} vs {posterior_variance.shape} vs {posterior_log_variance_clipped.shape} vs {x_start.shape}"
+            msg: str = (
+                "Shape mismatch: "
+                f"{posterior_mean.shape} vs "
+                f"{posterior_variance.shape} vs "
+                f"{posterior_log_variance_clipped.shape} vs "
+                f"{x_start.shape}"
             )
+            raise ValueError(msg)
         return (
             posterior_mean,
             posterior_variance,
@@ -396,15 +426,16 @@ class GaussianDiffusionBeatGans:
                 _x = denoised_fn(_x)
             return _x.clamp(-1, 1) if clip_denoised else _x
 
-        if self.model_mean_type in [
-            ModelMeanType.eps,
-        ]:
-            if self.model_mean_type == ModelMeanType.eps:
+        pred_xstart = None
+        if self.model_mean_type in [ModelMeanType.eps]:
+            if self.model_mean_type == ModelMeanType.eps:  # TODO
                 pred_xstart = process_xstart(
-                    self._predict_xstart_from_eps(x_t=x, t=t, eps=model_output)
+                    self._predict_xstart_from_eps(x_t=x, t=t, eps=model_output),
                 )
             model_mean, _, _ = self.q_posterior_mean_variance(
-                x_start=pred_xstart, x_t=x, t=t
+                x_start=pred_xstart,
+                x_t=x,
+                t=t,
             )
         else:
             raise NotImplementedError(self.model_mean_type)
@@ -412,9 +443,14 @@ class GaussianDiffusionBeatGans:
         if not (
             model_mean.shape == model_log_variance.shape == pred_xstart.shape == x.shape
         ):
-            raise ValueError(
-                f"Shape mismatch: {model_mean.shape} vs {model_log_variance.shape} vs {pred_xstart.shape} vs {x.shape}"
+            msg: str = (
+                "Shape mismatch: "
+                f"{model_mean.shape} vs "
+                f"{model_log_variance.shape} vs "
+                f"{pred_xstart.shape} vs "
+                f"{x.shape}"
             )
+            raise ValueError(msg)
         return {
             "mean": model_mean,
             "variance": model_variance,
@@ -446,7 +482,9 @@ class GaussianDiffusionBeatGans:
 
     def _predict_xstart_from_scaled_xstart(self, t, scaled_xstart):
         return scaled_xstart * _extract_into_tensor(
-            self.sqrt_recip_alphas_cumprod, t, scaled_xstart.shape
+            self.sqrt_recip_alphas_cumprod,
+            t,
+            scaled_xstart.shape,
         )
 
     def _predict_eps_from_xstart(self, x_t, t, pred_xstart):
@@ -456,13 +494,12 @@ class GaussianDiffusionBeatGans:
         ) / _extract_into_tensor(self.sqrt_recipm1_alphas_cumprod, t, x_t.shape)
 
     def _predict_eps_from_scaled_xstart(self, x_t, t, scaled_xstart):
-        """
-        Args:
-            scaled_xstart: is supposed to be `sqrt(alphacum) * x_0`
-        """
+        # scaled_xstart: is supposed to be `sqrt(alphacum) * x_0`
         # 1 / sqrt(1-alphabar) * (x_t - scaled xstart)
         return (x_t - scaled_xstart) / _extract_into_tensor(
-            self.sqrt_one_minus_alphas_cumprod, t, x_t.shape
+            self.sqrt_one_minus_alphas_cumprod,
+            t,
+            x_t.shape,
         )
 
     def _scale_timesteps(self, t):
@@ -497,13 +534,17 @@ class GaussianDiffusionBeatGans:
 
         eps = self._predict_eps_from_xstart(x, t, p_mean_var["pred_xstart"])
         eps = eps - (1 - alpha_bar).sqrt() * cond_fn(
-            x, self._scale_timesteps(t), **model_kwargs
+            x,
+            self._scale_timesteps(t),
+            **model_kwargs,
         )
 
         out = p_mean_var.copy()
         out["pred_xstart"] = self._predict_xstart_from_eps(x, t, eps)
         out["mean"], _, _ = self.q_posterior_mean_variance(
-            x_start=out["pred_xstart"], x_t=x, t=t
+            x_start=out["pred_xstart"],
+            x_t=x,
+            t=t,
         )
         return out
 
@@ -548,7 +589,11 @@ class GaussianDiffusionBeatGans:
         )  # no noise when t == 0
         if cond_fn is not None:
             out["mean"] = self.condition_mean(
-                cond_fn, out, x, t, model_kwargs=model_kwargs
+                cond_fn,
+                out,
+                x,
+                t,
+                model_kwargs,
             )
         sample = out["mean"] + nonzero_mask * th.exp(0.5 * out["log_variance"]) * noise
         return {"sample": sample, "pred_xstart": out["pred_xstart"]}
@@ -716,9 +761,10 @@ class GaussianDiffusionBeatGans:
         NOTE: never used?
         """
         if not np.isclose(eta, 0.0, rtol=1e-09, atol=1e-09):
-            raise ValueError(
+            msg: str = (
                 f"eta must be 0, but got {eta}, Reverse ODE only for deterministic path"
             )
+            raise ValueError(msg)
         out = self.p_mean_variance(
             model,
             x,
@@ -767,7 +813,13 @@ class GaussianDiffusionBeatGans:
             t = th.tensor([i] * len(sample), device=device)
             with th.no_grad():
                 out = self.ddim_reverse_sample(
-                    model, sample, t, clip_denoised, denoised_fn, model_kwargs, eta
+                    model,
+                    sample,
+                    t,
+                    clip_denoised,
+                    denoised_fn,
+                    model_kwargs,
+                    eta,
                 )
                 sample = out["sample"]
                 # [1, ..., _t]
@@ -865,7 +917,14 @@ class GaussianDiffusionBeatGans:
             t = th.tensor([i] * len(img), device=device)
             with th.no_grad():
                 out = self.ddim_sample(
-                    model, img, t, clip_denoised, denoised_fn, cond_fn, _kwargs, eta
+                    model,
+                    img,
+                    t,
+                    clip_denoised,
+                    denoised_fn,
+                    cond_fn,
+                    _kwargs,
+                    eta,
                 )
                 out["t"] = t
                 yield out
@@ -891,7 +950,9 @@ class GaussianDiffusionBeatGans:
                  * 'pred_xstart': the x_0 predictions.
         """
         true_mean, _, true_log_variance_clipped = self.q_posterior_mean_variance(
-            x_start=x_start, x_t=x_t, t=t
+            x_start=x_start,
+            x_t=x_t,
+            t=t,
         )
         out = self.p_mean_variance(
             model,
@@ -909,10 +970,13 @@ class GaussianDiffusionBeatGans:
         kl = mean_flat(kl) / np.log(2.0)
 
         decoder_nll = -discretized_gaussian_log_likelihood(
-            x_start, means=out["mean"], log_scales=0.5 * out["log_variance"]
+            x_start,
+            means=out["mean"],
+            log_scales=0.5 * out["log_variance"],
         )
         if decoder_nll.shape != x_start.shape:
-            raise ValueError(f"Shape mismatch: {decoder_nll.shape} vs {x_start.shape}")
+            msg = f"Shape mismatch: {decoder_nll.shape} vs {x_start.shape}"
+            raise ValueError(msg)
         decoder_nll = mean_flat(decoder_nll) / np.log(2.0)
 
         # At the first timestep return the decoder NLL,
@@ -936,16 +1000,24 @@ class GaussianDiffusionBeatGans:
         t = th.tensor([self.num_timesteps - 1] * batch_size, device=x_start.device)
         qt_mean, _, qt_log_variance = self.q_mean_variance(x_start, t)
         kl_prior = normal_kl(
-            mean1=qt_mean, logvar1=qt_log_variance, mean2=0.0, logvar2=0.0
+            mean1=qt_mean,
+            logvar1=qt_log_variance,
+            mean2=0.0,
+            logvar2=0.0,
         )
         return mean_flat(kl_prior) / np.log(2.0)
 
     def calc_bpd_loop(
-        self, model: Model, x_start, clip_denoised=True, model_kwargs=None
+        self,
+        model: Model,
+        x_start,
+        clip_denoised=True,
+        model_kwargs=None,
     ):
         """
-        Compute the entire variational lower-bound, measured in bits-per-dim,
-        as well as other related quantities.
+        Compute the entire variational lower-bound.
+
+        Measured in bits-per-dim, as well as other related quantities.
 
         :param model: The model to evaluate loss on.
         :param x_start: The `[N × C × ...]` Tensor of inputs.
@@ -1054,32 +1126,38 @@ def get_named_beta_schedule(schedule_name, num_diffusion_timesteps):
         case "const0.0065":
             scale = 1000 / num_diffusion_timesteps
             return np.array(
-                [scale * 0.0065] * num_diffusion_timesteps, dtype=np.float64
+                [scale * 0.0065] * num_diffusion_timesteps,
+                dtype=np.float64,
             )
         case "const0.0055":
             scale = 1000 / num_diffusion_timesteps
             return np.array(
-                [scale * 0.0055] * num_diffusion_timesteps, dtype=np.float64
+                [scale * 0.0055] * num_diffusion_timesteps,
+                dtype=np.float64,
             )
         case "const0.0045":
             scale = 1000 / num_diffusion_timesteps
             return np.array(
-                [scale * 0.0045] * num_diffusion_timesteps, dtype=np.float64
+                [scale * 0.0045] * num_diffusion_timesteps,
+                dtype=np.float64,
             )
         case "const0.0035":
             scale = 1000 / num_diffusion_timesteps
             return np.array(
-                [scale * 0.0035] * num_diffusion_timesteps, dtype=np.float64
+                [scale * 0.0035] * num_diffusion_timesteps,
+                dtype=np.float64,
             )
         case "const0.0025":
             scale = 1000 / num_diffusion_timesteps
             return np.array(
-                [scale * 0.0025] * num_diffusion_timesteps, dtype=np.float64
+                [scale * 0.0025] * num_diffusion_timesteps,
+                dtype=np.float64,
             )
         case "const0.0015":
             scale = 1000 / num_diffusion_timesteps
             return np.array(
-                [scale * 0.0015] * num_diffusion_timesteps, dtype=np.float64
+                [scale * 0.0015] * num_diffusion_timesteps,
+                dtype=np.float64,
             )
         case _:
             raise NotImplementedError(f"unknown beta schedule: {schedule_name}")
@@ -1156,9 +1234,13 @@ def discretized_gaussian_log_likelihood(x, *, means, log_scales):
     :return: A tensor like x of log probabilities (in nats).
     """
     if not x.shape == means.shape == log_scales.shape:
-        raise ValueError(
-            f"Shape mismatch: x {x.shape}, means {means.shape}, log_scales {log_scales.shape}"
+        msg: str = (
+            "Shape mismatch: "
+            f"x {x.shape}, "
+            f"means {means.shape}, "
+            f"log_scales {log_scales.shape}"
         )
+        raise ValueError(msg)
     centered_x = x - means
     inv_stdv = th.exp(-log_scales)
     plus_in = inv_stdv * (centered_x + 1.0 / 255.0)

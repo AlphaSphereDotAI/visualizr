@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import NamedTuple, Tuple
+from typing import NamedTuple
 
 import torch
 from torch import nn
@@ -23,12 +23,10 @@ class LatentNetReturn(NamedTuple):
 
 @dataclass
 class MLPSkipNetConfig(BaseConfig):
-    """
-    default MLP for the latent DPM in the paper!
-    """
+    """Default MLP for the latent DPM in the paper."""
 
     num_channels: int
-    skip_layers: Tuple[int]
+    skip_layers: tuple[int]
     num_hid_channels: int
     num_layers: int
     num_time_emb_channels: int = 64
@@ -46,9 +44,9 @@ class MLPSkipNetConfig(BaseConfig):
 
 class MLPSkipNet(nn.Module):
     """
-    concat x to hidden layers
+    concat x to hidden layers.
 
-    default MLP for the latent DPM in the paper!
+    Default MLP for the latent DPM in the paper.
     """
 
     def __init__(self, conf: MLPSkipNetConfig):
@@ -98,7 +96,7 @@ class MLPSkipNet(nn.Module):
                     use_cond=cond,
                     condition_bias=conf.condition_bias,
                     dropout=dropout,
-                )
+                ),
             )
         self.last_act = conf.last_act.get_act()
 

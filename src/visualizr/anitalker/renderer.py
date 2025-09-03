@@ -46,11 +46,12 @@ def render_condition(
     if conf.train_mode != TrainMode.diffusion:
         raise NotImplementedError()
     if not conf.model_type.has_autoenc():
-        raise ValueError(
+        msg: str = (
             "TrainMode.diffusion requires an "
             "autoencoder-capable `model_type`; "
             f"got {conf.model_type!r}"
         )
+        raise ValueError(msg)
     return sampler.sample(
         model=model,
         noise=noisy_t,

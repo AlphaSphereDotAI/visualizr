@@ -1,7 +1,7 @@
 """This module contains the settings for the Visualizr app."""
 
 from pathlib import Path
-from sys import exit as sys_exit
+from sys import exit
 from typing import Literal
 
 from dotenv import load_dotenv
@@ -23,21 +23,20 @@ class DirectorySettings(BaseModel):
     base: DirectoryPath = Field(default_factory=lambda: Path.cwd())
     results: DirectoryPath = Field(default_factory=lambda: Path.cwd() / "results")
     frames: DirectoryPath = Field(
-        default_factory=lambda: Path.cwd() / "results" / "frames"
+        default_factory=lambda: Path.cwd() / "results" / "frames",
     )
     checkpoint: DirectoryPath = Field(default_factory=lambda: Path.cwd() / "ckpts")
     log: DirectoryPath = Field(default_factory=lambda: Path.cwd() / "logs")
     assets: DirectoryPath = Field(default_factory=lambda: Path.cwd() / "assets")
     image: DirectoryPath = Field(
-        default_factory=lambda: Path.cwd() / "assets" / "image"
+        default_factory=lambda: Path.cwd() / "assets" / "image",
     )
     audio: DirectoryPath = Field(
-        default_factory=lambda: Path.cwd() / "assets" / "audio"
+        default_factory=lambda: Path.cwd() / "assets" / "audio",
     )
     video: DirectoryPath = Field(
-        default_factory=lambda: Path.cwd() / "assets" / "video"
+        default_factory=lambda: Path.cwd() / "assets" / "video",
     )
-    tmp_extension: FilePath = Field(default=".tmp.mp4")
 
     @model_validator(mode="after")
     def create_missing_dirs(self) -> "DirectorySettings":
@@ -66,24 +65,24 @@ class DirectorySettings(BaseModel):
 
 class Checkpoint(BaseModel):
     stage_1: FilePath = Field(
-        default_factory=lambda: Path.cwd() / "ckpts" / "stage1.ckpt"
+        default_factory=lambda: Path.cwd() / "ckpts" / "stage1.ckpt",
     )
     mfcc_pose_only: FilePath = Field(
-        default_factory=lambda: Path.cwd() / "ckpts" / "stage2_pose_only_mfcc.ckpt"
+        default_factory=lambda: Path.cwd() / "ckpts" / "stage2_pose_only_mfcc.ckpt",
     )
     mfcc_full_control: FilePath = Field(
-        default_factory=lambda: Path.cwd()
-        / "ckpts"
-        / "stage2_more_controllable_mfcc.ckpt"
+        default_factory=lambda: Path.cwd() / "ckpts" / "stage2_full_control_mfcc.ckpt",
     )
     hubert_audio_only: FilePath = Field(
-        default_factory=lambda: Path.cwd() / "ckpts" / "stage2_audio_only_hubert.ckpt"
+        default_factory=lambda: Path.cwd() / "ckpts" / "stage2_audio_only_hubert.ckpt",
     )
     hubert_pose_only: FilePath = Field(
-        default_factory=lambda: Path.cwd() / "ckpts" / "stage2_pose_only_hubert.ckpt"
+        default_factory=lambda: Path.cwd() / "ckpts" / "stage2_pose_only_hubert.ckpt",
     )
     hubert_full_control: FilePath = Field(
-        default_factory=lambda: Path.cwd() / "ckpts" / "stage2_full_control_hubert.ckpt"
+        default_factory=lambda: Path.cwd()
+        / "ckpts"
+        / "stage2_full_control_hubert.ckpt",
     )
 
 
@@ -122,10 +121,10 @@ class ModelSettings(BaseModel):
     def check_image_path(self) -> "ModelSettings":
         if self.image_path and not self.image_path.exists():
             Error("Image path does not exist.")
-            sys_exit(0)
+            exit(0)
         if self.audio_path and not self.audio_path.exists():
             Error("Audio path does not exist.")
-            sys_exit(0)
+            exit(0)
         return self
 
 

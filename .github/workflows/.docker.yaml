@@ -96,7 +96,7 @@ jobs:
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
         with:
-          subject-name: ${{ inputs.registry }}/${{ github.repository }}
+          subject-name: ${{ inputs.registry == 'docker.io' && 'index.docker.io' || inputs.registry }}/${{ github.repository }}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
       - name: Update Docker Hub Description
@@ -153,8 +153,6 @@ jobs:
         image: ${{ needs.build_image.outputs.image_tag }}
         ports:
           - 7860:7860
-        env:
-          FASTEMBED_CACHE_PATH: "/home/nonroot/fastembed" # TODO
         options: >-
           --health-cmd "curl -o /dev/null -f -s -w 'Status: %{http_code}, Time: %{time_total}s' http://localhost:7860/" --health-interval 10s
           --health-timeout 10s --health-start-period 20s --health-retries 15
@@ -178,6 +176,7 @@ jobs:
         uses: pavelzw/pytest-action@510c5e90c360a185039bea56ce8b3e7e51a16507 # v2
         with:
           click-to-expand: false
+          custom-arguments: '-k test_app'
   clean:
     name: Cleaning GHCR
     needs:

@@ -17,6 +17,8 @@
       <excludeFolder url="file://$MODULE_DIR$/assets" />
       <excludeFolder url="file://$MODULE_DIR$/.vscode" />
       <excludeFolder url="file://$MODULE_DIR$/.idea/httpRequests" />
+      <excludeFolder url="file://$MODULE_DIR$/dist" />
+      <excludeFolder url="file://$MODULE_DIR$/gfpgan" />
     </content>
     <orderEntry type="jdk" jdkName="uv (visualizr)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />

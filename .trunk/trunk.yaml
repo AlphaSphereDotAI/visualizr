@@ -23,11 +23,11 @@ lint:
     - gitleaks@8.28.0
     - actionlint@1.7.7
     - bandit@1.8.6
-    - checkov@3.2.467
+    - checkov@3.2.469
     - git-diff-check
     - hadolint@2.12.1-beta
     - markdownlint@0.45.0
-    - renovate@41.90.1
+    - renovate@41.93.2
     - ruff@0.12.11:
         commands:
           - lint
