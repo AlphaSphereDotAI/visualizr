@@ -29,9 +29,7 @@ class TrainMode(Enum):
         return self.is_latent_diffusion()
 
     def require_dataset_infer(self):
-        """
-        whether training in this mode requires the latent variables to be available?
-        """
+        """Whether training in this mode requires latent variables to be available."""
         # this will precalculate all the latents beforehand,
         # and the dataset will be all the predicted latents.
         return self in [TrainMode.latent_diffusion, TrainMode.manipulate]
@@ -64,9 +62,7 @@ class ManipulateMode(Enum):
 
 
 class ModelType(Enum):
-    """
-    Kinds of the backbone models
-    """
+    """Kinds of the backbone models."""
 
     # unconditional ddpm
     ddpm = "ddpm"
@@ -81,9 +77,7 @@ class ModelType(Enum):
 
 
 class ModelName(Enum):
-    """
-    List of all supported model classes
-    """
+    """List of all supported model classes."""
 
     beatgans_ddpm = "beatgans_ddpm"
     beatgans_autoenc = "beatgans_autoenc"

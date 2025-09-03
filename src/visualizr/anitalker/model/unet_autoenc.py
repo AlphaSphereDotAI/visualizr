@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import NamedTuple, Optional, Tuple
+from typing import NamedTuple
 
 import torch
 from torch import Tensor, nn
@@ -15,12 +15,12 @@ from visualizr.anitalker.model.unet import BeatGANsEncoderConfig
 class BeatGANsAutoencConfig(BeatGANsUNetConfig):
     # number of style channels
     enc_out_channels: int = 512
-    enc_attn_resolutions: Optional[Tuple[int]] = None
+    enc_attn_resolutions: tuple[int] | None = None
     enc_pool: str = "depthconv"
     enc_num_res_block: int = 2
-    enc_channel_mult: Optional[Tuple[int]] = None
+    enc_channel_mult: tuple[int] | None = None
     enc_grad_checkpoint: bool = False
-    latent_net_conf: Optional[MLPSkipNetConfig] = None
+    latent_net_conf: MLPSkipNetConfig | None = None
 
     def make_model(self):
         return BeatGANsAutoencModel(self)
@@ -79,7 +79,7 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
         return torch.randn(n, self.conf.enc_out_channels, device=device)
 
     def noise_to_cond(self, noise: Tensor):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def encode(self, x):
         cond = self.encoder.forward(x)
@@ -100,9 +100,7 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
         return sizes
 
     def encode_stylespace(self, x, return_vector: bool = True):
-        """
-        encode to style space
-        """
+        """Encode to style space."""
         modules = (
             list(self.input_blocks.modules())
             + list(self.middle_block.modules())
@@ -160,7 +158,7 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
         if self.conf.resnet_two_cond:
             res = self.time_embed.forward(time_emb=_t_emb, cond=cond)
         else:
-            raise NotImplementedError()
+            raise NotImplementedError
         if self.conf.resnet_two_cond:
             # two cond: first = time emb, second = cond_emb
             emb = res.time_emb
@@ -171,12 +169,11 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
             cond_emb = None
 
         if (y is not None) != (self.conf.num_classes is not None):
-            raise ValueError(
-                "must specify y if and only if the model is class-conditional"
-            )
+            msg = "must specify y if and only if the model is class-conditional"
+            raise ValueError(msg)
 
         if self.conf.num_classes is not None:
-            raise NotImplementedError()
+            raise NotImplementedError
 
         # where in the model to supply time conditions
         enc_time_emb = emb
@@ -222,7 +219,10 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
                     lateral = None
 
                 h = self.output_blocks[k](
-                    h, emb=dec_time_emb, cond=dec_cond_emb, lateral=lateral
+                    h,
+                    emb=dec_time_emb,
+                    cond=dec_cond_emb,
+                    lateral=lateral,
                 )
                 k += 1
 
