@@ -1,4 +1,4 @@
-"""This module contains tests for the app's HTTP endpoints."""
+"""Tests for the app's HTTP endpoints."""
 
 from os import getenv
 from pathlib import Path
