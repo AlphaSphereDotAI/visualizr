@@ -37,7 +37,10 @@ def frames_to_video(
     audio = AudioFileClip(audio_path)
     final_video = video.set_audio(audio)
     final_video.write_videofile(
-        output_path.as_posix(), fps, "libx264", audio_codec="aac"
+        output_path.as_posix(),
+        fps,
+        "libx264",
+        audio_codec="aac",
     )
 
 
@@ -75,12 +78,14 @@ def remove_frames(frames_path: Path):
 def load_stage_2_model(conf: TrainConfig, stage_2_checkpoint_path: Path) -> LitModel:
     Info("Loading stage 2 model")
     if not stage_2_checkpoint_path.exists():
-        raise FileNotFoundError(f"Checkpoint not found: {stage_2_checkpoint_path}")
+        msg = f"Checkpoint not found: {stage_2_checkpoint_path}"
+        raise FileNotFoundError(msg)
     model = LitModel(conf)
     try:
         state = torch_load(stage_2_checkpoint_path, map_location="cpu")
     except Exception as e:
-        raise RuntimeError(f"Failed to load checkpoint: {e}") from e
+        msg = f"Failed to load checkpoint: {e}"
+        raise RuntimeError(msg) from e
     model.load_state_dict(state)
     model.ema_model.eval()
     model.ema_model.to("cuda")
@@ -139,14 +144,19 @@ def super_resolution(
     Info(f"Saving video at {tmp_predicted_video_512_path}")
     mimsave(
         tmp_predicted_video_512_path,
-        enhancer_list(predicted_video_256_path, bg_upsampler=None),
+        enhancer_list(
+            predicted_video_256_path,
+            bg_upsampler=None,
+        ),
         fps=25.0,
     )
     # Merge audio and video
-    video_clip = VideoFileClip(tmp_predicted_video_512_path)
-    audio_clip = AudioFileClip(predicted_video_256_path)
+    video_clip = VideoFileClip(tmp_predicted_video_512_path.as_posix())
+    audio_clip = AudioFileClip(predicted_video_256_path.as_posix())
     final_clip = video_clip.set_audio(audio_clip)
     final_clip.write_videofile(
-        predicted_video_512_path, codec="libx264", audio_codec="aac"
+        predicted_video_512_path.as_posix(),
+        codec="libx264",
+        audio_codec="aac",
     )
     tmp_predicted_video_512_path.unlink()

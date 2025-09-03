@@ -65,3 +65,6 @@ dev = [
     #    "pytest-mergify>=2025.8.20.1",
     "uv-build>=0.8.14",
 ]
+
+[tool.ruff]
+extend = ".trunk/configs/ruff.toml"
