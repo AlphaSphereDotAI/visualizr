@@ -68,7 +68,6 @@ class ResBlockConfig(BaseConfig):
     cond_emb_channels: int | None = None
     # suggest: False
     has_lateral: bool = False
-    lateral_channels: int | None = None
     # if to init the convolution with zero weights,
     # this is defaulted from BeatGANs and seems to help learning.
     use_zero_module: bool = True
@@ -105,8 +104,6 @@ class ResBlock(TimestepBlock):
         #############################
         # IN LAYERS
         #############################
-        if conf.lateral_channels is not None:  # TODO: remove this
-            raise ValueError("`lateral_channels` is not `None`")
         layers = [
             normalization(conf.channels),
             nn.SiLU(),
