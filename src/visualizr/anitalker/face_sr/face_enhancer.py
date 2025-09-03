@@ -231,12 +231,8 @@ def enhancer_generator_no_len(
     # determine model paths
     model_path: Path = GFPGAN_WEIGHTS / f"{model_name}.pth"
 
-    if not model_path.is_file():
-        # download pre-trained models from URL
-        model_path: str = url
-
     restorer = GFPGANer(
-        model_path=model_path if isinstance(model_path, str) else model_path.as_posix(),
+        model_path=model_path.as_posix() if model_path.is_file() else url,
         arch=arch,
         channel_multiplier=channel_multiplier,
         bg_upsampler=_bg_upsampler,
