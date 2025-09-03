@@ -7,7 +7,6 @@ generators to optimize memory usage.
 """
 
 from collections.abc import Generator, Iterator
-from os.path import isfile, join
 from pathlib import Path
 
 import cv2
@@ -34,19 +33,46 @@ RESTORE_FORMER_MODEL_URL: str = (
 CODE_FORMER_MODEL_URL: str = (
     f"{GH}/sczhou/CodeFormer/releases/download/v0.1.0/codeformer.pth"
 )
+GFPGAN_WEIGHTS = Path("gfpgan/weights")
+CHECKPOINTS = Path("checkpoints")
 
 
 class GeneratorWithLen:
     """From `https://stackoverflow.com/a/7460929`."""
 
     def __init__(self, gen: Iterator, length: int) -> None:
+        """
+        Initialize a `GeneratorWithLen` object.
+
+        Args:
+            gen: The generator or iterator to wrap.
+            length: The total number of items the generator can yield.
+        """
         self.gen: Iterator = gen
         self.length: int = length
 
     def __len__(self) -> int:
+        """
+        Return the length of the generator.
+
+        Allows the `GeneratorWithLen` object to report the total number of items
+        it can yield, which is useful for progress tracking and length queries.
+
+        Returns:
+            int: The total number of items in the generator.
+        """
         return self.length
 
     def __iter__(self) -> Iterator:
+        """
+        Return the iterator for the generator.
+
+        Allows the `GeneratorWithLen` object to be used in for-loops and other
+        iterator contexts.
+
+        Returns:
+            Iterator: The underlying generator object.
+        """
         return self.gen
 
 
@@ -135,9 +161,9 @@ def enhancer_generator_no_len(
         )
         raise ValueError(msg)
     Info("face enhancer....")
-    if not isinstance(images, list) and isfile(images):
+    if not isinstance(images, list) and images.is_file():
         # handle video to images
-        images = load_video_to_cv2(images)
+        images = load_video_to_cv2(images.as_posix())
     channel_multiplier: int | None = None
     model_name: str | None = None
     url: str | None = None
@@ -174,6 +200,7 @@ def enhancer_generator_no_len(
             _bg_upsampler = None
         else:
             model = RRDBNet(num_in_ch=3, num_out_ch=3, scale=2)
+            # need to set False in CPU mode
             _bg_upsampler = RealESRGANer(
                 scale=2,
                 model_path=REAL_ESRGAN_X_2_PLUS_MODEL_PATH,
@@ -181,22 +208,35 @@ def enhancer_generator_no_len(
                 tile=400,
                 pre_pad=0,
                 half=True,
-            )  # need to set False in CPU mode
+            )
     else:
         _bg_upsampler = None
 
+    if (
+        model_name is None
+        or url is None
+        or arch is None
+        or _bg_upsampler is None
+        or channel_multiplier is None
+    ):
+        msg: str = (
+            "`model_name`, `url`, `arch`, `_bg_upsampler`, "
+            "and `channel_multiplier` must be set"
+        )
+        raise ValueError(msg)
+
     # determine model paths
-    model_path = join("gfpgan/weights", f"{model_name}.pth")
+    model_path: Path = GFPGAN_WEIGHTS / f"{model_name}.pth"
 
-    if not isfile(model_path):
-        model_path = join("checkpoints", f"{model_name}.pth")
+    if not model_path.is_file():
+        model_path = CHECKPOINTS / f"{model_name}.pth"
 
-    if not isfile(model_path):
+    if not model_path.is_file():
         # download pre-trained models from URL
-        model_path = url
+        model_path: str = url
 
     restorer = GFPGANer(
-        model_path=model_path,
+        model_path=model_path if isinstance(model_path, str) else model_path.as_posix(),
         arch=arch,
         channel_multiplier=channel_multiplier,
         bg_upsampler=_bg_upsampler,
