@@ -4,9 +4,7 @@ from torch.nn.functional import conv2d, pad
 
 
 class AntiAliasInterpolation2d(nn.Module):
-    """
-    Band-limited downsampling, for better preservation of the input signal.
-    """
+    """Band-limited downsampling, for better preservation of the input signal."""
 
     def __init__(self, channels, scale):
         super(AntiAliasInterpolation2d, self).__init__()
@@ -22,7 +20,7 @@ class AntiAliasInterpolation2d(nn.Module):
         meshgrids = torch.meshgrid(
             [torch.arange(size, dtype=torch.float32) for size in kernel_size]
         )
-        for size, std, mgrid in zip(kernel_size, sigma, meshgrids):
+        for size, std, mgrid in zip(kernel_size, sigma, meshgrids, strict=False):
             mean = (size - 1) / 2
             kernel *= torch.exp(-((mgrid - mean) ** 2) / (2 * std**2))
 

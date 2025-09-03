@@ -88,7 +88,7 @@ class LitModel(LightningModule):
             return self.eval_sampler.sample(model=model, noise=noise, x_start=x_start)
 
     def setup(self) -> None:
-        """make datasets & seeding each worker"""
+        """Make datasets & seeding each worker."""
         ##############################################
         if self.conf.seed is not None:
             seed = self.conf.seed * get_world_size() + self.global_rank
@@ -104,7 +104,7 @@ class LitModel(LightningModule):
         Info(f"val data: {len(self.val_data)}")
 
     def _train_dataloader(self, drop_last=True):
-        """make the dataloader"""
+        """Make the dataloader."""
         # make sure to use the fraction of batch size
         # the batch size is global.
         conf = self.conf.clone()
@@ -113,7 +113,9 @@ class LitModel(LightningModule):
 
     def train_dataloader(self):
         """
-        return the dataloader if diffusion mode → return image dataset
+        Return the dataloader.
+
+        If diffusion mode → return image dataset
         if latent mode → return the inferred latent dataset.
         """
         Info("on train dataloader start ...")
@@ -137,9 +139,7 @@ class LitModel(LightningModule):
 
     @property
     def batch_size(self):
-        """
-        local batch size for each worker
-        """
+        """Local batch size for each worker."""
         ws = get_world_size()
         if self.conf.batch_size % ws != 0:
             raise ValueError("batch size must be divisible by world size")
@@ -147,24 +147,22 @@ class LitModel(LightningModule):
 
     @property
     def num_samples(self):
-        """(global) batch size * iterations"""
+        """(global) batch size * iterations."""
         # Batch size here is global.
         # `global_step` already takes into account the accum batches.
         return self.global_step * self.conf.batch_size_effective
 
     def is_last_accum(self, batch_idx):
         """
-        is it the last gradient accumulation loop?
-        used with gradient_accum > 1 and to see if the optimizer will perform “step”
+        If it is the last gradient accumulation loop.
+
+        Used with `gradient_accum > 1` and to see if the optimizer will perform “step”
         in this iteration or not.
         """
         return (batch_idx + 1) % self.conf.accum_batches == 0
 
     def training_step(self, batch, batch_idx):
-        """
-        given an input, calculate the loss function
-        no optimization at this stage.
-        """
+        """Calculate the loss function. No optimization at this stage."""
         with amp.autocast(False):
             motion_start = batch["motion_start"]  # Size [B, 512]
             motion_direction = batch["motion_direction"]  # Size [B, 125, 20]
@@ -189,7 +187,7 @@ class LitModel(LightningModule):
                     t=t,
                 )
             else:
-                raise NotImplementedError()
+                raise NotImplementedError
 
             loss = losses["loss"].mean()
             # divide by accum batches to make the accumulated gradient exact.
@@ -198,17 +196,21 @@ class LitModel(LightningModule):
 
             if self.global_rank == 0:
                 self.logger.experiment.add_scalar(
-                    "loss", losses["loss"], self.num_samples
+                    "loss",
+                    losses["loss"],
+                    self.num_samples,
                 )
                 for key in losses:
                     self.logger.experiment.add_scalar(
-                        f"loss/{key}", losses[key], self.num_samples
+                        f"loss/{key}",
+                        losses[key],
+                        self.num_samples,
                     )
 
         return {"loss": loss}
 
     def on_train_batch_end(self, outputs, batch, batch_idx: int) -> None:
-        """after each training step"""
+        """After each training step."""
         if self.is_last_accum(batch_idx):
             if self.conf.train_mode == TrainMode.latent_diffusion:
                 # it trains only the latent hence change only the latent
@@ -243,7 +245,8 @@ class LitModel(LightningModule):
         out = {"optimizer": optim}
         if self.conf.warmup > 0:
             sched = torch.optim.lr_scheduler.LambdaLR(
-                optim, lr_lambda=WarmupLR(self.conf.warmup)
+                optim,
+                lr_lambda=WarmupLR(self.conf.warmup),
             )
             out["lr_scheduler"] = {"scheduler": sched, "interval": "step"}
         return out
@@ -255,7 +258,8 @@ class LitModel(LightningModule):
         Args:
             x: (n, c)
 
-        Returns: x: (`n_local`, c)
+        Returns:
+            x: (`n_local`, c)
         """
         n = len(x)
         rank = self.global_rank
@@ -269,7 +273,7 @@ def ema(source, target, decay):
     target_dict = target.state_dict()
     for key in source_dict.keys():
         target_dict[key].data.copy_(
-            target_dict[key].data * decay + source_dict[key].data * (1 - decay)
+            target_dict[key].data * decay + source_dict[key].data * (1 - decay),
         )
 
 
