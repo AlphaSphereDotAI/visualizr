@@ -1,6 +1,5 @@
 import math
 from dataclasses import dataclass
-from typing import NamedTuple
 
 import numpy as np
 import torch as th
@@ -1097,16 +1096,3 @@ def discretized_gaussian_log_likelihood(x, *, means, log_scales):
     if log_probs.shape != x.shape:
         raise ValueError(f"Shape mismatch: {log_probs.shape} vs {x.shape}")
     return log_probs
-
-
-class DummyModel(th.nn.Module):
-    def __init__(self, pred):
-        super().__init__()
-        self.pred = pred
-
-    def forward(self):
-        return DummyReturn(pred=self.pred)
-
-
-class DummyReturn(NamedTuple):
-    pred: th.Tensor

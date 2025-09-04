@@ -1,13 +1,9 @@
 import copy
-import os
 
 import numpy as np
 import torch
 from gradio import Info
-from pytorch_lightning import LightningModule, Trainer, seed_everything
-from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
-from pytorch_lightning.loggers import TensorBoardLogger
-from pytorch_lightning.strategies import DDPStrategy
+from pytorch_lightning import LightningModule, seed_everything
 from torch.cuda import amp
 from torch.utils.data.dataset import TensorDataset
 
@@ -143,64 +139,3 @@ class LitModel(LightningModule):
         if self.conf.batch_size % ws != 0:
             raise ValueError("batch size must be divisible by world size")
         return self.conf.batch_size // ws
-
-
-class WarmupLR:
-    def __init__(self, warmup) -> None:
-        self.warmup = warmup
-
-    def __call__(self, step):
-        return min(step, self.warmup) / self.warmup
-
-
-def train(conf: TrainConfig, gpus, nodes=1):
-    Info(f"conf: {conf.name}")
-    model = LitModel(conf)
-
-    if not os.path.exists(conf.logdir):
-        os.makedirs(conf.logdir)
-    checkpoint = ModelCheckpoint(
-        dirpath=f"{conf.logdir}",
-        save_last=True,
-        save_top_k=-1,
-        every_n_epochs=10,
-    )
-    checkpoint_path = f"{conf.logdir}/last.ckpt"
-    Info(f"ckpt path: {checkpoint_path}")
-    if os.path.exists(checkpoint_path):
-        resume = checkpoint_path
-        Info("resume!")
-    else:
-        resume = conf.continue_from.pathcd if conf.continue_from is not None else None
-    tb_logger = TensorBoardLogger(save_dir=conf.logdir, name=None, version="")
-
-    # from pytorch_lightning.
-
-    plugins = []
-    if len(gpus) == 1 and nodes == 1:
-        accelerator = None
-    else:
-        accelerator = "ddp"
-        # important for working with gradient checkpoint
-        plugins.append(DDPStrategy(find_unused_parameters=True))
-
-    trainer = Trainer(
-        max_steps=conf.total_samples // conf.batch_size_effective,
-        resume_from_checkpoint=resume,
-        gpus=gpus,
-        num_nodes=nodes,
-        accelerator=accelerator,
-        precision=16 if conf.fp16 else 32,
-        callbacks=[
-            checkpoint,
-            LearningRateMonitor(),
-        ],
-        # clip in the model instead
-        # gradient_clip_val=conf.grad_clip,
-        replace_sampler_ddp=True,
-        logger=tb_logger,
-        accumulate_grad_batches=conf.accum_batches,
-        plugins=plugins,
-    )
-
-    trainer.fit(model)

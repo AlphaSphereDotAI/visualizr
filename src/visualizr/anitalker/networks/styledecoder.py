@@ -141,24 +141,6 @@ def upfirdn2d(_input, kernel, up=1, down=1, _pad=(0, 0)):
     )
 
 
-class PixelNorm(nn.Module):
-    def __init__(self):
-        super().__init__()
-
-    @staticmethod
-    def forward(_input):
-        return _input * torch.rsqrt(torch.mean(_input**2, dim=1, keepdim=True) + 1e-8)
-
-
-class MotionPixelNorm(nn.Module):
-    def __init__(self):
-        super().__init__()
-
-    @staticmethod
-    def forward(_input):
-        return _input * torch.rsqrt(torch.mean(_input**2, dim=2, keepdim=True) + 1e-8)
-
-
 def make_kernel(k):
     """
     Create a 2D convolution kernel tensor from 1D or 2D input.
