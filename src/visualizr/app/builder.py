@@ -139,7 +139,7 @@ class App:
         )
 
         frame_end: int = 0
-        audio_driven: Tensor | None = None  # TODO
+        audio_driven: Tensor | None = None
 
         if conf.infer_type.startswith("mfcc"):
             # MFCC features
@@ -184,7 +184,7 @@ class App:
             feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained(
                 hubert_model_path,
             )
-            audio_model.feature_extractor._freeze_parameters()
+            audio_model.feature_extractor._freeze_parameters()  # noqa: SLF001
             audio_model.eval()
 
             # hubert model forward pass

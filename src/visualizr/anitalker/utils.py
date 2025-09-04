@@ -2,7 +2,7 @@ from importlib.util import find_spec
 from pathlib import Path
 from typing import Literal
 
-from gradio import Error, Info
+from gradio import Info
 from imageio import mimsave
 from moviepy.editor import (
     AudioFileClip,
@@ -26,11 +26,8 @@ def check_package_installed(package_name: str) -> bool:
 
 
 def frames_to_video(
-    input_path: Path,
-    audio_path: Path,
-    output_path: Path,
-    fps: int = 25,
-):
+    input_path: Path, audio_path: Path, output_path: Path, fps: int = 25
+) -> None:
     image_files = [input_path / img for img in sorted(input_path.iterdir())]
     clips = [ImageClip(m.as_posix()).set_duration(1 / fps) for m in image_files]
     video = concatenate_videoclips(clips, method="compose")
@@ -65,14 +62,10 @@ def saved_image(img_tensor: Tensor, img_path: Path) -> None:
     img.save(img_path)
 
 
-def remove_frames(frames_path: Path):
+def remove_frames(frames_path: Path) -> None:
     for frame in frames_path.iterdir():
-        try:
-            frame.unlink()
-            Info(f"Deleted {frame}")
-        except OSError:
-            Error(f"Error while deleting file {frame}")
-            continue
+        frame.unlink()
+        Info(f"Deleted {frame}")
 
 
 def load_stage_2_model(conf: TrainConfig, stage_2_checkpoint_path: Path) -> LitModel:

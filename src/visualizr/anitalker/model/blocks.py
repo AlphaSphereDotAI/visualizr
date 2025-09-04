@@ -147,7 +147,7 @@ class ResBlock(TimestepBlock):
 
             # construct the layers
             # - norm
-            # - (modulation)
+            # - modulation
             # - act
             # - dropout
             # - conv
