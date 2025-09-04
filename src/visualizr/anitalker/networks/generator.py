@@ -20,14 +20,12 @@ class Generator(nn.Module):
         # encoder
         self.enc = Encoder(size, style_dim, motion_dim)
         self.dec = Synthesis(
-            size, style_dim, motion_dim, blur_kernel, channel_multiplier
+            size,
+            style_dim,
+            motion_dim,
+            blur_kernel,
+            channel_multiplier,
         )
-
-    def get_direction(self):
-        return self.dec.direction(None)
-
-    def synthesis(self, wa, alpha, feat):
-        return self.dec(wa, alpha, feat)
 
     def forward(self, img_source, img_drive, h_start=None):
         wa, alpha, feats = self.enc(img_source, img_drive, h_start)

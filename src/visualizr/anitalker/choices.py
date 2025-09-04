@@ -12,16 +12,6 @@ class TrainMode(Enum):
     # Fitting a DDPM to a given latent.
     latent_diffusion = "latentdiffusion"
 
-    def is_manipulate(self):
-        return self in [TrainMode.manipulate]
-
-    def is_diffusion(self):
-        return self in [TrainMode.diffusion, TrainMode.latent_diffusion]
-
-    def is_autoenc(self):
-        # the network possibly does autoencoding
-        return self in [TrainMode.diffusion]
-
     def is_latent_diffusion(self):
         return self in [TrainMode.latent_diffusion]
 
@@ -44,22 +34,6 @@ class ManipulateMode(Enum):
     d2c_fewshot = "d2cfewshot"
     d2c_fewshot_allneg = "d2cfewshotallneg"
 
-    def is_celeba_attr(self):
-        return self in [
-            ManipulateMode.d2c_fewshot,
-            ManipulateMode.d2c_fewshot_allneg,
-            ManipulateMode.celebahq_all,
-        ]
-
-    def is_single_class(self):
-        return self in [ManipulateMode.d2c_fewshot, ManipulateMode.d2c_fewshot_allneg]
-
-    def is_fewshot(self):
-        return self in [ManipulateMode.d2c_fewshot, ManipulateMode.d2c_fewshot_allneg]
-
-    def is_fewshot_allneg(self):
-        return self in [ManipulateMode.d2c_fewshot_allneg]
-
 
 class ModelType(Enum):
     """Kinds of the backbone models."""
@@ -71,9 +45,6 @@ class ModelType(Enum):
 
     def has_autoenc(self):
         return self in [ModelType.autoencoder]
-
-    def can_sample(self):
-        return self in [ModelType.ddpm]
 
 
 class ModelName(Enum):

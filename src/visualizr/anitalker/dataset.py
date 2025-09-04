@@ -3,7 +3,6 @@ from random import randint
 
 import numpy as np
 from librosa import load as librosa_load
-from PIL import Image
 from python_speech_features import delta, mfcc
 from torchvision.transforms import Compose, Normalize, Resize, ToTensor
 from tqdm import tqdm
@@ -176,35 +175,20 @@ class LatentDataLoader:
 
         print("Db count:", len(self.data))
 
-    def get_single_image(self, image_path):
-        """
-        Load an image from a given path, convert it to RGB format,
-        apply the configured transform, and return the processed image.
-
-        Args:
-            image_path (str): Path to the image file.
-
-        Returns:
-            Tensor: Transformed image tensor in RGB format.
-        """
-        img_source = Image.open(image_path).convert("RGB")
-        return self.transform(img_source)
-
     @staticmethod
     def get_multiple_ranges(lists, multi_ranges):
         """
         Extract elements from a list based on multiple start-end index ranges.
 
         Args:
-            lists (list): The list from which to extract elements.
-            multi_ranges (list of tuple): List of (start, end) index tuples.
+            lists: The list from which to extract elements.
+            multi_ranges: List of (start, end) index tuples.
 
         Returns:
             list: Flattened list of extracted elements from the specified ranges.
 
         Raises:
             ValueError: If `multi_ranges` is not a list of (start, end) tuples.
-
         """
         # Ensure that `multi_ranges` is a list of tuples
         if not all(isinstance(item, tuple) and len(item) == 2 for item in multi_ranges):

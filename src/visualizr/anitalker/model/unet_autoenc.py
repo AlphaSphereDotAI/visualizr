@@ -1,11 +1,9 @@
 from dataclasses import dataclass
 from typing import NamedTuple
 
-import torch
 from torch import Tensor, nn
 
 from visualizr.anitalker.model import BeatGANsUNetConfig, BeatGANsUNetModel
-from visualizr.anitalker.model.blocks import ResBlock
 from visualizr.anitalker.model.latentnet import MLPSkipNetConfig
 from visualizr.anitalker.model.nn import timestep_embedding
 from visualizr.anitalker.model.unet import BeatGANsEncoderConfig
@@ -63,59 +61,12 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
         if conf.latent_net_conf is not None:
             self.latent_net = conf.latent_net_conf.make_model()
 
-    @staticmethod
-    def reparameterize(mu: Tensor, logvar: Tensor) -> Tensor:
-        """
-        Reparameterization trick to sample from N(mu, var) from N(0,1).
-        :param mu: (Tensor) Mean of the latent Gaussian [B × D]
-        :param logvar: (Tensor) Standard deviation of the latent Gaussian [B × D]
-        :return: (Tensor) [B × D]
-        """
-        std = torch.exp(0.5 * logvar)
-        eps = torch.randn_like(std)
-        return eps * std + mu
-
-    def sample_z(self, n: int, device):
-        return torch.randn(n, self.conf.enc_out_channels, device=device)
-
     def noise_to_cond(self, noise: Tensor):
         raise NotImplementedError
 
     def encode(self, x):
         cond = self.encoder.forward(x)
         return {"cond": cond}
-
-    @property
-    def stylespace_sizes(self):
-        modules = (
-            list(self.input_blocks.modules())
-            + list(self.middle_block.modules())
-            + list(self.output_blocks.modules())
-        )
-        sizes = []
-        for module in modules:
-            if isinstance(module, ResBlock):
-                _linear = module.cond_emb_layers[-1]
-                sizes.append(_linear.weight.shape[0])
-        return sizes
-
-    def encode_stylespace(self, x, return_vector: bool = True):
-        """Encode to style space."""
-        modules = (
-            list(self.input_blocks.modules())
-            + list(self.middle_block.modules())
-            + list(self.output_blocks.modules())
-        )
-        # (n, c)
-        cond = self.encoder.forward(x)
-        _s = []
-        for module in modules:
-            if isinstance(module, ResBlock):
-                # (n, c')
-                s = module.cond_emb_layers.forward(cond)
-                _s.append(s)
-
-        return torch.cat(_s, dim=1) if return_vector else _s
 
     def forward(
         self,

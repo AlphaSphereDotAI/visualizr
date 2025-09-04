@@ -1,4 +1,4 @@
-from torch import distributed
+from torch import Tensor, distributed
 
 
 def barrier():
@@ -11,7 +11,7 @@ def broadcast(data, src):
         distributed.broadcast(data, src)
 
 
-def all_gather(data: list, src):
+def all_gather(data: list, src: Tensor):
     if distributed.is_initialized():
         distributed.all_gather(data, src)
     else:
@@ -24,8 +24,3 @@ def get_rank():
 
 def get_world_size():
     return distributed.get_world_size() if distributed.is_initialized() else 1
-
-
-def chunk_size(size, rank, world_size):
-    extra = rank < size % world_size
-    return size // world_size + extra

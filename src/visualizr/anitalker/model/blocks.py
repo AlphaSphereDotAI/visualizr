@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from enum import Enum
 from numbers import Number
 
-import numpy as np
 import torch as th
 from torch import nn
 from torch.nn.functional import interpolate
@@ -425,7 +424,7 @@ class AttentionBlock(nn.Module):
         else:
             raise ValueError(
                 f"q,k,v channels {channels} is not "
-                + "divisible by `num_head_channels` {num_head_channels}"
+                "divisible by `num_head_channels` {num_head_channels}",
             )
         self.use_checkpoint = use_checkpoint
         self.norm = normalization(channels)
@@ -449,28 +448,6 @@ class AttentionBlock(nn.Module):
         h = self.attention(qkv)
         h = self.proj_out(h)
         return (x + h).reshape(b, c, *spatial)
-
-
-def count_flops_attn(model, _x, y):
-    """
-    A counter for the `thop` package to count the operations in an
-    attention operation.
-    Meant to be used like:
-    ```
-        macs, params = thop.profile(
-            model,
-            inputs=(inputs, timestamps),
-            custom_ops={QKVAttention: QKVAttention.count_flops},
-        )
-    ```
-    """
-    b, c, *spatial = y[0].shape
-    num_spatial = int(np.prod(spatial))
-    # We perform two matmul with the same number of ops.
-    # The first computes the weight matrix, the second computes
-    # the combination of the value vectors.
-    matmul_ops = 2 * b * (num_spatial**2) * c
-    model.total_ops += th.DoubleTensor([matmul_ops])
 
 
 class QKVAttentionLegacy(nn.Module):
@@ -498,10 +475,6 @@ class QKVAttentionLegacy(nn.Module):
         weight = th.softmax(weight.float(), dim=-1).type(weight.dtype)
         a = th.einsum("bts,bcs->bct", weight, v)
         return a.reshape(bs, -1, length)
-
-    @staticmethod
-    def count_flops(model, _x, y):
-        return count_flops_attn(model, _x, y)
 
 
 class QKVAttention(nn.Module):
@@ -532,10 +505,6 @@ class QKVAttention(nn.Module):
         weight = th.softmax(weight.float(), dim=-1).type(weight.dtype)
         a = th.einsum("bts,bcs->bct", weight, v.reshape(bs * self.n_heads, ch, length))
         return a.reshape(bs, -1, length)
-
-    @staticmethod
-    def count_flops(model, _x, y):
-        return count_flops_attn(model, _x, y)
 
 
 class AttentionPool2d(nn.Module):

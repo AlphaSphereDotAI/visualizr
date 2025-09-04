@@ -506,7 +506,3 @@ class BeatGANsEncoderModel(nn.Module):
         h = self.out(h)
 
         return (h, h_2d) if return_2d_feature else h
-
-    def forward_flatten(self, x):
-        """Transform the last 2D feature into a flattened vector."""
-        return self.out(x)

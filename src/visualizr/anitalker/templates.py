@@ -1,5 +1,5 @@
 from visualizr.anitalker.choices import GenerativeType, ModelName
-from visualizr.anitalker.config import PretrainConfig, TrainConfig
+from visualizr.anitalker.config import TrainConfig
 
 
 def ddpm():
@@ -52,15 +52,6 @@ def autoenc_base():
     conf.T_eval = 20
     conf.T = 1000
     conf.make_model_conf()
-    return conf
-
-
-def ffhq64_ddpm():
-    conf = ddpm()
-    conf.data_name = "ffhqlmdb256"
-    conf.warmup = 0
-    conf.total_samples = 72_000_000
-    conf.scale_up_gpus(4)
     return conf
 
 
@@ -234,65 +225,4 @@ def bedroom128_autoenc():
     conf.eval_every_samples = 10_000_000
     conf.total_samples = 120_000_000
     conf.name = "bedroom128_autoenc"
-    return conf
-
-
-def pretrain_celeba64d2c_72M():
-    conf = celeba64d2c_autoenc()
-    conf.pretrain = PretrainConfig(
-        name="72M",
-        path=f"checkpoints/{celeba64d2c_autoenc().name}/last.ckpt",
-    )
-    conf.latent_infer_path = f"checkpoints/{celeba64d2c_autoenc().name}/latent.pkl"
-    return conf
-
-
-def pretrain_ffhq128_autoenc72M():
-    conf = ffhq128_autoenc_base()
-    conf.postfix = ""
-    conf.pretrain = PretrainConfig(
-        name="72M",
-        path=f"checkpoints/{ffhq128_autoenc_72M().name}/last.ckpt",
-    )
-    conf.latent_infer_path = f"checkpoints/{ffhq128_autoenc_72M().name}/latent.pkl"
-    return conf
-
-
-def pretrain_ffhq128_autoenc130M():
-    conf = ffhq128_autoenc_base()
-    conf.pretrain = PretrainConfig(
-        name="130M",
-        path=f"checkpoints/{ffhq128_autoenc_130M().name}/last.ckpt",
-    )
-    conf.latent_infer_path = f"checkpoints/{ffhq128_autoenc_130M().name}/latent.pkl"
-    return conf
-
-
-def pretrain_ffhq256_autoenc():
-    conf = ffhq256_autoenc()
-    conf.pretrain = PretrainConfig(
-        name="90M",
-        path=f"checkpoints/{ffhq256_autoenc().name}/last.ckpt",
-    )
-    conf.latent_infer_path = f"checkpoints/{ffhq256_autoenc().name}/latent.pkl"
-    return conf
-
-
-def pretrain_horse128():
-    conf = horse128_autoenc()
-    conf.pretrain = PretrainConfig(
-        name="82M",
-        path=f"checkpoints/{horse128_autoenc().name}/last.ckpt",
-    )
-    conf.latent_infer_path = f"checkpoints/{horse128_autoenc().name}/latent.pkl"
-    return conf
-
-
-def pretrain_bedroom128():
-    conf = bedroom128_autoenc()
-    conf.pretrain = PretrainConfig(
-        name="120M",
-        path=f"checkpoints/{bedroom128_autoenc().name}/last.ckpt",
-    )
-    conf.latent_infer_path = f"checkpoints/{bedroom128_autoenc().name}/latent.pkl"
     return conf
