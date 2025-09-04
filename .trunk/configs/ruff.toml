@@ -13,7 +13,7 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 combine-as-imports = true
 
 [lint.per-file-ignores]
-"test_app.py" = ["S101"]
+"test_app.py" = ["INP001", "S101"]
 
 [format]
 quote-style = "double"
