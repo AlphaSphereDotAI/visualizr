@@ -1,6 +1,6 @@
 [project]
 name = "visualizr"
-version = "0.0.3"
+version = "0.0.4"
 description = "Video Generator part of the Chatacter Backend"
 readme = "README.md"
 authors = [
