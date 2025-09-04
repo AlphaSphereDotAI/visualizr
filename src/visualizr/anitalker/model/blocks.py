@@ -416,10 +416,11 @@ class AttentionBlock(nn.Module):
         elif channels % num_head_channels == 0:
             self.num_heads = channels // num_head_channels
         else:
-            raise ValueError(
+            msg: str = (
                 f"q,k,v channels {channels} is not "
-                "divisible by `num_head_channels` {num_head_channels}",
+                f"divisible by `num_head_channels` {num_head_channels}"
             )
+            raise ValueError(msg)
         self.use_checkpoint = use_checkpoint
         self.norm = normalization(channels)
         self.qkv = conv_nd(1, channels, channels * 3, 1)
