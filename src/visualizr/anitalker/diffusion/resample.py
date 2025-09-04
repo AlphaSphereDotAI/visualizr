@@ -4,18 +4,6 @@ import numpy as np
 import torch as th
 
 
-def create_named_schedule_sampler(name, diffusion):
-    """
-    Create a ScheduleSampler from a library of pre-defined samplers.
-
-    :param name: The name of the sampler.
-    :param diffusion: The diffusion object to sample for.
-    """
-    if name != "uniform":
-        raise NotImplementedError(f"unknown schedule sampler: {name}")
-    return UniformSampler(diffusion)
-
-
 class ScheduleSampler(ABC):
     """
     A distribution over timesteps in the diffusion process, intended to reduce

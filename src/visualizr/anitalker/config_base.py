@@ -1,4 +1,3 @@
-from copy import deepcopy
 from dataclasses import dataclass
 from functools import lru_cache
 from json import dump, dumps, load
@@ -16,10 +15,6 @@ class BaseConfig:
     Inherit settings from another config, propagate setting to nested configs,
     and serialize/deserialize configurations to/from JSON.
     """
-
-    def clone(self):
-        """Return a deep copy of this configuration."""
-        return deepcopy(self)
 
     def inherit(self, another):
         """Inherit common keys from a given config."""

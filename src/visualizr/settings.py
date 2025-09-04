@@ -6,13 +6,7 @@ from typing import Literal
 
 from dotenv import load_dotenv
 from gradio import Error, Info
-from pydantic import (
-    BaseModel,
-    DirectoryPath,
-    Field,
-    FilePath,
-    model_validator,
-)
+from pydantic import BaseModel, DirectoryPath, Field, FilePath, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from torch.cuda import is_available
 

@@ -21,7 +21,16 @@ class FusedLeakyReLU(nn.Module):
 
 
 def upfirdn2d_native(
-    _input, kernel, up_x, up_y, down_x, down_y, pad_x0, pad_x1, pad_y0, pad_y1
+    _input,
+    kernel,
+    up_x,
+    up_y,
+    down_x,
+    down_y,
+    pad_x0,
+    pad_x1,
+    pad_y0,
+    pad_y1,
 ):
     _, minor, in_h, in_w = _input.shape
     kernel_h, kernel_w = kernel.shape
@@ -39,7 +48,7 @@ def upfirdn2d_native(
     ]
 
     out = out.reshape(
-        [-1, 1, in_h * up_y + pad_y0 + pad_y1, in_w * up_x + pad_x0 + pad_x1]
+        [-1, 1, in_h * up_y + pad_y0 + pad_y1, in_w * up_x + pad_x0 + pad_x1],
     )
     w = flip(kernel, [0, 1]).view(1, 1, kernel_h, kernel_w)
     out = conv2d(out, w)
@@ -55,7 +64,16 @@ def upfirdn2d_native(
 
 def upfirdn2d(_input, kernel, up=1, down=1, _pad=(0, 0)):
     return upfirdn2d_native(
-        _input, kernel, up, up, down, down, _pad[0], _pad[1], _pad[0], _pad[1]
+        _input,
+        kernel,
+        up,
+        up,
+        down,
+        down,
+        _pad[0],
+        _pad[1],
+        _pad[0],
+        _pad[1],
     )
 
 
@@ -110,7 +128,7 @@ class EqualConv2d(nn.Module):
         super().__init__()
 
         self.weight = nn.Parameter(
-            randn(out_channel, in_channel, kernel_size, kernel_size)
+            randn(out_channel, in_channel, kernel_size, kernel_size),
         )
         self.scale = 1 / sqrt(in_channel * kernel_size**2)
 
@@ -207,7 +225,7 @@ class ConvLayer(nn.Sequential):
                 padding=self.padding,
                 stride=stride,
                 bias=bias and not activate,
-            )
+            ),
         )
 
         if activate:
@@ -291,7 +309,7 @@ class EncoderApp(nn.Module):
         if self.fusion_type != "weighted_sum":
             raise ValueError(
                 f"Unsupported `fusion_type`: {self.fusion_type}. "
-                "Expected 'weighted_sum'."
+                "Expected 'weighted_sum'.",
             )
         Info("HAL layer is enabled!")
         self.adaptive_pool = nn.AdaptiveAvgPool2d((1, 1))
@@ -373,18 +391,6 @@ class Encoder(nn.Module):
         fc.append(EqualLinear(dim, dim_motion))
         self.fc = nn.Sequential(*fc)
 
-    def enc_app(self, x):
-        return self.net_app(x)
-
-    def enc_motion(self, x):
-        h, _ = self.net_app(x)
-        return self.fc(h)
-
-    def encode_image_obj(self, image_obj):
-        feat, _ = self.net_app(image_obj)
-        id_emb, idrm_emb, id_density_emb = self.net_decouping(feat)
-        return id_emb, idrm_emb, id_density_emb
-
     def forward(self, input_source, input_target, input_face, input_aug):
         h_target_motion_target = None
         h_another_face_target = None
@@ -414,10 +420,10 @@ class Encoder(nn.Module):
                 self.net_decouping(h_target)
             )
             h_face_id_emb, h_face_idrm_emb, h_face_id_density_emb = self.net_decouping(
-                h_face
+                h_face,
             )
             h_aug_id_emb, h_aug_idrm_emb, h_aug_id_density_emb = self.net_decouping(
-                h_aug
+                h_aug,
             )
 
             h_target_motion_target = self.fc(h_target_idrm_emb)

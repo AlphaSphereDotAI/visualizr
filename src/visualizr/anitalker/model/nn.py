@@ -54,30 +54,10 @@ def avg_pool_nd(dims, *args, **kwargs):
     raise ValueError(msg)
 
 
-def update_ema(target_params, source_params, rate=0.99):
-    """
-    Update target parameters to be closer to those of source parameters using
-    an exponential moving average.
-
-    :param target_params: The target parameter sequence.
-    :param source_params: The source parameter sequence.
-    :param rate: The EMA rate (closer to 1 means slower).
-    """
-    for targ, src in zip(target_params, source_params, strict=False):
-        targ.detach().mul_(rate).add_(src, alpha=1 - rate)
-
-
 def zero_module(module):
     """Zero out the parameters of a module and return it."""
     for p in module.parameters():
         p.detach().zero_()
-    return module
-
-
-def scale_module(module, scale):
-    """Scale the parameters of a module and return it."""
-    for p in module.parameters():
-        p.detach().mul_(scale)
     return module
 
 
