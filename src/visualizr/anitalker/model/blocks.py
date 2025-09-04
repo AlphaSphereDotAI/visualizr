@@ -60,7 +60,6 @@ class ResBlockConfig(BaseConfig):
     two_cond: bool = False
     # number of encoders' output channels
     cond_emb_channels: int | None = None
-    # suggest: False
     has_lateral: bool = False
     # if to init the convolution with zero weights,
     # this is defaulted from BeatGANs and seems to help learning.
