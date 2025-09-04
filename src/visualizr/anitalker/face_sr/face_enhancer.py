@@ -6,7 +6,7 @@ RealESRGAN. It includes functions to generate enhanced images as lists or
 generators to optimize memory usage.
 """
 
-from collections.abc import Generator, Iterator
+from collections.abc import Generator
 from pathlib import Path
 from typing import Literal
 
@@ -35,46 +35,6 @@ CODE_FORMER_MODEL_URL: str = (
     f"{GH}/sczhou/CodeFormer/releases/download/v0.1.0/codeformer.pth"
 )
 GFPGAN_WEIGHTS: Path = Path("gfpgan/weights")
-CHECKPOINTS: Path = Path("checkpoints")
-
-
-class GeneratorWithLen:
-    """From `https://stackoverflow.com/a/7460929`."""
-
-    def __init__(self, gen: Iterator, length: int) -> None:
-        """
-        Initialize a `GeneratorWithLen` object.
-
-        Args:
-            gen: The generator or iterator to wrap.
-            length: The total number of items the generator can yield.
-        """
-        self.gen: Iterator = gen
-        self.length: int = length
-
-    def __len__(self) -> int:
-        """
-        Return the length of the generator.
-
-        Allows the `GeneratorWithLen` object to report the total number of items
-        it can yield, which is useful for progress tracking and length queries.
-
-        Returns:
-            int: The total number of items in the generator.
-        """
-        return self.length
-
-    def __iter__(self) -> Iterator:
-        """
-        Return the iterator for the generator.
-
-        Allows the `GeneratorWithLen` object to be used in for-loops and other
-        iterator contexts.
-
-        Returns:
-            Iterator: The underlying generator object.
-        """
-        return self.gen
 
 
 def enhancer_list(
@@ -99,36 +59,6 @@ def enhancer_list(
     """
     gen = enhancer_generator_no_len(images, method, bg_upsampler)
     return list(gen)
-
-
-def enhancer_generator_with_len(
-    images: Path,
-    method: str = "gfpgan",
-    bg_upsampler: str = "realesrgan",
-) -> GeneratorWithLen:
-    """
-    Generate a generator with a known length for enhanced face images.
-
-    This function returns a generator that yields enhanced images and provides
-    the total number of images, allowing for progress tracking and length queries.
-
-    Args:
-        images: A path of images to be processed.
-        method: The face enhancement model to
-                use ("gfpgan", "RestoreFormer", or "codeformer").
-        bg_upsampler: The background upsampler to use ("realesrgan").
-
-    Returns:
-        GeneratorWithLen: A generator object with a defined length for enhanced images.
-    """
-    if not isinstance(images, Path):
-        msg = "images must be a Path object"
-        raise TypeError(msg)
-    if images.is_file():
-        # handle video to images
-        images = load_video_to_cv2(images.as_posix())
-    gen = enhancer_generator_no_len(images, method, bg_upsampler)
-    return GeneratorWithLen(gen, len(images))
 
 
 def setup_gfpgan_restorer(method: str):

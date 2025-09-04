@@ -1,10 +1,8 @@
 import math
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from enum import Enum
 from numbers import Number
 
-import numpy as np
 import torch as th
 from torch import nn
 from torch.nn.functional import interpolate
@@ -17,10 +15,6 @@ from visualizr.anitalker.model.nn import (
     torch_checkpoint,
     zero_module,
 )
-
-
-class ScaleAt(Enum):
-    after_norm = "afternorm"
 
 
 class TimestepBlock(nn.Module, ABC):
@@ -66,7 +60,6 @@ class ResBlockConfig(BaseConfig):
     two_cond: bool = False
     # number of encoders' output channels
     cond_emb_channels: int | None = None
-    # suggest: False
     has_lateral: bool = False
     # if to init the convolution with zero weights,
     # this is defaulted from BeatGANs and seems to help learning.
@@ -423,10 +416,11 @@ class AttentionBlock(nn.Module):
         elif channels % num_head_channels == 0:
             self.num_heads = channels // num_head_channels
         else:
-            raise ValueError(
+            msg: str = (
                 f"q,k,v channels {channels} is not "
-                + "divisible by `num_head_channels` {num_head_channels}"
+                f"divisible by `num_head_channels` {num_head_channels}"
             )
+            raise ValueError(msg)
         self.use_checkpoint = use_checkpoint
         self.norm = normalization(channels)
         self.qkv = conv_nd(1, channels, channels * 3, 1)
@@ -449,28 +443,6 @@ class AttentionBlock(nn.Module):
         h = self.attention(qkv)
         h = self.proj_out(h)
         return (x + h).reshape(b, c, *spatial)
-
-
-def count_flops_attn(model, _x, y):
-    """
-    A counter for the `thop` package to count the operations in an
-    attention operation.
-    Meant to be used like:
-    ```
-        macs, params = thop.profile(
-            model,
-            inputs=(inputs, timestamps),
-            custom_ops={QKVAttention: QKVAttention.count_flops},
-        )
-    ```
-    """
-    b, c, *spatial = y[0].shape
-    num_spatial = int(np.prod(spatial))
-    # We perform two matmul with the same number of ops.
-    # The first computes the weight matrix, the second computes
-    # the combination of the value vectors.
-    matmul_ops = 2 * b * (num_spatial**2) * c
-    model.total_ops += th.DoubleTensor([matmul_ops])
 
 
 class QKVAttentionLegacy(nn.Module):
@@ -498,10 +470,6 @@ class QKVAttentionLegacy(nn.Module):
         weight = th.softmax(weight.float(), dim=-1).type(weight.dtype)
         a = th.einsum("bts,bcs->bct", weight, v)
         return a.reshape(bs, -1, length)
-
-    @staticmethod
-    def count_flops(model, _x, y):
-        return count_flops_attn(model, _x, y)
 
 
 class QKVAttention(nn.Module):
@@ -532,37 +500,3 @@ class QKVAttention(nn.Module):
         weight = th.softmax(weight.float(), dim=-1).type(weight.dtype)
         a = th.einsum("bts,bcs->bct", weight, v.reshape(bs * self.n_heads, ch, length))
         return a.reshape(bs, -1, length)
-
-    @staticmethod
-    def count_flops(model, _x, y):
-        return count_flops_attn(model, _x, y)
-
-
-class AttentionPool2d(nn.Module):
-    """Adapted from CLIP: https://github.com/openai/CLIP/blob/main/clip/model.py"""
-
-    def __init__(
-        self,
-        spacial_dim: int,
-        embed_dim: int,
-        num_heads_channels: int,
-        output_dim: int = None,
-    ):
-        super().__init__()
-        self.positional_embedding = nn.Parameter(
-            th.randn(embed_dim, spacial_dim**2 + 1) / embed_dim**0.5,
-        )
-        self.qkv_proj = conv_nd(1, embed_dim, 3 * embed_dim, 1)
-        self.c_proj = conv_nd(1, embed_dim, output_dim or embed_dim, 1)
-        self.num_heads = embed_dim // num_heads_channels
-        self.attention = QKVAttention(self.num_heads)
-
-    def forward(self, x):
-        b, c, *_spatial = x.shape
-        x = x.reshape(b, c, -1)  # NC(HW)
-        x = th.cat([x.mean(dim=-1, keepdim=True), x], dim=-1)  # NC(HW+1)
-        x += self.positional_embedding[None, :, :].to(x.dtype)  # NC(HW+1)
-        x = self.qkv_proj(x)
-        x = self.attention(x)
-        x = self.c_proj(x)
-        return x[:, :, 0]

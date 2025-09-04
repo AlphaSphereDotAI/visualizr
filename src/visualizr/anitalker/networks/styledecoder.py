@@ -141,24 +141,6 @@ def upfirdn2d(_input, kernel, up=1, down=1, _pad=(0, 0)):
     )
 
 
-class PixelNorm(nn.Module):
-    def __init__(self):
-        super().__init__()
-
-    @staticmethod
-    def forward(_input):
-        return _input * torch.rsqrt(torch.mean(_input**2, dim=1, keepdim=True) + 1e-8)
-
-
-class MotionPixelNorm(nn.Module):
-    def __init__(self):
-        super().__init__()
-
-    @staticmethod
-    def forward(_input):
-        return _input * torch.rsqrt(torch.mean(_input**2, dim=2, keepdim=True) + 1e-8)
-
-
 def make_kernel(k):
     """
     Create a 2D convolution kernel tensor from 1D or 2D input.
@@ -707,13 +689,11 @@ class Synthesis(nn.Module):
             style_dim,
             blur_kernel=blur_kernel,
         )
-        self.to_rgb1 = ToRGB(self.channels[4], upsample=False)
 
         self.log_size = int(math.log(size, 2))
         self.num_layers = (self.log_size - 2) * 2 + 1
 
         self.convs = nn.ModuleList()
-        self.upsamples = nn.ModuleList()
         self.to_rgbs = nn.ModuleList()
         self.to_flows = nn.ModuleList()
 
