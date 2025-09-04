@@ -97,9 +97,6 @@ class BeatGANsUNetModel(nn.Module):
             nn.Linear(conf.embed_channels, conf.embed_channels),
         )
 
-        if conf.num_classes is not None:
-            self.label_emb = nn.Embedding(conf.num_classes, conf.embed_channels)
-
         ch = input_ch = int(conf.channel_mult[0] * conf.model_channels)
         self.input_blocks = nn.ModuleList(
             [
@@ -115,9 +112,6 @@ class BeatGANsUNetModel(nn.Module):
             "use_zero_module": conf.resnet_use_zero_module,
             "cond_emb_channels": conf.resnet_cond_channels,
         }
-
-        self._feature_size = ch
-
         input_block_chans = [[] for _ in range(len(conf.channel_mult))]
         input_block_chans[0].append(ch)
 
@@ -125,8 +119,6 @@ class BeatGANsUNetModel(nn.Module):
         self.input_num_blocks = [0 for _ in range(len(conf.channel_mult))]
         self.input_num_blocks[0] = 1
         self.output_num_blocks = [0 for _ in range(len(conf.channel_mult))]
-
-        ds = 1
         resolution = conf.image_size
         for level, mult in enumerate(conf.input_channel_mult or conf.channel_mult):
             for _ in range(conf.num_input_res_blocks or conf.num_res_blocks):
@@ -153,7 +145,6 @@ class BeatGANsUNetModel(nn.Module):
                         ),
                     )
                 self.input_blocks.append(TimestepEmbedSequential(*layers))
-                self._feature_size += ch
                 input_block_chans[level].append(ch)
                 self.input_num_blocks[level] += 1
             if level != len(conf.channel_mult) - 1:
@@ -178,8 +169,6 @@ class BeatGANsUNetModel(nn.Module):
                 ch = out_ch
                 input_block_chans[level + 1].append(ch)
                 self.input_num_blocks[level + 1] += 1
-                ds *= 2
-                self._feature_size += ch
 
         self.middle_block = TimestepEmbedSequential(
             ResBlockConfig(
@@ -206,7 +195,6 @@ class BeatGANsUNetModel(nn.Module):
                 **kwargs,
             ).make_model(),
         )
-        self._feature_size += ch
 
         self.output_blocks = nn.ModuleList([])
         for level, mult in list(enumerate(conf.channel_mult))[::-1]:
@@ -265,10 +253,8 @@ class BeatGANsUNetModel(nn.Module):
                             out_channels=out_ch,
                         ),
                     )
-                    ds //= 2
                 self.output_blocks.append(TimestepEmbedSequential(*layers))
                 self.output_num_blocks[level] += 1
-                self._feature_size += ch
         if conf.resnet_use_zero_module:
             self.out = nn.Sequential(
                 normalization(ch),
@@ -335,7 +321,6 @@ class BeatGANsEncoderConfig(BaseConfig):
     image_size: int
     in_channels: int
     model_channels: int
-    out_hid_channels: int
     out_channels: int
     num_res_blocks: int
     attention_resolutions: tuple[int]
@@ -385,9 +370,7 @@ class BeatGANsEncoderModel(nn.Module):
                 ),
             ],
         )
-        self._feature_size = ch
         input_block_chans = [ch]
-        ds = 1
         resolution = conf.image_size
         for level, mult in enumerate(conf.channel_mult):
             for _ in range(conf.num_res_blocks):
@@ -414,7 +397,6 @@ class BeatGANsEncoderModel(nn.Module):
                         ),
                     )
                 self.input_blocks.append(TimestepEmbedSequential(*layers))
-                self._feature_size += ch
                 input_block_chans.append(ch)
             if level != len(conf.channel_mult) - 1:
                 resolution //= 2
@@ -442,8 +424,6 @@ class BeatGANsEncoderModel(nn.Module):
                 )
                 ch = out_ch
                 input_block_chans.append(ch)
-                ds *= 2
-                self._feature_size += ch
 
         self.middle_block = TimestepEmbedSequential(
             ResBlockConfig(
@@ -470,7 +450,6 @@ class BeatGANsEncoderModel(nn.Module):
                 use_checkpoint=conf.use_checkpoint,
             ).make_model(),
         )
-        self._feature_size += ch
         if conf.pool == "adaptivenonzero":
             self.out = nn.Sequential(
                 normalization(ch),

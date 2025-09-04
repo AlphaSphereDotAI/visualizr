@@ -35,7 +35,6 @@ CODE_FORMER_MODEL_URL: str = (
     f"{GH}/sczhou/CodeFormer/releases/download/v0.1.0/codeformer.pth"
 )
 GFPGAN_WEIGHTS: Path = Path("gfpgan/weights")
-CHECKPOINTS: Path = Path("checkpoints")
 
 
 def enhancer_list(

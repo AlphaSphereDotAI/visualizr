@@ -689,13 +689,11 @@ class Synthesis(nn.Module):
             style_dim,
             blur_kernel=blur_kernel,
         )
-        self.to_rgb1 = ToRGB(self.channels[4], upsample=False)
 
         self.log_size = int(math.log(size, 2))
         self.num_layers = (self.log_size - 2) * 2 + 1
 
         self.convs = nn.ModuleList()
-        self.upsamples = nn.ModuleList()
         self.to_rgbs = nn.ModuleList()
         self.to_flows = nn.ModuleList()
 

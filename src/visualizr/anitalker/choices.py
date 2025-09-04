@@ -8,31 +8,6 @@ class TrainMode(Enum):
     manipulate = "manipulate"
     # default training mode!
     diffusion = "diffusion"
-    # Default latent training mode.
-    # Fitting a DDPM to a given latent.
-    latent_diffusion = "latentdiffusion"
-
-    def is_latent_diffusion(self):
-        return self in [TrainMode.latent_diffusion]
-
-    def use_latent_net(self):
-        return self.is_latent_diffusion()
-
-    def require_dataset_infer(self):
-        """Whether training in this mode requires latent variables to be available."""
-        # this will precalculate all the latents beforehand,
-        # and the dataset will be all the predicted latents.
-        return self in [TrainMode.latent_diffusion, TrainMode.manipulate]
-
-
-class ManipulateMode(Enum):
-    """how to train the classifier to manipulate."""
-
-    # train on whole celeba attr dataset
-    celebahq_all = "celebahq_all"
-    # celeba with D2C's crop
-    d2c_fewshot = "d2cfewshot"
-    d2c_fewshot_allneg = "d2cfewshotallneg"
 
 
 class ModelType(Enum):
@@ -57,7 +32,8 @@ class ModelName(Enum):
 class ModelMeanType(Enum):
     """Which type of output the model predicts."""
 
-    eps = "eps"  # the model predicts epsilon
+    # the model predicts epsilon
+    eps = "eps"
 
 
 class ModelVarType(Enum):
@@ -85,16 +61,6 @@ class GenerativeType(Enum):
 
     ddpm = "ddpm"
     ddim = "ddim"
-
-
-class OptimizerType(Enum):
-    adam = "adam"
-    adamw = "adamw"
-
-
-class ManipulateLossType(Enum):
-    bce = "bce"
-    mse = "mse"
 
 
 class Activation(Enum):

@@ -47,7 +47,6 @@ def upfirdn2d_native(
         max(-pad_x0, 0) : out.shape[3] - max(-pad_x1, 0),
     ]
 
-    # out = out.permute(0, 3, 1, 2)
     out = out.reshape(
         [-1, 1, in_h * up_y + pad_y0 + pad_y1, in_w * up_x + pad_x0 + pad_x1],
     )

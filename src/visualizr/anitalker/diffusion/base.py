@@ -46,7 +46,6 @@ class GaussianDiffusionBeatGansConfig(BaseConfig):
     loss_type: LossType
     rescale_timesteps: bool
     fp16: bool
-    train_pred_xstart_detach: bool = True
 
     def make_sampler(self):
         """
@@ -81,7 +80,6 @@ class GaussianDiffusionBeatGans:
         alphas = 1.0 - betas
         self.alphas_cumprod = np.cumprod(alphas, axis=0)
         self.alphas_cumprod_prev = np.append(1.0, self.alphas_cumprod[:-1])
-        self.alphas_cumprod_next = np.append(self.alphas_cumprod[1:], 0.0)
         if self.alphas_cumprod_prev.shape != (self.num_timesteps,):
             msg: str = "`alphas_cumprod_prev` must have the same shape as `betas`"
             raise ValueError(msg)
@@ -89,7 +87,6 @@ class GaussianDiffusionBeatGans:
         # calculations for diffusion and others.
         self.sqrt_alphas_cumprod = np.sqrt(self.alphas_cumprod)
         self.sqrt_one_minus_alphas_cumprod = np.sqrt(1.0 - self.alphas_cumprod)
-        self.log_one_minus_alphas_cumprod = np.log(1.0 - self.alphas_cumprod)
         self.sqrt_recip_alphas_cumprod = np.sqrt(1.0 / self.alphas_cumprod)
         self.sqrt_recipm1_alphas_cumprod = np.sqrt(1.0 / self.alphas_cumprod - 1)
 
@@ -257,25 +254,6 @@ class GaussianDiffusionBeatGans:
                     model_kwargs=model_kwargs,
                     progress=progress,
                 )
-
-    def q_mean_variance(self, x_start, t):
-        """
-        Get the distribution `q(x_t | x_0)`.
-
-        :param x_start: The `[N × C × ...]` Tensor of noiseless inputs.
-        :param t: The number of diffusion steps (minus 1). Here, 0 means one step.
-        :return: A tuple (mean, variance, `log_variance`), all `x_start`'s shape.
-        """
-        mean = (
-            _extract_into_tensor(self.sqrt_alphas_cumprod, t, x_start.shape) * x_start
-        )
-        variance = _extract_into_tensor(1.0 - self.alphas_cumprod, t, x_start.shape)
-        log_variance = _extract_into_tensor(
-            self.log_one_minus_alphas_cumprod,
-            t,
-            x_start.shape,
-        )
-        return mean, variance, log_variance
 
     def q_sample(self, x_start, t, noise=None):
         """
@@ -464,40 +442,11 @@ class GaussianDiffusionBeatGans:
             - _extract_into_tensor(self.sqrt_recipm1_alphas_cumprod, t, x_t.shape) * eps
         )
 
-    def _predict_xstart_from_xprev(self, x_t, t, xprev):
-        if x_t.shape != xprev.shape:
-            raise ValueError(f"Shape mismatch: {x_t.shape} vs {xprev.shape}")
-        return (  # (xprev - coef2*x_t) / coef1
-            _extract_into_tensor(1.0 / self.posterior_mean_coef1, t, x_t.shape) * xprev
-            - _extract_into_tensor(
-                self.posterior_mean_coef2 / self.posterior_mean_coef1,
-                t,
-                x_t.shape,
-            )
-            * x_t
-        )
-
-    def _predict_xstart_from_scaled_xstart(self, t, scaled_xstart):
-        return scaled_xstart * _extract_into_tensor(
-            self.sqrt_recip_alphas_cumprod,
-            t,
-            scaled_xstart.shape,
-        )
-
     def _predict_eps_from_xstart(self, x_t, t, pred_xstart):
         return (
             _extract_into_tensor(self.sqrt_recip_alphas_cumprod, t, x_t.shape) * x_t
             - pred_xstart
         ) / _extract_into_tensor(self.sqrt_recipm1_alphas_cumprod, t, x_t.shape)
-
-    def _predict_eps_from_scaled_xstart(self, x_t, t, scaled_xstart):
-        # scaled_xstart: is supposed to be `sqrt(alphacum) * x_0`
-        # 1 / sqrt(1-alphabar) * (x_t - scaled xstart)
-        return (x_t - scaled_xstart) / _extract_into_tensor(
-            self.sqrt_one_minus_alphas_cumprod,
-            t,
-            x_t.shape,
-        )
 
     def _scale_timesteps(self, t):
         if self.rescale_timesteps:
@@ -827,83 +776,6 @@ class GaussianDiffusionBeatGans:
                 yield out
                 img = out["sample"]
 
-    def _vb_terms_bpd(
-        self,
-        model: Model,
-        x_start,
-        x_t,
-        t: th.Tensor,
-        clip_denoised=True,
-        model_kwargs=None,
-    ):
-        """
-        Get a term for the variational lower-bound.
-
-        The resulting units are bits (rather than nats, as one might expect).
-        This allows for comparison to other papers.
-
-        :return: A dict with the following keys:
-                 * 'output': a shape [N] tensor of NLLs or KLs.
-                 * 'pred_xstart': the x_0 predictions.
-        """
-        true_mean, _, true_log_variance_clipped = self.q_posterior_mean_variance(
-            x_start=x_start,
-            x_t=x_t,
-            t=t,
-        )
-        out = self.p_mean_variance(
-            model,
-            x_t,
-            t,
-            clip_denoised=clip_denoised,
-            model_kwargs=model_kwargs,
-        )
-        kl = normal_kl(
-            true_mean,
-            true_log_variance_clipped,
-            out["mean"],
-            out["log_variance"],
-        )
-        kl = mean_flat(kl) / np.log(2.0)
-
-        decoder_nll = -discretized_gaussian_log_likelihood(
-            x_start,
-            means=out["mean"],
-            log_scales=0.5 * out["log_variance"],
-        )
-        if decoder_nll.shape != x_start.shape:
-            msg = f"Shape mismatch: {decoder_nll.shape} vs {x_start.shape}"
-            raise ValueError(msg)
-        decoder_nll = mean_flat(decoder_nll) / np.log(2.0)
-
-        # At the first timestep return the decoder NLL,
-        # otherwise return KL(q(x_{t-1}|x_t,x_0) || p(x_{t-1}|x_t))
-        output = th.where((t == 0), decoder_nll, kl)
-        return {
-            "output": output,
-            "pred_xstart": out["pred_xstart"],
-            "model_forward": out["model_forward"],
-        }
-
-    def _prior_bpd(self, x_start):
-        """
-        Get the prior KL term for the variational lower-bound, measured in
-        bits-per-dim. This term can't be optimized, as it only depends on the encoder.
-
-        :param x_start: The `[N × C × ...]` Tensor of inputs.
-        :return: A batch of [N] KL values (in bits), one per batch element.
-        """
-        batch_size = x_start.shape[0]
-        t = th.tensor([self.num_timesteps - 1] * batch_size, device=x_start.device)
-        qt_mean, _, qt_log_variance = self.q_mean_variance(x_start, t)
-        kl_prior = normal_kl(
-            mean1=qt_mean,
-            logvar1=qt_log_variance,
-            mean2=0.0,
-            logvar2=0.0,
-        )
-        return mean_flat(kl_prior) / np.log(2.0)
-
 
 def _extract_into_tensor(arr, timesteps, broadcast_shape):
     """
@@ -1015,84 +887,3 @@ def betas_for_alpha_bar(num_diffusion_timesteps, alpha_bar, max_beta=0.999):
         t2 = (i + 1) / num_diffusion_timesteps
         betas.append(min(1 - alpha_bar(t2) / alpha_bar(t1), max_beta))
     return np.array(betas)
-
-
-def normal_kl(mean1, logvar1, mean2, logvar2):
-    """
-    Compute the KL divergence between two Gaussian's.
-
-    Shapes are automatically broadcasted, so batches can be compared to
-    scalars, among other use cases.
-    """
-    tensor = next(
-        (obj for obj in (mean1, logvar1, mean2, logvar2) if isinstance(obj, th.Tensor)),
-        None,
-    )
-    if tensor is None:
-        raise ValueError("`tensor` is required, at least one argument must be a Tensor")
-
-    # Force variances to be Tensors.
-    # Broadcasting helps convert scalars to
-    # Tensors, but it doesn't work for `th.exp()`.
-    logvar1, logvar2 = [
-        x if isinstance(x, th.Tensor) else th.tensor(x).to(tensor)
-        for x in (logvar1, logvar2)
-    ]
-
-    return 0.5 * (
-        -1.0
-        + logvar2
-        - logvar1
-        + th.exp(logvar1 - logvar2)
-        + ((mean1 - mean2) ** 2) * th.exp(-logvar2)
-    )
-
-
-def approx_standard_normal_cdf(x):
-    """
-    A fast approximation of the cumulative distribution function of the
-    standard normal.
-    """
-    return 0.5 * (1.0 + th.tanh(np.sqrt(2.0 / np.pi) * (x + 0.044715 * th.pow(x, 3))))
-
-
-def discretized_gaussian_log_likelihood(x, *, means, log_scales):
-    """
-    Compute the log-likelihood of a Gaussian distribution discretizing to a
-    given image.
-
-    :param x: The target images. It is assumed that this was uint8 values,
-              rescaled to the range [-1, 1].
-    :param means: The Gaussian means Tensor.
-    :param log_scales: The Gaussian log stddev Tensor.
-    :return: A tensor like x of log probabilities (in nats).
-    """
-    if not x.shape == means.shape == log_scales.shape:
-        msg: str = (
-            "Shape mismatch: "
-            f"x {x.shape}, "
-            f"means {means.shape}, "
-            f"log_scales {log_scales.shape}"
-        )
-        raise ValueError(msg)
-    centered_x = x - means
-    inv_stdv = th.exp(-log_scales)
-    plus_in = inv_stdv * (centered_x + 1.0 / 255.0)
-    cdf_plus = approx_standard_normal_cdf(plus_in)
-    min_in = inv_stdv * (centered_x - 1.0 / 255.0)
-    cdf_min = approx_standard_normal_cdf(min_in)
-    log_cdf_plus = th.log(cdf_plus.clamp(min=1e-12))
-    log_one_minus_cdf_min = th.log((1.0 - cdf_min).clamp(min=1e-12))
-    cdf_delta = cdf_plus - cdf_min
-    log_probs = th.where(
-        x < -0.999,
-        log_cdf_plus,
-        th.where(
-            x > 0.999,
-            log_one_minus_cdf_min,
-            th.log(cdf_delta.clamp(min=1e-12)),
-        ),
-    )
-    if log_probs.shape != x.shape:
-        raise ValueError(f"Shape mismatch: {log_probs.shape} vs {x.shape}")
-    return log_probs

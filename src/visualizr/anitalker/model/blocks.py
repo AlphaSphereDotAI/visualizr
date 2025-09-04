@@ -1,7 +1,6 @@
 import math
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from enum import Enum
 from numbers import Number
 
 import torch as th
@@ -16,10 +15,6 @@ from visualizr.anitalker.model.nn import (
     torch_checkpoint,
     zero_module,
 )
-
-
-class ScaleAt(Enum):
-    after_norm = "afternorm"
 
 
 class TimestepBlock(nn.Module, ABC):

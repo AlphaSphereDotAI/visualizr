@@ -39,7 +39,6 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
             image_size=conf.image_size,
             in_channels=conf.in_channels,
             model_channels=conf.model_channels,
-            out_hid_channels=conf.enc_out_channels,
             out_channels=conf.enc_out_channels,
             num_res_blocks=conf.enc_num_res_block,
             attention_resolutions=(
@@ -57,9 +56,6 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
             use_new_attention_order=conf.use_new_attention_order,
             pool=conf.enc_pool,
         ).make_model()
-
-        if conf.latent_net_conf is not None:
-            self.latent_net = conf.latent_net_conf.make_model()
 
     def noise_to_cond(self, noise: Tensor):
         raise NotImplementedError
