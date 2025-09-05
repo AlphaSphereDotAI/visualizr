@@ -35,7 +35,7 @@ class DiffusionPredictor(BaseModule):
         motion_start_dim: int = 512,
         hal_layers: int = 25,
     ):
-        super(DiffusionPredictor, self).__init__()
+        super().__init__()
         self.conf: TrainConfig = conf
         # Speech downsampling
         if self.conf.infer_type.startswith("mfcc"):

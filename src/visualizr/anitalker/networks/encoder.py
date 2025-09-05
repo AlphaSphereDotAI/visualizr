@@ -263,7 +263,7 @@ class ResBlock(nn.Module):
 
 class WeightedSumLayer(nn.Module):
     def __init__(self, num_tensors=8):
-        super(WeightedSumLayer, self).__init__()
+        super().__init__()
         self.weights = nn.Parameter(randn(num_tensors))
 
     def forward(self, tensor_list):
@@ -276,7 +276,7 @@ class WeightedSumLayer(nn.Module):
 
 class EncoderApp(nn.Module):
     def __init__(self, size, w_dim=512, fusion_type=""):
-        super(EncoderApp, self).__init__()
+        super().__init__()
 
         channels = {
             4: 512,
@@ -347,7 +347,7 @@ class EncoderApp(nn.Module):
 
 class DecouplingModel(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim):
-        super(DecouplingModel, self).__init__()
+        super().__init__()
 
         # identity_excluded_net is called identity encoder in the paper
         self.identity_net = nn.Sequential(
@@ -377,7 +377,7 @@ class DecouplingModel(nn.Module):
 
 class Encoder(nn.Module):
     def __init__(self, size, dim=512, dim_motion=20, weighted_sum=False):
-        super(Encoder, self).__init__()
+        super().__init__()
 
         # image encoder
         self.net_app = EncoderApp(size, dim, weighted_sum)

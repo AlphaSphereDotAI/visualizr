@@ -633,7 +633,7 @@ class ToFlow(nn.Module):
 
 class Direction(nn.Module):
     def __init__(self, motion_dim):
-        super(Direction, self).__init__()
+        super().__init__()
 
         self.weight = nn.Parameter(torch.randn(512, motion_dim))
 
@@ -661,7 +661,7 @@ class Synthesis(nn.Module):
     ):
         if blur_kernel is None:
             blur_kernel = [1, 3, 3, 1]
-        super(Synthesis, self).__init__()
+        super().__init__()
 
         self.size = size
         self.style_dim = style_dim

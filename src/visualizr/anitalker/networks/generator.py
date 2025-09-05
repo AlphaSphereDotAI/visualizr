@@ -15,7 +15,7 @@ class Generator(nn.Module):
     ):
         if blur_kernel is None:
             blur_kernel = [1, 3, 3, 1]
-        super(Generator, self).__init__()
+        super().__init__()
 
         # encoder
         self.enc = Encoder(size, style_dim, motion_dim)
