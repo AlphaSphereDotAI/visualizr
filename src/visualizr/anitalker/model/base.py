@@ -1,6 +1,6 @@
-import torch
+from torch.nn import Module
 
 
-class BaseModule(torch.nn.Module):
+class BaseModule(Module):
     def __init__(self) -> None:
-        super(BaseModule, self).__init__()
+        super().__init__()

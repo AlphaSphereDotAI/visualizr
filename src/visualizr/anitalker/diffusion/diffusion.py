@@ -1,36 +1,35 @@
 from dataclasses import dataclass
 
 import numpy as np
-from torch import tensor
 
 from visualizr.anitalker.diffusion.base import (
     GaussianDiffusionBeatGans,
     GaussianDiffusionBeatGansConfig,
 )
-from visualizr.anitalker.model import Model
 
 
 def space_timesteps(num_timesteps, section_counts):
     """
-    Create a list of timesteps to use from an original diffusion process,
-    given the number of timesteps we want to take from equally-sized portions
+    Create a list of timesteps to use from an original diffusion process.
+
+    Given the number of timesteps we want to take from equally sized portions
     of the original process.
 
-    For example, if there are 300 timesteps and the section counts are [10,15,20]
+    For example, if there are 300 timesteps, and the section counts are [10,15,20],
     then the first 100 timesteps are strided to be 10 timesteps, the second 100
     are strided to be 15 timesteps, and the final 100 are strided to be 20.
 
     If the stride is a string starting with "ddim", then the fixed striding
     from the DDIM paper is used, and only one section is allowed.
 
-    :param num_timesteps: the number of diffusion steps in the original
+    :param num_timesteps: The number of diffusion steps in the original
                           process to divide up.
-    :param section_counts: either a list of numbers, or a string containing
+    :param section_counts: List of numbers or string containing
                            comma-separated numbers, indicating the step count
-                           per section. As a special case, use "ddimN" where N
+                           per a section. As a special case, use "ddimN" where N
                            is a number of steps to use the striding from the
                            DDIM paper.
-    :return: a set of diffusion steps from the original process to use.
+    :return: A set of diffusion steps from the original process to use.
     """
     if isinstance(section_counts, str):
         if section_counts.startswith("ddim"):
@@ -100,77 +99,3 @@ class SpacedDiffusionBeatGans(GaussianDiffusionBeatGans):
                 self.timestep_map.append(i)
         conf.betas = np.array(new_betas)
         super().__init__(conf)
-
-    def p_mean_variance(self, model: Model, *args, **kwargs):
-        return super().p_mean_variance(self._wrap_model(model), *args, **kwargs)
-
-    def training_losses(self, model: Model, *args, **kwargs):
-        return super().training_losses(self._wrap_model(model), *args, **kwargs)
-
-    def condition_mean(self, cond_fn, *args, **kwargs):
-        return super().condition_mean(self._wrap_model(cond_fn), *args, **kwargs)
-
-    def condition_score(self, cond_fn, *args, **kwargs):
-        return super().condition_score(self._wrap_model(cond_fn), *args, **kwargs)
-
-    def _wrap_model(self, model: Model):
-        if isinstance(model, _WrappedModel):
-            return model
-        return _WrappedModel(
-            model,
-            self.timestep_map,
-            self.rescale_timesteps,
-            self.original_num_steps,
-        )
-
-    def _scale_timesteps(self, t):
-        # Scaling is done by the wrapped model.
-        return t
-
-
-class _WrappedModel:
-    """converting the supplied t's to the old t's scales."""
-
-    def __init__(self, model, timestep_map, rescale_timesteps, original_num_steps):
-        self.model = model
-        self.timestep_map = timestep_map
-        self.rescale_timesteps = rescale_timesteps
-        self.original_num_steps = original_num_steps
-
-    def forward(
-        self,
-        motion_start,
-        motion_direction_start,
-        audio_feats,
-        face_location,
-        face_scale,
-        yaw_pitch_roll,
-        x_t,
-        t,
-        control_flag=False,
-    ):
-        map_tensor = tensor(self.timestep_map, device=t.device, dtype=t.dtype)
-
-        def do(_t):
-            new_ts = map_tensor[_t]
-            if self.rescale_timesteps:
-                new_ts = new_ts.float() * (1000.0 / self.original_num_steps)
-            return new_ts
-
-        return self.model(
-            motion_start,
-            motion_direction_start,
-            audio_feats,
-            face_location,
-            face_scale,
-            yaw_pitch_roll,
-            x_t,
-            do(t),
-            control_flag=control_flag,
-        )
-
-    def __getattr__(self, name):
-        # allow for calling the model's methods
-        if hasattr(self.model, name):
-            return getattr(self.model, name)
-        raise AttributeError(name)

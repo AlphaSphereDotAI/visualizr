@@ -26,7 +26,10 @@ def check_package_installed(package_name: str) -> bool:
 
 
 def frames_to_video(
-    input_path: Path, audio_path: Path, output_path: Path, fps: int = 25
+    input_path: Path,
+    audio_path: Path,
+    output_path: Path,
+    fps: int = 25,
 ) -> None:
     image_files = [input_path / img for img in sorted(input_path.iterdir())]
     clips = [ImageClip(m.as_posix()).set_duration(1 / fps) for m in image_files]
