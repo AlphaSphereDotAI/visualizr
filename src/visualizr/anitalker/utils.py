@@ -2,7 +2,7 @@ from importlib.util import find_spec
 from pathlib import Path
 from typing import Literal
 
-from gradio import Info
+from gradio import Error, Info
 from imageio import mimsave
 from moviepy.editor import (
     AudioFileClip,
@@ -63,9 +63,12 @@ def saved_image(img_tensor: Tensor, img_path: Path) -> None:
 
 
 def remove_frames(frames_path: Path) -> None:
-    for frame in frames_path.iterdir():
-        frame.unlink()
-        Info(f"Deleted {frame}")
+    try:
+        for frame in frames_path.iterdir():
+            frame.unlink()
+            Info(f"Deleted {frame}")
+    except OSError as e:
+        Error(f"Failed to delete frames: {e}")
 
 
 def load_stage_2_model(conf: TrainConfig, stage_2_checkpoint_path: Path) -> LitModel:
