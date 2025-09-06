@@ -20,9 +20,6 @@ class BeatGANsAutoencConfig(BeatGANsUNetConfig):
     enc_grad_checkpoint: bool = False
     latent_net_conf: MLPSkipNetConfig | None = None
 
-    def make_model(self):
-        return BeatGANsAutoencModel(self)
-
 
 class BeatGANsAutoencModel(BeatGANsUNetModel):
     def __init__(self, conf: BeatGANsAutoencConfig):

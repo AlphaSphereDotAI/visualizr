@@ -180,25 +180,6 @@ class Upsample(nn.Module):
         return upfirdn2d(_input, self.kernel, up=self.factor, _pad=self.pad)
 
 
-class Downsample(nn.Module):
-    def __init__(self, kernel, factor=2):
-        super().__init__()
-
-        self.factor = factor
-        kernel = make_kernel(kernel)
-        self.register_buffer("kernel", kernel)
-
-        p = kernel.shape[0] - factor
-
-        pad0 = (p + 1) // 2
-        pad1 = p // 2
-
-        self.pad = (pad0, pad1)
-
-    def forward(self, _input):
-        return upfirdn2d(_input, self.kernel, down=self.factor, _pad=self.pad)
-
-
 class Blur(nn.Module):
     def __init__(self, kernel, _pad, upsample_factor=1):
         super().__init__()
@@ -402,13 +383,6 @@ class ModulatedConv2d(nn.Module):
 
         self.modulation = EqualLinear(style_dim, in_channel, bias_init=1)
         self.demodulate = demodulate
-
-    def __repr__(self) -> str:
-        return (
-            f"{self.__class__.__name__}"
-            f"({self.in_channel}, {self.out_channel}, {self.kernel_size}, "
-            f"upsample={self.upsample}, downsample={self.downsample})"
-        )
 
     def forward(self, _input, style):
         batch, in_channel, height, width = _input.shape

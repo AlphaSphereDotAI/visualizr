@@ -79,7 +79,7 @@ def load_stage_2_model(conf: TrainConfig, stage_2_checkpoint_path: Path) -> LitM
     if not stage_2_checkpoint_path.exists():
         msg = f"Checkpoint not found: {stage_2_checkpoint_path}"
         raise FileNotFoundError(msg)
-    model = LitModel(conf)
+    model: LitModel = LitModel(conf)
     try:
         state = torch_load(stage_2_checkpoint_path, map_location="cpu")
     except Exception as e:

@@ -6,7 +6,6 @@ from torch.cuda import amp
 
 from visualizr.anitalker.choices import TrainMode
 from visualizr.anitalker.config import TrainConfig
-from visualizr.anitalker.dist_utils import get_world_size
 from visualizr.anitalker.model.seq2seq import DiffusionPredictor
 from visualizr.anitalker.renderer import render_condition
 
@@ -75,11 +74,3 @@ class LitModel(LightningModule):
         with amp.autocast(False):
             model = self.model if self.disable_ema else self.ema_model
             return self.eval_sampler.sample(model=model, noise=noise, x_start=x_start)
-
-    @property
-    def batch_size(self):
-        """Local batch size for each worker."""
-        ws = get_world_size()
-        if self.conf.batch_size % ws != 0:
-            raise ValueError("batch size must be divisible by world size")
-        return self.conf.batch_size // ws

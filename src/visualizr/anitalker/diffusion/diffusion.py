@@ -86,9 +86,7 @@ class SpacedDiffusionBeatGans(GaussianDiffusionBeatGans):
         self.use_timesteps = set(conf.use_timesteps)
         # how the new t's mapped to the old t's
         self.timestep_map = []
-        self.original_num_steps = len(conf.betas)
-
-        base_diffusion = GaussianDiffusionBeatGans(conf)  # pylint: disable=missing-kwoa
+        base_diffusion = GaussianDiffusionBeatGans(conf)
         last_alpha_cumprod = 1.0
         new_betas = []
         for i, alpha_cumprod in enumerate(base_diffusion.alphas_cumprod):
