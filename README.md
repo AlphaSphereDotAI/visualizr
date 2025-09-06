@@ -1,3 +1,13 @@
+<pre style="justify-content: center;">
+░██    ░██ ░██                                 ░██ ░██
+░██    ░██                                     ░██
+░██    ░██ ░██ ░███████  ░██    ░██  ░██████   ░██ ░██░█████████ ░██░████
+░██    ░██ ░██░██        ░██    ░██       ░██  ░██ ░██     ░███  ░███
+ ░██  ░██  ░██ ░███████  ░██    ░██  ░███████  ░██ ░██   ░███    ░██
+  ░██░██   ░██       ░██ ░██   ░███ ░██   ░██  ░██ ░██ ░███      ░██
+   ░███    ░██ ░███████   ░█████░██  ░█████░██ ░██ ░██░█████████ ░██
+</pre>
+
 # Visualizr: Video Generator part of the Chatacter Backend
 
 [![PyPI - Version](https://img.shields.io/pypi/v/visualizr)](https://pypi.org/project/visualizr)
