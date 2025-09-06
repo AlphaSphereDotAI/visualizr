@@ -3,10 +3,13 @@ from typing import NamedTuple
 
 from torch import Tensor, nn
 
-from visualizr.anitalker.model import BeatGANsUNetConfig, BeatGANsUNetModel
 from visualizr.anitalker.model.latentnet import MLPSkipNetConfig
 from visualizr.anitalker.model.nn import timestep_embedding
-from visualizr.anitalker.model.unet import BeatGANsEncoderConfig
+from visualizr.anitalker.model.unet import (
+    BeatGANsEncoderConfig,
+    BeatGANsUNetConfig,
+    BeatGANsUNetModel,
+)
 
 
 @dataclass
