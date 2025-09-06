@@ -1,4 +1,10 @@
-![https://img.shields.io/pypi/v/visualizr](https://github.com/user-attachments/assets/f101e172-6a66-499c-885f-fa173e611de6)
+```
+ _    ___                  ___
+| |  / (_)______  ______ _/ (_)___  _____
+| | / / / ___/ / / / __ `/ / /_  / / ___/
+| |/ / (__  ) /_/ / /_/ / / / / /_/ /
+|___/_/____/\__,_/\__,_/_/_/ /___/_/
+```
 
 # Visualizr: Video Generator part of the Chatacter Backend
 
