@@ -35,26 +35,28 @@ docker compose up
 
 ### Minimum Requirements
 
-- **Python**: 3.10 (exact version required)
+- **Python**: 3.10 (an exact version required)
 - **Operating System**:
     - Linux (Ubuntu 18.04+, CentOS 7+)
     - Windows 10/11
     - macOS 10.15+
-- **Memory**: 8GB RAM minimum
-- **Storage**: 5GB free space for models and dependencies
+- **Memory**: 8 GB RAM minimum
+- **Storage**: 5 GB free space for models and dependencies
 
 ### Recommended Requirements
 
 - **GPU**: NVIDIA GPU with CUDA 11.8 support
-- **Memory**: 16GB RAM or more
-- **Storage**: 10GB+ free space
+- **Memory**: 16 GB RAM or more
+- **Storage**: 10 GB+ free space
 - **Python**: 3.10 with virtual environment
+
+> **Important**: Visualizr needs python 3.10 only (it does not support other versions).
 
 ### GPU Requirements (Optional but Recommended)
 
 - **NVIDIA GPU**: GTX 1060 or better
 - **CUDA**: Version 11.8
-- **VRAM**: 6GB+ for optimal performance
+- **VRAM**: 6 GB+ for optimal performance
 - **Compute Capability**: 6.0 or higher
 
 > **Note**: Visualizr can run on CPU-only systems, but GPU acceleration significantly
@@ -178,7 +180,7 @@ docker run -p 7860:7860 visualizr
 
 ### From Source
 
-For development or customization, you can install from source:
+For development or customization, you can install from a source:
 
 #### 1. Clone Repository
 
@@ -264,7 +266,8 @@ python -c "import torch; print(torch.cuda.get_device_name(0))"
 
 ## Model Download
 
-Visualizr automatically downloads required models on first run. Models are cached in:
+Visualizr automatically downloads required models on the first run. Models are cached
+in:
 
 - **Linux/macOS**: `~/.cache/huggingface/hub/`
 - **Windows**: `%USERPROFILE%\.cache\huggingface\hub\`
@@ -404,7 +407,7 @@ If you encounter issues:
 
 ## Next Steps
 
-After successful installation:
+After a successful installation:
 
 1. **[Quick Start Guide](quickstart.md)** - Create your first video
 2. **[User Guide](user-guide.md)** - Learn all features
