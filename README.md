@@ -1,3 +1,11 @@
+```
+ _    ___                  ___
+| |  / (_)______  ______ _/ (_)___  _____
+| | / / / ___/ / / / __ `/ / /_  / / ___/
+| |/ / (__  ) /_/ / /_/ / / / / /_/ /
+|___/_/____/\__,_/\__,_/_/_/ /___/_/
+```
+
 # Visualizr: Video Generator part of the Chatacter Backend
 
 [![PyPI - Version](https://img.shields.io/pypi/v/visualizr)](https://pypi.org/project/visualizr)
@@ -14,7 +22,7 @@
 uvx --python 3.10 visualizr
 ```
 
-## Installations (docker)
+## Installations (Docker)
 
 ```bash
 curl -o compose.yaml https://raw.githubusercontent.com/alphaspheredotai/visualizr/main/compose.yaml
