@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from functools import lru_cache
-from json import dump, dumps, load
-from pathlib import Path
+from json import dumps
 from typing import Any
 
 from gradio import Info
@@ -28,22 +27,6 @@ class BaseConfig:
             if isinstance(v, BaseConfig):
                 v.inherit(self)
                 v.propagate()
-
-    def save(self, save_path: Path):
-        """Save a config to JSON file."""
-        if not save_path.exists():
-            save_path.mkdir(parents=True, exist_ok=True)
-        conf = self.as_dict_jsonable()
-        with open(save_path, "w") as f:
-            dump(conf, f)
-
-    def load(self, load_path: Path):
-        """Load json config."""
-        if not load_path.exists():
-            load_path.mkdir(parents=True, exist_ok=True)
-        with open(load_path) as f:
-            conf = load(f)
-        self.from_dict(conf)
 
     def from_dict(self, config_dict, strict=False):
         """

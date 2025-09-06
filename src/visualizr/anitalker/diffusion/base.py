@@ -15,8 +15,6 @@ from visualizr.anitalker.choices import (
 )
 from visualizr.anitalker.config_base import BaseConfig
 from visualizr.anitalker.model import Model
-from visualizr.anitalker.model.base import BaseModule
-from visualizr.anitalker.model.nn import mean_flat
 
 
 @dataclass
@@ -85,8 +83,6 @@ class GaussianDiffusionBeatGans:
             raise ValueError(msg)
 
         # calculations for diffusion and others.
-        self.sqrt_alphas_cumprod = np.sqrt(self.alphas_cumprod)
-        self.sqrt_one_minus_alphas_cumprod = np.sqrt(1.0 - self.alphas_cumprod)
         self.sqrt_recip_alphas_cumprod = np.sqrt(1.0 / self.alphas_cumprod)
         self.sqrt_recipm1_alphas_cumprod = np.sqrt(1.0 / self.alphas_cumprod - 1)
 
@@ -107,97 +103,6 @@ class GaussianDiffusionBeatGans:
             * np.sqrt(alphas)
             / (1.0 - self.alphas_cumprod)
         )
-
-    def training_losses(
-        self,
-        model: BaseModule,
-        motion_direction_start: th.Tensor,
-        motion_target: th.Tensor,
-        motion_start: th.Tensor,
-        audio_feats: th.Tensor,
-        face_location: th.Tensor,
-        face_scale: th.Tensor,
-        yaw_pitch_roll: th.Tensor,
-        t: th.Tensor,
-        noise: th.Tensor = None,
-    ):
-        """
-        Compute training losses for a single timestep.
-
-        :param model: The model to evaluate loss on.
-        :param t: A batch of timestep indexes.
-        :param noise: If specified, the specific Gaussian noise to try to remove.
-        :return: A dict with the key “loss” containing a tensor of shape [N].
-                 Some mean or variance settings may also have other keys.
-        """
-        if noise is None:
-            noise = th.randn_like(motion_target)
-
-        x_t = self.q_sample(motion_target, t, noise=noise)
-
-        terms = {"x_t": x_t}
-
-        if self.loss_type in [
-            LossType.mse,
-            LossType.l1,
-        ]:
-            with autocast(self.conf.fp16):
-                # x_t is static wrt. To the diffusion process.
-                (
-                    predicted_direction,
-                    predicted_location,
-                    predicted_scale,
-                    predicted_pose,
-                ) = model.forward(
-                    motion_start,
-                    motion_direction_start,
-                    audio_feats,
-                    face_location,
-                    face_scale,
-                    yaw_pitch_roll,
-                    x_t.detach(),
-                    self._scale_timesteps(t),
-                    control_flag=False,
-                )
-
-            target_types = {
-                ModelMeanType.eps: noise,
-            }
-            target = target_types[self.model_mean_type]
-            if not predicted_direction.shape == target.shape == motion_target.shape:
-                msg: str = (
-                    f"Shape mismatch: "
-                    f"predicted_direction {predicted_direction.shape}, "
-                    f"target {target.shape}, "
-                    f"motion_target {motion_target.shape}"
-                )
-                raise ValueError(msg)
-
-            if self.loss_type == LossType.mse:
-                if self.model_mean_type == ModelMeanType.eps:
-                    direction_loss = mean_flat((target - predicted_direction) ** 2)
-                    location_loss = mean_flat(
-                        (face_location.unsqueeze(-1) - predicted_location) ** 2,
-                    )
-                    scale_loss = mean_flat((face_scale - predicted_scale) ** 2)
-                    pose_loss = mean_flat((yaw_pitch_roll - predicted_pose) ** 2)
-
-                    terms["mse"] = (
-                        direction_loss + location_loss + scale_loss + pose_loss
-                    )
-            elif self.loss_type == LossType.l1:
-                # (n, c, h, w) => (n, )
-                terms["mse"] = mean_flat((target - predicted_direction).abs())
-
-            if "vb" in terms:
-                # if learning the variance, also use the vlb loss
-                terms["loss"] = terms["mse"] + terms["vb"]
-            else:
-                terms["loss"] = terms["mse"]
-        else:
-            raise NotImplementedError(self.loss_type)
-
-        return terms
 
     def sample(
         self,
@@ -254,26 +159,6 @@ class GaussianDiffusionBeatGans:
                     model_kwargs=model_kwargs,
                     progress=progress,
                 )
-
-    def q_sample(self, x_start, t, noise=None):
-        """
-        Diffuse the data for a given number of diffusion steps.
-        In other words, sample from `q(x_t | x_0)`.
-
-        :param x_start: The initial data batch.
-        :param t: The number of diffusion steps (minus 1). Here, 0 means one step.
-        :param noise: If specified, the split-out normal noise.
-        :return: A noisy version of `x_start`.
-        """
-        if noise is None:
-            noise = th.randn_like(x_start)
-        if noise.shape != x_start.shape:
-            raise ValueError(f"Shape mismatch: {noise.shape} vs {x_start.shape}")
-        return (
-            _extract_into_tensor(self.sqrt_alphas_cumprod, t, x_start.shape) * x_start
-            + _extract_into_tensor(self.sqrt_one_minus_alphas_cumprod, t, x_start.shape)
-            * noise
-        )
 
     def q_posterior_mean_variance(self, x_start, x_t, t):
         """

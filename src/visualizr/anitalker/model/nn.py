@@ -1,26 +1,16 @@
 from math import log
 
 from torch import (
-    Tensor,
     arange,
     cat,
     cos,
     exp,
     float32,
     nn,
-    sigmoid,
     sin,
     zeros_like,
 )
 from torch.utils.checkpoint import checkpoint
-
-
-# PyTorch 1.7 has SiLU, but we support PyTorch 1.5.
-class SiLU(nn.Module):
-    # @torch.jit.script
-    @staticmethod
-    def forward(x):
-        return x * sigmoid(x)
 
 
 class GroupNorm32(nn.GroupNorm):
@@ -59,11 +49,6 @@ def zero_module(module):
     for p in module.parameters():
         p.detach().zero_()
     return module
-
-
-def mean_flat(tensor: Tensor) -> Tensor:
-    """Take the mean over all non-batch dimensions."""
-    return tensor.mean(dim=list(range(1, len(tensor.shape))))
 
 
 def normalization(channels):

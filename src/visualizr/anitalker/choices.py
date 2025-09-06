@@ -53,7 +53,6 @@ class ModelVarType(Enum):
 class LossType(Enum):
     # use raw MSE loss and KL when learning variances
     mse = "mse"
-    l1 = "l1"
 
 
 class GenerativeType(Enum):

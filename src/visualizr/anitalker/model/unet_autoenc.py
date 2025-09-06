@@ -3,10 +3,13 @@ from typing import NamedTuple
 
 from torch import Tensor, nn
 
-from visualizr.anitalker.model import BeatGANsUNetConfig, BeatGANsUNetModel
 from visualizr.anitalker.model.latentnet import MLPSkipNetConfig
 from visualizr.anitalker.model.nn import timestep_embedding
-from visualizr.anitalker.model.unet import BeatGANsEncoderConfig
+from visualizr.anitalker.model.unet import (
+    BeatGANsEncoderConfig,
+    BeatGANsUNetConfig,
+    BeatGANsUNetModel,
+)
 
 
 @dataclass
@@ -19,9 +22,6 @@ class BeatGANsAutoencConfig(BeatGANsUNetConfig):
     enc_channel_mult: tuple[int] | None = None
     enc_grad_checkpoint: bool = False
     latent_net_conf: MLPSkipNetConfig | None = None
-
-    def make_model(self):
-        return BeatGANsAutoencModel(self)
 
 
 class BeatGANsAutoencModel(BeatGANsUNetModel):

@@ -147,7 +147,7 @@ class ResBlock(TimestepBlock):
 
             # construct the layers
             # - norm
-            # - (modulation)
+            # - modulation
             # - act
             # - dropout
             # - conv
@@ -164,7 +164,8 @@ class ResBlock(TimestepBlock):
         # SKIP LAYERS
         #############################
         if conf.out_channels == conf.channels:
-            # can't be used with `gatedconv`, also `gatedconv` is always used as the first block.
+            # can't be used with `gatedconv`,
+            # also `gatedconv` is always used as the first block.
             self.skip_connection = nn.Identity()
         else:
             if conf.use_conv:
@@ -203,7 +204,8 @@ class ResBlock(TimestepBlock):
         cond=None,
         lateral=None,
     ):
-        # lateral: required if `has_lateral` and non-gated, with gated, it can be supplied optionally.
+        # lateral: required if `has_lateral` and non-gated,
+        # with gated, it can be supplied optionally.
         if self.conf.has_lateral:
             # lateral may be supplied even if it doesn't require
             # the model will take the lateral only if `has_lateral`
@@ -260,7 +262,7 @@ def apply_conditions(
     up_down_layer: nn.Module = None,
 ):
     """
-    Apply conditions on the feature maps
+    Apply conditions on the feature maps.
 
     Args:
         emb: time conditional (ready to scale + shift)
@@ -300,7 +302,7 @@ def apply_conditions(
     if isinstance(scale_bias, Number):
         biases = [scale_bias] * len(scale_shifts)
 
-    # by default, the scale and shift are applied after the group norm but BEFORE `SiLU`.
+    # by default, the scale and shift are applied after the group norm but BEFORE `SiLU`
     pre_layers, post_layers = layers[0], layers[1:]
 
     # spilt the post-layer to be able to scale up or down before conv
@@ -446,7 +448,11 @@ class AttentionBlock(nn.Module):
 
 
 class QKVAttentionLegacy(nn.Module):
-    """A module, which performs QKV attention. Matches legacy QKVAttention + input/output heads shaping."""
+    """
+    A module, which performs QKV attention.
+
+    Matches legacy QKVAttention + input/output heads shaping.
+    """
 
     def __init__(self, n_heads):
         super().__init__()
