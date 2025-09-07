@@ -1,6 +1,6 @@
 # Visualizr
 
-![Logo](./docs/assets/carbon(3).png)
+![Logo](./docs/assets/logo.png)
 
 [![PyPI - Version](https://img.shields.io/pypi/v/visualizr)](https://pypi.org/project/visualizr)
 [![Build](https://github.com/AlphaSphereDotAI/visualizr/actions/workflows/build.yaml/badge.svg)](https://github.com/AlphaSphereDotAI/visualizr/actions/workflows/build.yaml)
