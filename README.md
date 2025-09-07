@@ -1,6 +1,6 @@
 ![Logo](./docs/assets/logo.svg)
 
-# Visualizr: Video Generator part of the Chatacter Backend
+# Video Generator part of the Chatacter Backend
 
 [![PyPI - Version](https://img.shields.io/pypi/v/visualizr)](https://pypi.org/project/visualizr)
 [![Build](https://github.com/AlphaSphereDotAI/visualizr/actions/workflows/build.yaml/badge.svg)](https://github.com/AlphaSphereDotAI/visualizr/actions/workflows/build.yaml)
