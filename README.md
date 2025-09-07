@@ -10,15 +10,15 @@
 [![Release](https://github.com/AlphaSphereDotAI/visualizr/actions/workflows/release.yaml/badge.svg)](https://github.com/AlphaSphereDotAI/visualizr/actions/workflows/release.yaml)
 [![Test](https://github.com/AlphaSphereDotAI/visualizr/actions/workflows/test.yaml/badge.svg)](https://github.com/AlphaSphereDotAI/visualizr/actions/workflows/test.yaml)
 
+## Video Generator part of the Chatacter Backend
 
-# Video Generator part of the Chatacter Backend
-## Installations (uv)
+### Installations (uv)
 
 ```bash
 uvx --python 3.10 visualizr
 ```
 
-## Installations (Docker)
+### Installations (Docker)
 
 ```bash
 curl -o compose.yaml https://raw.githubusercontent.com/alphaspheredotai/visualizr/main/compose.yaml
