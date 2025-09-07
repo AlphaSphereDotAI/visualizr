@@ -1,11 +1,6 @@
 # Visualizr
-```
- _    __ _                      __ _             
-| |  / /(_)_____ __  __ ____ _ / /(_)____   _____
-| | / // // ___// / / // __ `// // //_  /  / ___/
-| |/ // /(__  )/ /_/ // /_/ // // /  / /_ / /    
-|___//_//____/ \__,_/ \__,_//_//_/  /___//_/     
-```
+
+![Logo](./docs/assets/carbon(3).png)
 
 [![PyPI - Version](https://img.shields.io/pypi/v/visualizr)](https://pypi.org/project/visualizr)
 [![Build](https://github.com/AlphaSphereDotAI/visualizr/actions/workflows/build.yaml/badge.svg)](https://github.com/AlphaSphereDotAI/visualizr/actions/workflows/build.yaml)
