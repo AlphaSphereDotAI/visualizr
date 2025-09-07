@@ -1,4 +1,5 @@
 # Visualizr
+
 ![Logo](./docs/assets/logo.svg)
 
 [![PyPI - Version](https://img.shields.io/pypi/v/visualizr)](https://pypi.org/project/visualizr)
