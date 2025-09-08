@@ -1,5 +1,4 @@
 from pathlib import Path
-from sys import exit as sys_exit
 from time import time
 from typing import Literal
 
@@ -170,7 +169,7 @@ class App:
                 _msg = "Please download the hubert weight into the ckpts path first."
                 logger.error(_msg)
                 Error(_msg)
-                sys_exit(0)
+                raise FileNotFoundError(_msg)
             _msg: str = (
                 "You did not extract the audio features in advance, "
                 "extracting online now, which will increase processing delay"
