@@ -68,12 +68,16 @@ def saved_image(img_tensor: Tensor, img_path: Path) -> None:
 
 def remove_frames(frames_path: Path) -> None:
     try:
+        _msg = f"Deleting {len(list(frames_path.iterdir()))} frames at {frames_path}"
+        logger.info(_msg)
+        Info(_msg)
         for frame in frames_path.iterdir():
             frame.unlink()
-            _msg = f"Deleted {frame}"
-            logger.info(_msg)
-            Info(_msg)
+        _msg = "Frames Deleted 👍"
+        logger.info(_msg)
+        Info(_msg)
     except OSError as e:
+        logger.exception(f"Failed to delete frames at {frames_path}")
         Error(f"Failed to delete frames: {e}")
 
 

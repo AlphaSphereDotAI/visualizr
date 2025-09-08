@@ -54,10 +54,9 @@ class DirectorySettings(BaseModel):
             self.audio,
             self.video,
         ]:
-            directory.mkdir(exist_ok=True)
-        logger.info(
-            f"Created directories {list(self.model_fields.keys())} at {self.base}",
-        )
+            if not directory.exists():
+                directory.mkdir(exist_ok=True)
+                logger.info(f"Created directory {directory}.")
         return self
 
 
