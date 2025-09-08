@@ -31,7 +31,7 @@ def frames_to_video(
     audio_path: Path,
     output_path: Path,
     fps: int = 25,
-):
+) -> None:
     image_files = [input_path / img for img in sorted(input_path.iterdir())]
     clips = [ImageClip(m.as_posix()).set_duration(1 / fps) for m in image_files]
     video = concatenate_videoclips(clips, method="compose")
@@ -66,16 +66,15 @@ def saved_image(img_tensor: Tensor, img_path: Path) -> None:
     img.save(img_path)
 
 
-def remove_frames(frames_path: Path):
-    for frame in frames_path.iterdir():
-        try:
+def remove_frames(frames_path: Path) -> None:
+    try:
+        for frame in frames_path.iterdir():
             frame.unlink()
             _msg = f"Deleted {frame}"
             logger.info(_msg)
             Info(_msg)
-        except OSError:
-            Error(f"Error while deleting file {frame}")
-            continue
+    except OSError as e:
+        Error(f"Failed to delete frames: {e}")
 
 
 def load_stage_2_model(conf: TrainConfig, stage_2_checkpoint_path: Path) -> LitModel:
@@ -85,7 +84,7 @@ def load_stage_2_model(conf: TrainConfig, stage_2_checkpoint_path: Path) -> LitM
     if not stage_2_checkpoint_path.exists():
         msg = f"Checkpoint not found: {stage_2_checkpoint_path}"
         raise FileNotFoundError(msg)
-    model = LitModel(conf)
+    model: LitModel = LitModel(conf)
     try:
         state = torch_load(stage_2_checkpoint_path, map_location="cpu")
     except Exception as e:

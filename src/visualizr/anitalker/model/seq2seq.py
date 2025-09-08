@@ -1,14 +1,14 @@
 from espnet.nets.pytorch_backend.conformer.encoder import Encoder
 from gradio import Error, Info
 from torch import cat, nn, zeros
+from torch.nn import Module
 from torch.nn.functional import softmax
 
 from visualizr import logger
 from visualizr.anitalker.config import TrainConfig
-from visualizr.anitalker.model.base import BaseModule
 
 
-class LSTM(nn.Module):
+class LSTM(Module):
     def __init__(self, motion_dim, output_dim, num_layers=2, hidden_dim=128):
         super().__init__()
         self.lstm = nn.LSTM(
@@ -24,7 +24,7 @@ class LSTM(nn.Module):
         return self.fc(x)
 
 
-class DiffusionPredictor(BaseModule):
+class DiffusionPredictor(Module):
     def __init__(
         self,
         conf: TrainConfig,
@@ -36,7 +36,7 @@ class DiffusionPredictor(BaseModule):
         motion_start_dim: int = 512,
         hal_layers: int = 25,
     ):
-        super(DiffusionPredictor, self).__init__()
+        super().__init__()
         self.conf: TrainConfig = conf
         # Speech downsampling
         if self.conf.infer_type.startswith("mfcc"):

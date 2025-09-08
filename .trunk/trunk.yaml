@@ -16,7 +16,7 @@ runtimes:
 lint:
   enabled:
     #    - ty@0.0.1-alpha.19
-    - trufflehog-git@3.90.5
+    - trufflehog-git@3.90.6
     - pre-commit-hooks@5.0.0
     - trivy@0.66.0
     - yamlfmt@0.17.2
@@ -27,8 +27,8 @@ lint:
     - git-diff-check
     - hadolint@2.13.1
     - markdownlint@0.45.0
-    - renovate@41.94.0
-    - ruff@0.12.11:
+    - renovate@41.97.5
+    - ruff@0.12.12:
         commands:
           - lint
           - format
@@ -36,7 +36,7 @@ lint:
         commands:
           - lint
           - format
-    - trufflehog@3.90.5
+    - trufflehog@3.90.6
     - yamllint@1.37.1
   disabled:
     - prettier
