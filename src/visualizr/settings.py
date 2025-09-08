@@ -117,7 +117,7 @@ class ModelSettings(BaseModel):
             _msg = f"Image path does not exist: {self.image_path}"
             logger.error(_msg)
             Error(_msg)
-            sys_exit(0)
+            raise FileNotFoundError(_msg)
         if self.audio_path and not self.audio_path.exists():
             _msg = f"Audio path does not exist: {self.audio_path}"
             logger.error(_msg)
