@@ -1,11 +1,10 @@
-"""This module contains the settings for the Visualizr app."""
+"""Settings for the Visualizr app."""
 
 from pathlib import Path
-from sys import exit as sys_exit
 from typing import Literal
 
 from dotenv import load_dotenv
-from gradio import Error, Info
+from gradio import Error
 from pydantic import BaseModel, DirectoryPath, Field, FilePath, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from torch.cuda import is_available
@@ -38,7 +37,8 @@ class DirectorySettings(BaseModel):
     def create_missing_dirs(self) -> "DirectorySettings":
         """
         Ensure that all specified directories exist, creating them if necessary.
-        This method checks and creates any missing directories defined in the DirectorySettings.
+
+        Checks and creates any missing directories defined in the `DirectorySettings`.
 
         Returns:
             Self: The validated DirectorySettings instance.
@@ -55,9 +55,9 @@ class DirectorySettings(BaseModel):
             self.video,
         ]:
             directory.mkdir(exist_ok=True)
-            _msg = f"Created directory: {directory}"
-            logger.info(_msg)
-            Info(_msg)
+        logger.info(
+            f"Created directories {list(self.model_fields.keys())} at {self.base}",
+        )
         return self
 
 
