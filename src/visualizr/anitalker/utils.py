@@ -1,4 +1,3 @@
-from importlib.util import find_spec
 from pathlib import Path
 from typing import Literal
 
@@ -20,10 +19,6 @@ from visualizr.anitalker.config import TrainConfig
 from visualizr.anitalker.experiment import LitModel
 from visualizr.anitalker.face_sr.face_enhancer import enhancer_list
 from visualizr.anitalker.templates import ffhq256_autoenc
-
-
-def check_package_installed(package_name: str) -> bool:
-    return find_spec(package_name) is not None
 
 
 def frames_to_video(

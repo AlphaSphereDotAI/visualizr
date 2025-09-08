@@ -46,7 +46,6 @@ from visualizr import logger
 from visualizr.anitalker.config import TrainConfig
 from visualizr.anitalker.liamodel import LiaModel
 from visualizr.anitalker.utils import (
-    check_package_installed,
     frames_to_video,
     img_preprocessing,
     init_configuration,
@@ -166,12 +165,11 @@ class App:
 
         elif conf.infer_type.startswith("hubert"):
             # Hubert features
-            if not check_package_installed("transformers"):
-                Error("Please install transformers module first.")
-                sys_exit(0)
             hubert_model_path = "ckpts/chinese-hubert-large"
             if not Path(hubert_model_path).exists():
-                Error("Please download the hubert weight into the ckpts path first.")
+                _msg = "Please download the hubert weight into the ckpts path first."
+                logger.error(_msg)
+                Error(_msg)
                 sys_exit(0)
             _msg: str = (
                 "You did not extract the audio features in advance, "
@@ -301,7 +299,7 @@ class App:
         remove_frames(self.settings.directory.frames)
 
         # Enhancer
-        if face_sr and check_package_installed("gfpgan"):
+        if face_sr:
             # Super-resolution
             super_resolution(
                 predicted_video_512_path.with_suffix(".tmp.mp4"),
