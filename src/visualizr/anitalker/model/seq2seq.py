@@ -71,8 +71,9 @@ class DiffusionPredictor(Module):
                 speech_layers,
             )
         else:
-            Error("`infer_type` not supported")
-
+            msg = f"`infer_type` not supported: {self.conf.infer_type}"
+            logger.error(msg)
+            raise ValueError(msg)
         # Encoders & Decoders
         self.coarse_decoder = self.create_conformer_encoder(
             decoder_dim,
