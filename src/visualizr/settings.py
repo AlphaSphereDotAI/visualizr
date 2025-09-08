@@ -122,7 +122,7 @@ class ModelSettings(BaseModel):
             _msg = f"Audio path does not exist: {self.audio_path}"
             logger.error(_msg)
             Error(_msg)
-            sys_exit(0)
+            raise FileNotFoundError(_msg)
         return self
 
 
