@@ -71,9 +71,14 @@ class DiffusionPredictor(Module):
                 speech_layers,
             )
         else:
-            msg = f"`infer_type` not supported: {self.conf.infer_type}"
-            logger.error(msg)
-            raise ValueError(msg)
+            _msg: str = (
+                f"`infer_type` not supported: {self.conf.infer_type}, "
+                f"Expected one of `mfcc_full_control`, `mfcc_pose_only`, "
+                f"`hubert_pose_only`, `hubert_audio_only`, `hubert_full_control`."
+            )
+            logger.error(_msg)
+            Error(_msg)
+            raise ValueError(_msg)
         # Encoders & Decoders
         self.coarse_decoder = self.create_conformer_encoder(
             decoder_dim,
