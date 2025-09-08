@@ -32,4 +32,3 @@ basicConfig(
     format="%(name)s | %(process)d | %(message)s",
 )
 logger = getLogger(__name__)
-logger.disabled = True
