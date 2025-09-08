@@ -149,9 +149,6 @@ class DiffusionPredictor(Module):
             yaw_pitch_roll,
         )
         if self.conf.infer_type != "hubert_audio_only":
-            _msg = f"pose controllable. control_flag: {control_flag}"
-            logger.info(_msg)
-            Info(_msg)
             x, predicted_location, predicted_scale, predicted_pose = (
                 self.adjust_features(
                     x,
@@ -188,9 +185,6 @@ class DiffusionPredictor(Module):
     ):
         predicted_location, predicted_scale = 0, 0
         if "full_control" in self.conf.infer_type:
-            _msg = f"full controllable. control_flag: {control_flag}"
-            logger.info(_msg)
-            Info(_msg)
             x_residual, predicted_location = self.adjust_location(
                 x,
                 face_location,
