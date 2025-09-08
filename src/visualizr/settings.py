@@ -1,7 +1,7 @@
 """This module contains the settings for the Visualizr app."""
 
 from pathlib import Path
-from sys import exit
+from sys import exit as sys_exit
 from typing import Literal
 
 from dotenv import load_dotenv
@@ -9,6 +9,8 @@ from gradio import Error, Info
 from pydantic import BaseModel, DirectoryPath, Field, FilePath, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from torch.cuda import is_available
+
+from visualizr import logger
 
 load_dotenv()
 
@@ -53,7 +55,9 @@ class DirectorySettings(BaseModel):
             self.video,
         ]:
             directory.mkdir(exist_ok=True)
-            Info(f"Created directory: {directory}")
+            _msg = f"Created directory: {directory}"
+            logger.info(_msg)
+            Info(_msg)
         return self
 
 
@@ -89,17 +93,13 @@ class ModelSettings(BaseModel):
     step_t: int = 50
     seed: int = 0
     motion_dim: int = 20
-
     image_path: FilePath = Field(default=None)
     audio_path: FilePath = Field(default=None)
-
     control_flag: bool = True
     pose_driven_path: str = "not_supported_in_this_mode"
     image_size: int = 256
     device: Literal["cuda", "cpu"] = "cuda" if is_available() else "cpu"
-    motion_dim: int = 20
     decoder_layers: int = 2
-
     repo_id: str = "taocode/anitalker_ckpts"
     infer_type: Literal[
         "mfcc_full_control",
@@ -114,11 +114,15 @@ class ModelSettings(BaseModel):
     @model_validator(mode="after")
     def check_image_path(self) -> "ModelSettings":
         if self.image_path and not self.image_path.exists():
-            Error("Image path does not exist.")
-            exit(0)
+            _msg = f"Image path does not exist: {self.image_path}"
+            logger.error(_msg)
+            Error(_msg)
+            sys_exit(0)
         if self.audio_path and not self.audio_path.exists():
-            Error("Audio path does not exist.")
-            exit(0)
+            _msg = f"Audio path does not exist: {self.audio_path}"
+            logger.error(_msg)
+            Error(_msg)
+            sys_exit(0)
         return self
 
 
@@ -131,8 +135,14 @@ class Settings(BaseSettings):
         env_file=".env",
         extra="ignore",
     )
+    debug: bool = False
     directory: DirectorySettings = DirectorySettings()
     model: ModelSettings = ModelSettings()
+
+    @model_validator(mode="after")
+    def check_debug(self) -> "Settings":
+        logger.disabled = not self.debug
+        return self
 
 
 if __name__ == "__main__":

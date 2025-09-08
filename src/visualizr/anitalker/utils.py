@@ -15,6 +15,7 @@ from PIL import Image
 from torch import Tensor, from_numpy, load as torch_load
 from torchvision.transforms import ToPILImage
 
+from visualizr import logger
 from visualizr.anitalker.config import TrainConfig
 from visualizr.anitalker.experiment import LitModel
 from visualizr.anitalker.face_sr.face_enhancer import enhancer_list
@@ -69,14 +70,18 @@ def remove_frames(frames_path: Path):
     for frame in frames_path.iterdir():
         try:
             frame.unlink()
-            Info(f"Deleted {frame}")
+            _msg = f"Deleted {frame}"
+            logger.info(_msg)
+            Info(_msg)
         except OSError:
             Error(f"Error while deleting file {frame}")
             continue
 
 
 def load_stage_2_model(conf: TrainConfig, stage_2_checkpoint_path: Path) -> LitModel:
-    Info("Loading stage 2 model")
+    _msg = f"Stage 2 checkpoint path: {stage_2_checkpoint_path}"
+    logger.info(_msg)
+    Info(_msg)
     if not stage_2_checkpoint_path.exists():
         msg = f"Checkpoint not found: {stage_2_checkpoint_path}"
         raise FileNotFoundError(msg)
@@ -116,13 +121,17 @@ def init_configuration(
     decoder_layers: int,
     motion_dim: int,
 ) -> TrainConfig:
-    Info("Initializing configuration... ")
+    _msg = "Initializing configuration"
+    logger.info(_msg)
+    Info(_msg)
     conf: TrainConfig = ffhq256_autoenc()
     conf.seed = seed
     conf.decoder_layers = decoder_layers
     conf.motion_dim = motion_dim
     conf.infer_type = infer_type
-    Info(f"infer_type: {infer_type}")
+    _msg = f"infer_type: {infer_type}"
+    logger.info(_msg)
+    Info(_msg)
     match infer_type:
         case "mfcc_full_control":
             return _init_configuration_param(conf, True, True, True)
@@ -141,7 +150,9 @@ def super_resolution(
     predicted_video_256_path: Path,
     predicted_video_512_path: Path,
 ):
-    Info(f"Saving video at {tmp_predicted_video_512_path}")
+    _msg = f"Saving video at {tmp_predicted_video_512_path}"
+    logger.info(_msg)
+    Info(_msg)
     mimsave(
         tmp_predicted_video_512_path,
         enhancer_list(

@@ -42,6 +42,7 @@ from torch import (
 from tqdm import tqdm
 from transformers import HubertModel, Wav2Vec2FeatureExtractor
 
+from visualizr import logger
 from visualizr.anitalker.config import TrainConfig
 from visualizr.anitalker.liamodel import LiaModel
 from visualizr.anitalker.utils import (
@@ -60,6 +61,7 @@ from visualizr.settings import Settings
 class App:
     def __init__(self, settings: Settings):
         self.settings: Settings = settings
+        logger.info("Downloading model checkpoint")
         snapshot_download(
             repo_id=settings.model.repo_id,
             local_dir=settings.directory.checkpoint,
@@ -171,12 +173,12 @@ class App:
             if not Path(hubert_model_path).exists():
                 Error("Please download the hubert weight into the ckpts path first.")
                 sys_exit(0)
-            Info(
-                (
-                    "You did not extract the audio features in advance, "
-                    "extracting online now, which will increase processing delay"
-                ),
+            _msg: str = (
+                "You did not extract the audio features in advance, "
+                "extracting online now, which will increase processing delay"
             )
+            logger.info(_msg)
+            Info(_msg)
 
             start_time = time()
 
@@ -210,7 +212,9 @@ class App:
                 ws_feat_obj = np_pad(ws_feat_obj, ((0, 0), (0, 1), (0, 0)), "edge")
 
             execution_time = time() - start_time
-            Info(f"Extraction Audio Feature: {execution_time:.2f} Seconds")
+            _msg = f"Extraction Audio Feature: {execution_time:.2f} Seconds"
+            logger.info(_msg)
+            Info(_msg)
 
             audio_driven_obj = ws_feat_obj
 
@@ -258,7 +262,9 @@ class App:
         # =========================================
 
         execution_time = time() - start_time
-        Info(f"Motion Diffusion Model: {execution_time:.2f} Seconds")
+        _msg = f"Motion Diffusion Model: {execution_time:.2f} Seconds"
+        logger.info(_msg)
+        Info(_msg)
 
         generated_directions = generated_directions.detach().cpu().numpy()
 
@@ -279,8 +285,12 @@ class App:
         # ==============================================
 
         execution_time = time() - start_time
-        Info(f"Renderer Model: {execution_time:.2f} Seconds")
-        Info(f"Saving video at {predicted_video_256_path}")
+        _msg = f"Renderer Model: {execution_time:.2f} Seconds"
+        logger.info(_msg)
+        Info(_msg)
+        _msg = f"Saving video at {predicted_video_256_path}"
+        logger.info(_msg)
+        Info(_msg)
 
         frames_to_video(
             self.settings.directory.frames,
@@ -418,7 +428,9 @@ class App:
         return sorted({p.stem for p in paths})
 
     def _load_stage_1_model(self) -> LiaModel:
-        Info("Loading stage 1 model")
+        _msg = "Loading stage 1 model"
+        logger.info(_msg)
+        Info(_msg)
         lia: LiaModel = LiaModel(
             motion_dim=self.settings.model.motion_dim,
             fusion_type="weighted_sum",

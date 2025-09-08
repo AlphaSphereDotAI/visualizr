@@ -3,6 +3,7 @@ from gradio import Error, Info
 from torch import cat, nn, zeros
 from torch.nn.functional import softmax
 
+from visualizr import logger
 from visualizr.anitalker.config import TrainConfig
 from visualizr.anitalker.model.base import BaseModule
 
@@ -41,27 +42,41 @@ class DiffusionPredictor(BaseModule):
         if self.conf.infer_type.startswith("mfcc"):
             # from 100 hz to 25 hz
             self.down_sample1 = nn.Conv1d(
-                mfcc_dim, 256, kernel_size=3, stride=2, padding=1
+                mfcc_dim,
+                256,
+                kernel_size=3,
+                stride=2,
+                padding=1,
             )
             self.down_sample2 = nn.Conv1d(
-                256, speech_dim, kernel_size=3, stride=2, padding=1
+                256,
+                speech_dim,
+                kernel_size=3,
+                stride=2,
+                padding=1,
             )
         elif self.conf.infer_type.startswith("hubert"):
             # from 50 hz to 25 hz
             self.down_sample1 = nn.Conv1d(
-                hubert_dim, speech_dim, kernel_size=3, stride=2, padding=1
+                hubert_dim,
+                speech_dim,
+                kernel_size=3,
+                stride=2,
+                padding=1,
             )
 
             self.weights = nn.Parameter(zeros(hal_layers))
             self.speech_encoder = self.create_conformer_encoder(
-                speech_dim, speech_layers
+                speech_dim,
+                speech_layers,
             )
         else:
             Error("`infer_type` not supported")
 
         # Encoders & Decoders
         self.coarse_decoder = self.create_conformer_encoder(
-            decoder_dim, conf.decoder_layers
+            decoder_dim,
+            conf.decoder_layers,
         )
 
         # LSTM predictors for Variance Adapter
@@ -81,7 +96,9 @@ class DiffusionPredictor(BaseModule):
         self.t_encoder = nn.Sequential(nn.Linear(1, 128))
         self.encoder_direction_code = nn.Linear(conf.motion_dim, 128)
         self.out_proj = nn.Linear(decoder_dim, conf.motion_dim)
-        Info(f"infer_type: {self.conf.infer_type}")
+        _msg = f"infer_type: {self.conf.infer_type}"
+        logger.info(_msg)
+        Info(_msg)
 
     @staticmethod
     def create_conformer_encoder(attention_dim: int, num_blocks: int) -> Encoder:
@@ -132,17 +149,27 @@ class DiffusionPredictor(BaseModule):
             yaw_pitch_roll,
         )
         if self.conf.infer_type != "hubert_audio_only":
-            Info(f"pose controllable. control_flag: {control_flag}")
+            _msg = f"pose controllable. control_flag: {control_flag}"
+            logger.info(_msg)
+            Info(_msg)
             x, predicted_location, predicted_scale, predicted_pose = (
                 self.adjust_features(
-                    x, face_location, face_scale, yaw_pitch_roll, control_flag
+                    x,
+                    face_location,
+                    face_scale,
+                    yaw_pitch_roll,
+                    control_flag,
                 )
             )
         # Variable initial_code and direction_code serve as a motion guide
         # extracted from the reference image.
         # This aims to tell the model what the starting motion should be.
         concatenated_features = self.combine_features(
-            x, initial_code, direction_code, noisy_x, t_emb
+            x,
+            initial_code,
+            direction_code,
+            noisy_x,
+            t_emb,
         )
         outputs = self.decode_features(concatenated_features)
         return outputs, predicted_location, predicted_scale, predicted_pose
@@ -152,13 +179,22 @@ class DiffusionPredictor(BaseModule):
         return self.down_sample2(x).transpose(1, 2)
 
     def adjust_features(
-        self, x, face_location, face_scale, yaw_pitch_roll, control_flag
+        self,
+        x,
+        face_location,
+        face_scale,
+        yaw_pitch_roll,
+        control_flag,
     ):
         predicted_location, predicted_scale = 0, 0
         if "full_control" in self.conf.infer_type:
-            Info(f"full controllable. control_flag: {control_flag}")
+            _msg = f"full controllable. control_flag: {control_flag}"
+            logger.info(_msg)
+            Info(_msg)
             x_residual, predicted_location = self.adjust_location(
-                x, face_location, control_flag
+                x,
+                face_location,
+                control_flag,
             )
             x = x + x_residual
             x_residual, predicted_scale = self.adjust_scale(x, face_scale, control_flag)

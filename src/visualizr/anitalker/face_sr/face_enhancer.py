@@ -19,6 +19,7 @@ from torch.cuda import is_available
 from tqdm import tqdm
 
 from gfpgan import GFPGANer
+from visualizr import logger
 from visualizr.anitalker.face_sr.videoio import load_video_to_cv2
 
 GH: str = "https://github.com"
@@ -147,7 +148,9 @@ def enhancer_generator_no_len(
             "Expected one of: gfpgan, RestoreFormer, codeformer."
         )
         raise ValueError(msg)
-    Info("face enhancer....")
+    _msg = f"face enhancer: {method}"
+    logger.info(_msg)
+    Info(_msg)
     if not isinstance(images, list) and images.is_file():
         # handle video to images
         images = load_video_to_cv2(images.as_posix())
