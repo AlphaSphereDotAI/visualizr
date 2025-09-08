@@ -17,7 +17,7 @@ console.print(art, style=Style(bold=True))
 basicConfig(
     level=INFO,
     handlers=[RichHandler(level=INFO, console=console, rich_tracebacks=True)],
-    format="%(name)s: %(asctime)s | %(process)d | %(message)s",
+    format="%(name)s | %(process)d | %(message)s",
 )
 logger = getLogger(__name__)
 logger.disabled = True
