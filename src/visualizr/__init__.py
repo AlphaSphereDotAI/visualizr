@@ -1,4 +1,4 @@
-from logging import INFO, basicConfig, getLogger
+from logging import INFO, WARNING, basicConfig, getLogger
 from warnings import filterwarnings
 
 from pyfiglet import Figlet
@@ -19,4 +19,5 @@ basicConfig(
     handlers=[RichHandler(level=INFO, console=console, rich_tracebacks=True)],
     format="%(name)s | %(process)d | %(message)s",
 )
+getLogger("httpx").setLevel(WARNING)
 logger = getLogger(__name__)
