@@ -56,7 +56,7 @@ class DirectorySettings(BaseModel):
         ]:
             if not directory.exists():
                 directory.mkdir(exist_ok=True)
-                logger.info(f"Created directory {directory}.")
+                logger.info("Created directory %s.", directory)
         return self
 
 
