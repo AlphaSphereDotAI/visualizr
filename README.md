@@ -1,6 +1,7 @@
 # Visualizr
 
-<pre style="justify-content: center;">
+<div align="center">
+<pre aria-label="VISUALIZR ASCII banner">
 ░██    ░██ ░██                                 ░██ ░██
 ░██    ░██                                     ░██
 ░██    ░██ ░██ ░███████  ░██    ░██  ░██████   ░██ ░██░█████████ ░██░████
@@ -9,6 +10,7 @@
   ░██░██   ░██       ░██ ░██   ░███ ░██   ░██  ░██ ░██ ░███      ░██
    ░███    ░██ ░███████   ░█████░██  ░█████░██ ░██ ░██░█████████ ░██
 </pre>
+</div>
 
 [![PyPI - Version](https://img.shields.io/pypi/v/visualizr)](https://pypi.org/project/visualizr)
 [![Build](https://github.com/AlphaSphereDotAI/visualizr/actions/workflows/build.yaml/badge.svg)](https://github.com/AlphaSphereDotAI/visualizr/actions/workflows/build.yaml)
