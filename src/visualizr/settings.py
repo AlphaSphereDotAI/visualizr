@@ -134,15 +134,8 @@ class Settings(BaseSettings):
         env_file=".env",
         extra="ignore",
     )
-    debug: bool = False
     directory: DirectorySettings = DirectorySettings()
     model: ModelSettings = ModelSettings()
-
-    @model_validator(mode="after")
-    def check_debug(self) -> "Settings":
-        logger.disabled = not self.debug
-        return self
-
 
 if __name__ == "__main__":
     print(Settings().model_dump())
