@@ -137,6 +137,7 @@ class Settings(BaseSettings):
     directory: DirectorySettings = DirectorySettings()
     model: ModelSettings = ModelSettings()
 
+
 if __name__ == "__main__":
     print(Settings().model_dump())
     print(__package__)
