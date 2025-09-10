@@ -63,7 +63,9 @@ def saved_image(img_tensor: Tensor, img_path: Path) -> None:
 
 def remove_frames(frames_path: Path) -> None:
     try:
-        logger.info("Deleting %s frames at %s", len(list(frames_path.iterdir())), frames_path)
+        logger.info(
+            "Deleting %s frames at %s", len(list(frames_path.iterdir())), frames_path
+        )
         Info("Deleting %s frames at %s", len(list(frames_path.iterdir())), frames_path)
         for frame in frames_path.iterdir():
             frame.unlink()
