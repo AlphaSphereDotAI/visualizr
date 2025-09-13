@@ -1,4 +1,3 @@
-from importlib.util import find_spec
 from pathlib import Path
 from typing import Literal
 
@@ -19,10 +18,7 @@ from visualizr.anitalker.config import TrainConfig
 from visualizr.anitalker.experiment import LitModel
 from visualizr.anitalker.face_sr.face_enhancer import enhancer_list
 from visualizr.anitalker.templates import ffhq256_autoenc
-
-
-def check_package_installed(package_name: str) -> bool:
-    return find_spec(package_name) is not None
+from visualizr.app.logger import logger
 
 
 def frames_to_video(
@@ -31,9 +27,24 @@ def frames_to_video(
     output_path: Path,
     fps: int = 25,
 ) -> None:
-    image_files = [input_path / img for img in sorted(input_path.iterdir())]
-    clips = [ImageClip(m.as_posix()).set_duration(1 / fps) for m in image_files]
-    video = concatenate_videoclips(clips, method="compose")
+    """
+    Compose frames and audio into a video.
+
+    Args:
+        input_path: Directory containing ordered frame images.
+        audio_path: Path to the audio track to mux.
+        output_path: Destination MP4 path.
+        fps: Frames per second for the output.
+
+    Raises:
+        FileNotFoundError: If no frames are found.
+        OSError: On I/O errors while reading/writing media.
+    """
+    clips = [
+        ImageClip(m.as_posix()).set_duration(1 / fps)
+        for m in sorted(input_path.iterdir())
+    ]
+    video = concatenate_videoclips(clips, "compose")
     audio = AudioFileClip(audio_path)
     final_video = video.set_audio(audio)
     final_video.write_videofile(
@@ -67,15 +78,24 @@ def saved_image(img_tensor: Tensor, img_path: Path) -> None:
 
 def remove_frames(frames_path: Path) -> None:
     try:
+        _msg = f"Deleting {len(list(frames_path.iterdir()))} frames at {frames_path}"
+        logger.info(_msg)
+        Info(_msg)
         for frame in frames_path.iterdir():
             frame.unlink()
-            Info(f"Deleted {frame}")
+        _msg = "Frames Deleted 👍"
+        logger.info(_msg)
+        Info(_msg)
     except OSError as e:
-        Error(f"Failed to delete frames: {e}")
+        _msg = f"Failed to delete frames: {e}"
+        logger.exception(_msg)
+        Error(_msg)
 
 
 def load_stage_2_model(conf: TrainConfig, stage_2_checkpoint_path: Path) -> LitModel:
-    Info("Loading stage 2 model")
+    _msg = f"Stage 2 checkpoint path: {stage_2_checkpoint_path}"
+    logger.info(_msg)
+    Info(_msg)
     if not stage_2_checkpoint_path.exists():
         msg = f"Checkpoint not found: {stage_2_checkpoint_path}"
         raise FileNotFoundError(msg)
@@ -115,13 +135,17 @@ def init_configuration(
     decoder_layers: int,
     motion_dim: int,
 ) -> TrainConfig:
-    Info("Initializing configuration... ")
+    _msg = "Initializing configuration"
+    logger.info(_msg)
+    Info(_msg)
     conf: TrainConfig = ffhq256_autoenc()
     conf.seed = seed
     conf.decoder_layers = decoder_layers
     conf.motion_dim = motion_dim
     conf.infer_type = infer_type
-    Info(f"infer_type: {infer_type}")
+    _msg = f"infer_type: {infer_type}"
+    logger.info(_msg)
+    Info(_msg)
     match infer_type:
         case "mfcc_full_control":
             return _init_configuration_param(conf, True, True, True)
@@ -140,7 +164,9 @@ def super_resolution(
     predicted_video_256_path: Path,
     predicted_video_512_path: Path,
 ):
-    Info(f"Saving video at {tmp_predicted_video_512_path}")
+    _msg = f"Saving video at {tmp_predicted_video_512_path}"
+    logger.info(_msg)
+    Info(_msg)
     mimsave(
         tmp_predicted_video_512_path,
         enhancer_list(
