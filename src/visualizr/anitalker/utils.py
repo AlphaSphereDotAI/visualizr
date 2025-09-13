@@ -14,11 +14,11 @@ from PIL import Image
 from torch import Tensor, from_numpy, load as torch_load
 from torchvision.transforms import ToPILImage
 
-from visualizr import logger
 from visualizr.anitalker.config import TrainConfig
 from visualizr.anitalker.experiment import LitModel
 from visualizr.anitalker.face_sr.face_enhancer import enhancer_list
 from visualizr.anitalker.templates import ffhq256_autoenc
+from visualizr.app.logger import logger
 
 
 def frames_to_video(
@@ -29,7 +29,7 @@ def frames_to_video(
 ) -> None:
     image_files = [input_path / img for img in sorted(input_path.iterdir())]
     clips = [ImageClip(m.as_posix()).set_duration(1 / fps) for m in image_files]
-    video = concatenate_videoclips(clips, method="compose")
+    video = concatenate_videoclips(clips, "compose")
     audio = AudioFileClip(audio_path)
     final_video = video.set_audio(audio)
     final_video.write_videofile(
@@ -64,7 +64,9 @@ def saved_image(img_tensor: Tensor, img_path: Path) -> None:
 def remove_frames(frames_path: Path) -> None:
     try:
         logger.info(
-            "Deleting %s frames at %s", len(list(frames_path.iterdir())), frames_path
+            "Deleting %s frames at %s",
+            len(list(frames_path.iterdir())),
+            frames_path,
         )
         Info("Deleting %s frames at %s", len(list(frames_path.iterdir())), frames_path)
         for frame in frames_path.iterdir():

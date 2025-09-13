@@ -41,7 +41,6 @@ from torch import (
 from tqdm import tqdm
 from transformers import HubertModel, Wav2Vec2FeatureExtractor
 
-from visualizr import logger
 from visualizr.anitalker.config import TrainConfig
 from visualizr.anitalker.liamodel import LiaModel
 from visualizr.anitalker.utils import (
@@ -53,7 +52,8 @@ from visualizr.anitalker.utils import (
     saved_image,
     super_resolution,
 )
-from visualizr.settings import Settings
+from visualizr.app.logger import logger
+from visualizr.app.settings import Settings
 
 
 class App:

@@ -12,15 +12,15 @@ from typing import Literal
 
 import cv2
 from basicsr.archs.rrdbnet_arch import RRDBNet
+from gfpgan import GFPGANer
 from gradio import Info, Warning as grWarning
 from numpy import ndarray
 from realesrgan import RealESRGANer
 from torch.cuda import is_available
 from tqdm import tqdm
 
-from gfpgan import GFPGANer
-from visualizr import logger
 from visualizr.anitalker.face_sr.videoio import load_video_to_cv2
+from visualizr.app.logger import logger
 
 GH: str = "https://github.com"
 REAL_ESRGAN_X_2_PLUS_MODEL_PATH: str = (

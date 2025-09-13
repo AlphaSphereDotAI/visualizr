@@ -5,7 +5,7 @@ from typing import Any
 
 from gradio import Info
 
-from visualizr import logger
+from visualizr.app.logger import logger
 
 
 @dataclass

@@ -4,8 +4,8 @@ from torch import cat, nn, zeros
 from torch.nn import Module
 from torch.nn.functional import softmax
 
-from visualizr import logger
 from visualizr.anitalker.config import TrainConfig
+from visualizr.app.logger import logger
 
 
 class LSTM(Module):

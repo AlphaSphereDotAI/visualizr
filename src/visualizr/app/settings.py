@@ -9,7 +9,7 @@ from pydantic import BaseModel, DirectoryPath, Field, FilePath, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from torch.cuda import is_available
 
-from visualizr import logger
+from visualizr.app.logger import logger
 
 load_dotenv()
 
