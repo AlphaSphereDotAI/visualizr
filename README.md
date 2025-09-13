@@ -1,4 +1,6 @@
-# Visualizr: Video Generator part of the Chatacter Backend
+# Visualizr
+
+![Logo](./docs/assets/logo.png)
 
 [![PyPI - Version](https://img.shields.io/pypi/v/visualizr)](https://pypi.org/project/visualizr)
 [![Build](https://github.com/AlphaSphereDotAI/visualizr/actions/workflows/build.yaml/badge.svg)](https://github.com/AlphaSphereDotAI/visualizr/actions/workflows/build.yaml)
@@ -8,13 +10,15 @@
 [![Release](https://github.com/AlphaSphereDotAI/visualizr/actions/workflows/release.yaml/badge.svg)](https://github.com/AlphaSphereDotAI/visualizr/actions/workflows/release.yaml)
 [![Test](https://github.com/AlphaSphereDotAI/visualizr/actions/workflows/test.yaml/badge.svg)](https://github.com/AlphaSphereDotAI/visualizr/actions/workflows/test.yaml)
 
-## Installations (uv)
+## Video Generator part of the Chatacter Backend
+
+### Installations (uv)
 
 ```bash
 uvx --python 3.10 visualizr
 ```
 
-## Installations (docker)
+### Installations (Docker)
 
 ```bash
 curl -o compose.yaml https://raw.githubusercontent.com/alphaspheredotai/visualizr/main/compose.yaml
