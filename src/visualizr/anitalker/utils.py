@@ -68,7 +68,7 @@ def remove_frames(frames_path: Path) -> None:
             len(list(frames_path.iterdir())),
             frames_path,
         )
-        Info("Deleting %s frames at %s", len(list(frames_path.iterdir())), frames_path)
+        Info(f"Deleting {len(list(frames_path.iterdir()))} frames at {frames_path}")
         for frame in frames_path.iterdir():
             frame.unlink()
         _msg = "Frames Deleted 👍"
@@ -76,7 +76,7 @@ def remove_frames(frames_path: Path) -> None:
         Info(_msg)
     except OSError as e:
         logger.exception("Failed to delete frames at %s", frames_path)
-        Error("Failed to delete frames: %s", e)
+        Error(f"Failed to delete frames: {e}")
 
 
 def load_stage_2_model(conf: TrainConfig, stage_2_checkpoint_path: Path) -> LitModel:
