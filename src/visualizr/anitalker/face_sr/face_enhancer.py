@@ -93,14 +93,14 @@ def setup_background_upsampler(bg_upsampler: str) -> RealESRGANer | None:
     _bg_upsampler: RealESRGANer | None = None
     if bg_upsampler == "realesrgan":
         if not is_available():  # CPU
-            grWarning(
-                (
-                    "The unoptimized RealESRGAN is slow on CPU. "
-                    "We do not use it. "
-                    "If you really want to use it, "
-                    "please modify the corresponding codes."
-                ),
+            _msg: str = (
+                "The unoptimized RealESRGAN is slow on CPU. "
+                "We do not use it. "
+                "If you really want to use it, "
+                "please modify the corresponding codes."
             )
+            logger.warning(_msg)
+            grWarning(_msg)
             _bg_upsampler = None
         else:
             model = RRDBNet(num_in_ch=3, num_out_ch=3, scale=2)
