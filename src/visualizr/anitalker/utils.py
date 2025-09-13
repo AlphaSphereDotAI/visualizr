@@ -63,20 +63,18 @@ def saved_image(img_tensor: Tensor, img_path: Path) -> None:
 
 def remove_frames(frames_path: Path) -> None:
     try:
-        logger.info(
-            "Deleting %s frames at %s",
-            len(list(frames_path.iterdir())),
-            frames_path,
-        )
-        Info(f"Deleting {len(list(frames_path.iterdir()))} frames at {frames_path}")
+        _msg = f"Deleting {len(list(frames_path.iterdir()))} frames at {frames_path}"
+        logger.info(_msg)
+        Info(_msg)
         for frame in frames_path.iterdir():
             frame.unlink()
         _msg = "Frames Deleted 👍"
         logger.info(_msg)
         Info(_msg)
     except OSError as e:
-        logger.exception("Failed to delete frames at %s", frames_path)
-        Error(f"Failed to delete frames: {e}")
+        _msg = f"Failed to delete frames: {e}"
+        logger.exception(_msg)
+        Error(_msg)
 
 
 def load_stage_2_model(conf: TrainConfig, stage_2_checkpoint_path: Path) -> LitModel:
