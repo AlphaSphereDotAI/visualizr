@@ -27,8 +27,10 @@ def frames_to_video(
     output_path: Path,
     fps: int = 25,
 ) -> None:
-    image_files = [input_path / img for img in sorted(input_path.iterdir())]
-    clips = [ImageClip(m.as_posix()).set_duration(1 / fps) for m in image_files]
+    clips = [
+        ImageClip(m.as_posix()).set_duration(1 / fps)
+        for m in sorted(input_path.iterdir())
+    ]
     video = concatenate_videoclips(clips, "compose")
     audio = AudioFileClip(audio_path)
     final_video = video.set_audio(audio)
