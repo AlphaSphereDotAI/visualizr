@@ -27,6 +27,19 @@ def frames_to_video(
     output_path: Path,
     fps: int = 25,
 ) -> None:
+    """
+    Compose frames and audio into a video.
+
+    Args:
+        input_path: Directory containing ordered frame images.
+        audio_path: Path to the audio track to mux.
+        output_path: Destination MP4 path.
+        fps: Frames per second for the output.
+
+    Raises:
+        FileNotFoundError: If no frames are found.
+        OSError: On I/O errors while reading/writing media.
+    """
     clips = [
         ImageClip(m.as_posix()).set_duration(1 / fps)
         for m in sorted(input_path.iterdir())
