@@ -41,7 +41,7 @@ GFPGAN_WEIGHTS: Path = Path("gfpgan/weights")
 def enhancer_list(
     images: Path,
     method: str = "gfpgan",
-    bg_upsampler: str = "realesrgan",
+    bg_upsampler: str | None = "realesrgan",
 ) -> list:
     """
     Generate a list of enhanced images.
