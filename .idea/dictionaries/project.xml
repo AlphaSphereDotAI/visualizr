@@ -38,6 +38,8 @@
       <w>hstack</w>
       <w>jlumbroso</w>
       <w>latentdiffusion</w>
+      <w>librosa</w>
+      <w>libx</w>
       <w>logvar</w>
       <w>lrelu</w>
       <w>markdownlint</w>

@@ -1,14 +1,15 @@
-"""This module contains the settings for the Visualizr app."""
+"""Settings for the Visualizr app."""
 
 from pathlib import Path
-from sys import exit
 from typing import Literal
 
 from dotenv import load_dotenv
-from gradio import Error, Info
+from gradio import Error
 from pydantic import BaseModel, DirectoryPath, Field, FilePath, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from torch.cuda import is_available
+
+from visualizr.app.logger import logger
 
 load_dotenv()
 
@@ -36,7 +37,8 @@ class DirectorySettings(BaseModel):
     def create_missing_dirs(self) -> "DirectorySettings":
         """
         Ensure that all specified directories exist, creating them if necessary.
-        This method checks and creates any missing directories defined in the DirectorySettings.
+
+        Checks and creates any missing directories defined in the `DirectorySettings`.
 
         Returns:
             Self: The validated DirectorySettings instance.
@@ -52,8 +54,9 @@ class DirectorySettings(BaseModel):
             self.audio,
             self.video,
         ]:
-            directory.mkdir(exist_ok=True)
-            Info(f"Created directory: {directory}")
+            if not directory.exists():
+                directory.mkdir(exist_ok=True)
+                logger.info("Created directory %s.", directory)
         return self
 
 
@@ -89,17 +92,13 @@ class ModelSettings(BaseModel):
     step_t: int = 50
     seed: int = 0
     motion_dim: int = 20
-
     image_path: FilePath = Field(default=None)
     audio_path: FilePath = Field(default=None)
-
     control_flag: bool = True
     pose_driven_path: str = "not_supported_in_this_mode"
     image_size: int = 256
     device: Literal["cuda", "cpu"] = "cuda" if is_available() else "cpu"
-    motion_dim: int = 20
     decoder_layers: int = 2
-
     repo_id: str = "taocode/anitalker_ckpts"
     infer_type: Literal[
         "mfcc_full_control",
@@ -114,11 +113,15 @@ class ModelSettings(BaseModel):
     @model_validator(mode="after")
     def check_image_path(self) -> "ModelSettings":
         if self.image_path and not self.image_path.exists():
-            Error("Image path does not exist.")
-            exit(0)
+            _msg = f"Image path does not exist: {self.image_path}"
+            logger.error(_msg)
+            Error(_msg)
+            raise FileNotFoundError(_msg)
         if self.audio_path and not self.audio_path.exists():
-            Error("Audio path does not exist.")
-            exit(0)
+            _msg = f"Audio path does not exist: {self.audio_path}"
+            logger.error(_msg)
+            Error(_msg)
+            raise FileNotFoundError(_msg)
         return self
 
 
@@ -133,8 +136,3 @@ class Settings(BaseSettings):
     )
     directory: DirectorySettings = DirectorySettings()
     model: ModelSettings = ModelSettings()
-
-
-if __name__ == "__main__":
-    print(Settings().model_dump())
-    print(__package__)
