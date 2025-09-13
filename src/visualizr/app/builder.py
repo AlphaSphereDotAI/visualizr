@@ -164,7 +164,7 @@ class App:
 
         elif conf.infer_type.startswith("hubert"):
             # Hubert features
-            hubert_model_path:Path = (
+            hubert_model_path: Path = (
                 self.settings.directory.checkpoint / "chinese-hubert-large"
             )
             if not hubert_model_path.exists():
