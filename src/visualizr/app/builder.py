@@ -164,8 +164,10 @@ class App:
 
         elif conf.infer_type.startswith("hubert"):
             # Hubert features
-            hubert_model_path = "ckpts/chinese-hubert-large"
-            if not Path(hubert_model_path).exists():
+            hubert_model_path: Path = (
+                self.settings.directory.checkpoint / "chinese-hubert-large"
+            )
+            if not hubert_model_path.exists():
                 _msg = "Please download the hubert weight into the ckpts path first."
                 logger.error(_msg)
                 Error(_msg)
