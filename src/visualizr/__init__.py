@@ -1,23 +1,12 @@
-from logging import INFO, WARNING, basicConfig, getLogger
 from warnings import filterwarnings
 
 from pyfiglet import Figlet
 from rich.console import Console
-from rich.logging import RichHandler
-from rich.style import Style
+from rich.panel import Panel
 
 filterwarnings("ignore", category=UserWarning)
 
-figlet = Figlet(font="slant", justify="center")
-art = figlet.renderText("VISUALIZR")
+art = Figlet(font="slant", justify="center").renderText("VISUALIZR")
 
 console = Console()
-console.print(art, style=Style(bold=True))
-
-basicConfig(
-    level=INFO,
-    handlers=[RichHandler(level=INFO, console=console, rich_tracebacks=True)],
-    format="%(name)s | %(process)d | %(message)s",
-)
-getLogger("httpx").setLevel(WARNING)
-logger = getLogger(__name__)
+console.print(Panel(art))
