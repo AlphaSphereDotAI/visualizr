@@ -16,7 +16,6 @@ runtimes:
 lint:
   enabled:
     #    - ty@0.0.1-alpha.19
-    - oxipng@9.1.5
     - trufflehog-git@3.90.6
     - pre-commit-hooks@5.0.0
     - trivy@0.66.0
