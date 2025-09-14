@@ -17,9 +17,9 @@ console.print(
     justify="center",
 )
 console.print(
-    "Developed by (https://github.com/AlphaSphereDotAI)",
+    "Developed by [link=https://github.com/AlphaSphereDotAI]AlphaSphere.AI[/link]",
     style=Style(bold=True),
     no_wrap=True,
     justify="center",
-    end="\n\n\n",
+    end="\n\n\n\n",
 )
