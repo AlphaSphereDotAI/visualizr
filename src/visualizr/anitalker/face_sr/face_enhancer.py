@@ -12,14 +12,15 @@ from typing import Literal
 
 import cv2
 from basicsr.archs.rrdbnet_arch import RRDBNet
+from gfpgan import GFPGANer
 from gradio import Info, Warning as grWarning
 from numpy import ndarray
 from realesrgan import RealESRGANer
 from torch.cuda import is_available
 from tqdm import tqdm
 
-from gfpgan import GFPGANer
 from visualizr.anitalker.face_sr.videoio import load_video_to_cv2
+from visualizr.app.logger import logger
 
 GH: str = "https://github.com"
 REAL_ESRGAN_X_2_PLUS_MODEL_PATH: str = (
@@ -40,7 +41,7 @@ GFPGAN_WEIGHTS: Path = Path("gfpgan/weights")
 def enhancer_list(
     images: Path,
     method: str = "gfpgan",
-    bg_upsampler: str = "realesrgan",
+    bg_upsampler: str | None = "realesrgan",
 ) -> list:
     """
     Generate a list of enhanced images.
@@ -92,14 +93,14 @@ def setup_background_upsampler(bg_upsampler: str) -> RealESRGANer | None:
     _bg_upsampler: RealESRGANer | None = None
     if bg_upsampler == "realesrgan":
         if not is_available():  # CPU
-            grWarning(
-                (
-                    "The unoptimized RealESRGAN is slow on CPU. "
-                    "We do not use it. "
-                    "If you really want to use it, "
-                    "please modify the corresponding codes."
-                ),
+            _msg: str = (
+                "The unoptimized RealESRGAN is slow on CPU. "
+                "We do not use it. "
+                "If you really want to use it, "
+                "please modify the corresponding codes."
             )
+            logger.warning(_msg)
+            grWarning(_msg)
             _bg_upsampler = None
         else:
             model = RRDBNet(num_in_ch=3, num_out_ch=3, scale=2)
@@ -147,7 +148,9 @@ def enhancer_generator_no_len(
             "Expected one of: gfpgan, RestoreFormer, codeformer."
         )
         raise ValueError(msg)
-    Info("face enhancer....")
+    _msg = f"face enhancer: {method}"
+    logger.info(_msg)
+    Info(_msg)
     if not isinstance(images, list) and images.is_file():
         # handle video to images
         images = load_video_to_cv2(images.as_posix())

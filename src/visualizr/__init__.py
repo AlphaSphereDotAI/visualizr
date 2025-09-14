@@ -1,18 +1,18 @@
-from logging import INFO, basicConfig, getLogger
 from warnings import filterwarnings
 
 from pyfiglet import Figlet
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.style import Style
+from rich.panel import Panel
 
 filterwarnings("ignore", category=UserWarning)
 
-figlet = Figlet(font="dos_rebel", width=110)
-art = figlet.renderText("VISUALIZR")
+art = Figlet(font="slant", justify="center").renderText("VISUALIZR")
 
 console = Console()
-console.print(art, style=Style(frame=True), new_line_start=True)
+console.print(Panel(art))
+
 console.print(
     "Video Generation with AniTalker Model.",
     style=Style(bold=True),
@@ -25,10 +25,3 @@ console.print(
     no_wrap=True,
     justify="center",
 )
-
-basicConfig(
-    level=INFO,
-    handlers=[RichHandler(level=INFO, console=console, rich_tracebacks=True)],
-    format="%(name)s | %(process)d | %(message)s",
-)
-logger = getLogger(__name__)

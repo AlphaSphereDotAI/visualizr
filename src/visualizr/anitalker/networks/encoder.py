@@ -4,6 +4,8 @@ from gradio import Info
 from torch import Tensor, flip, float32, nn, randn, softmax, tensor, zeros, zeros_like
 from torch.nn.functional import conv2d, leaky_relu, linear, pad
 
+from visualizr.app.logger import logger
+
 
 def fused_leaky_relu(_input, bias, negative_slope=0.2, scale=2**0.5):
     return leaky_relu(_input + bias, negative_slope) * scale
@@ -311,7 +313,9 @@ class EncoderApp(nn.Module):
                 f"Unsupported `fusion_type`: {self.fusion_type}. "
                 "Expected 'weighted_sum'.",
             )
-        Info("HAL layer is enabled!")
+        _msg = "HAL layer is enabled!"
+        logger.info(_msg)
+        Info(_msg)
         self.adaptive_pool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc1 = EqualLinear(64, 512)
         self.fc2 = EqualLinear(128, 512)

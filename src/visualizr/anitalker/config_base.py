@@ -5,6 +5,8 @@ from typing import Any
 
 from gradio import Info
 
+from visualizr.app.logger import logger
+
 
 @dataclass
 class BaseConfig:
@@ -38,7 +40,9 @@ class BaseConfig:
             if not hasattr(self, k):
                 if strict:
                     raise ValueError(f"loading extra '{k}'")
-                Info(f"loading extra '{k}'")
+                _msg = f"loading extra '{k}'"
+                logger.info(_msg)
+                Info(_msg)
                 continue
             if isinstance(self.__dict__[k], BaseConfig):
                 self.__dict__[k].from_dict(v)
