@@ -2,13 +2,12 @@ from warnings import filterwarnings
 
 from pyfiglet import Figlet
 from rich.console import Console
-from rich.logging import RichHandler
-from rich.style import Style
 from rich.panel import Panel
+from rich.style import Style
 
 filterwarnings("ignore", category=UserWarning)
 
-art = Figlet(font="slant", justify="center").renderText("VISUALIZR")
+art = Figlet(font="dos_rebel", justify="center").renderText("VISUALIZR")
 
 console = Console()
 console.print(Panel(art))
