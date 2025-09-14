@@ -16,4 +16,4 @@ basicConfig(
     format="%(name)s | %(process)d | %(message)s",
 )
 getLogger("httpx").setLevel(WARNING)
-logger = getLogger(__name__)
+logger = getLogger(__package__)
