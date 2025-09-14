@@ -2,16 +2,14 @@ from warnings import filterwarnings
 
 from pyfiglet import Figlet
 from rich.console import Console
-from rich.panel import Panel
 from rich.style import Style
 
 filterwarnings("ignore", category=UserWarning)
 
-art = Figlet(font="dos_rebel", justify="center").renderText("VISUALIZR")
+art = Figlet(font="dos_rebel", justify="center", width=110).renderText("VISUALIZR")
 
 console = Console()
-console.print(Panel(art))
-
+console.print(art, no_wrap=True, new_line_start=True)
 console.print(
     "Video Generation with AniTalker Model.",
     style=Style(bold=True),
@@ -23,4 +21,5 @@ console.print(
     style=Style(bold=True),
     no_wrap=True,
     justify="center",
+    end="\n\n\n",
 )
