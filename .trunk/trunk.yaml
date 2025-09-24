@@ -25,9 +25,9 @@ lint:
     - bandit@1.8.6
     - checkov@3.2.471
     - git-diff-check
-    - hadolint@2.13.1
+    - hadolint@2.14.0
     - markdownlint@0.45.0
-    - renovate@41.123.0
+    - renovate@41.125.3
     - ruff@0.13.1:
         commands:
           - lint
