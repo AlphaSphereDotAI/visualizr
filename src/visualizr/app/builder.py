@@ -57,7 +57,7 @@ from visualizr.app.settings import Settings
 
 
 class App:
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Settings) -> None:
         self.settings: Settings = settings
         logger.info("Downloading model checkpoint")
         snapshot_download(
@@ -378,6 +378,10 @@ class App:
                         the high-resolution video (if `face_sr` is True),
                         and a Markdown status message.
         """
+        if name not in self._get_character_names():
+            _msg = f"Character '{name}' not found."
+            logger.error(_msg)
+            raise Error(_msg)
         return self.generate_video(
             infer_type,
             self._get_image_path(name),
