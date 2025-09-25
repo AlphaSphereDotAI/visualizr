@@ -61,9 +61,10 @@ class App:
         self.settings: Settings = settings
         logger.info("Downloading model checkpoint")
         snapshot_download(
-            repo_id=settings.model.repo_id,
-            local_dir=settings.directory.checkpoint,
+            repo_id=self.settings.model.repo_id,
+            local_dir=self.settings.directory.checkpoint,
             repo_type="model",
+            revision=self.settings.model.revision,
         )
 
     def generate_video(
