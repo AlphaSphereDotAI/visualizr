@@ -100,6 +100,7 @@ class ModelSettings(BaseModel):
     device: Literal["cuda", "cpu"] = "cuda" if is_available() else "cpu"
     decoder_layers: int = 2
     repo_id: str = "taocode/anitalker_ckpts"
+    revision: str = "main"
     infer_type: Literal[
         "mfcc_full_control",
         "mfcc_pose_only",

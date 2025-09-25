@@ -78,7 +78,6 @@ class App:
         ],
         image_path: str | Path,
         audio_path: str | Path,
-        face_sr: bool,
         pose_yaw: float,
         pose_pitch: float,
         pose_roll: float,
@@ -86,6 +85,8 @@ class App:
         face_scale: float,
         step_t: int,
         seed: int,
+        *,
+        face_sr: bool,
     ) -> tuple[Video | None, Video | None, Markdown]:
         if image_path is None or not Path(image_path).exists():
             Error(f"{image_path} does not exist or is invalid!")
@@ -342,7 +343,6 @@ class App:
             "hubert_full_control",
         ],
         audio_path: str | Path,
-        face_sr: bool,
         pose_yaw: float,
         pose_pitch: float,
         pose_roll: float,
@@ -350,6 +350,8 @@ class App:
         face_scale: float,
         step_t: int,
         seed: int,
+        *,
+        face_sr: bool,
     ) -> tuple[Video | None, Video | None, Markdown]:
         """
         Generate a video for a character by name using the provided settings and audio.
@@ -387,7 +389,6 @@ class App:
             infer_type,
             self._get_image_path(name),
             audio_path,
-            face_sr,
             pose_yaw,
             pose_pitch,
             pose_roll,
@@ -395,6 +396,7 @@ class App:
             face_scale,
             step_t,
             seed,
+            face_sr=face_sr,
         )
 
     def _get_image_path(self, name: str) -> Path:
