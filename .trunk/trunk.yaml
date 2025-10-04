@@ -28,7 +28,7 @@ lint:
     - hadolint@2.14.0
     - markdownlint@0.45.0
     - renovate@41.132.5
-    - ruff@0.13.2:
+    - ruff@0.13.3:
         commands:
           - lint
           - format
