@@ -18,16 +18,16 @@ lint:
     #    - ty@0.0.1-alpha.19
     - trufflehog-git@3.90.8
     - pre-commit-hooks@5.0.0
-    - trivy@0.67.1
+    - trivy@0.67.2
     - yamlfmt@0.17.2
     - gitleaks@8.28.0
-    - actionlint@1.7.7
+    - actionlint@1.7.8
     - bandit@1.8.6
-    - checkov@3.2.477
+    - checkov@3.2.483
     - git-diff-check
     - hadolint@2.14.0
     - markdownlint@0.45.0
-    - renovate@41.144.1
+    - renovate@41.146.2
     - ruff@0.14.0:
         commands:
           - lint
