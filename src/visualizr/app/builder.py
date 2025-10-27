@@ -455,9 +455,10 @@ class App:
             list[str]: Sorted list of unique character names (file stems)
                        from supported image files.
         """
-        extensions = ("*.jpg", "*.jpeg", "*.png")
         paths = (
-            p for ext in extensions for p in self.settings.directory.image.glob(ext)
+            p
+            for ext in ("*.jpg", "*.jpeg", "*.png")
+            for p in self.settings.directory.image.glob(ext)
         )
         # Use a set to handle cases where an image exists with multiple supported
         # extensions (for example, napoleon.jpg, napoleon.png)
