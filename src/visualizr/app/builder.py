@@ -417,13 +417,13 @@ class App:
 
     def _download_audio(self, url: HttpUrl) -> Path | None:
         try:
-            client = Client()
-            response = client.get(url)
-            response.raise_for_status()
-            with NamedTemporaryFile(delete=False, suffix=".wav") as f:
-                f.write(response.content)
-                audio_path = Path(f.name)
-            logger.info(f"Downloaded audio to {audio_path}")
+            with Client() as client:
+                response = client.get(url)
+                response.raise_for_status()
+                with NamedTemporaryFile(delete=False, suffix=".wav") as f:
+                    f.write(response.content)
+                    audio_path = Path(f.name)
+                logger.info(f"Downloaded audio to {audio_path}")
         except (RequestError, HTTPStatusError, OSError) as e:
             logger.error(f"Failed to download audio from {url}: {e}")
             return None
