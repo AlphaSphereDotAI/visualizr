@@ -344,10 +344,12 @@ class App:
             _msg = f"Character '{name}' not found."
             logger.error(_msg)
             raise Error(_msg)
-        if isinstance(audio_file, str) and audio_file.startswith((
-            "http://",
-            "https://",
-        )):
+        if isinstance(audio_file, str) and audio_file.startswith(
+            (
+                "http://",
+                "https://",
+            ),
+        ):
             audio_file = self._download_audio(URL(audio_file))
         if not isinstance(audio_file, Path):
             audio_file = Path(audio_file)
@@ -405,7 +407,7 @@ class App:
         return self.generate_video_from_name(
             name,
             infer_type,
-            audio_file.as_posix(),
+            audio_file,
             pose_yaw,
             pose_pitch,
             pose_roll,
