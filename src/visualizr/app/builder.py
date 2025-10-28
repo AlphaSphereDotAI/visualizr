@@ -422,6 +422,18 @@ class App:
         ).as_posix()
 
     def _download_audio(self, url: URL) -> Path:
+        """
+        Download an audio file from a given URL and save it as a temporary WAV file.
+
+        Args:
+            url (URL): The URL to download the audio from.
+
+        Returns:
+            Path: The path to the downloaded temporary audio file.
+
+        Raises:
+            Error: If the download fails due to network or file errors.
+        """
         try:
             with Client() as client:
                 response = client.get(url)
