@@ -371,7 +371,7 @@ class App:
         step_t: int,
         seed: int,
         face_sr: bool,
-    ) -> Path:
+    ) -> str:
         """
         Generate a video for a character by name using the provided settings and audio.
 
