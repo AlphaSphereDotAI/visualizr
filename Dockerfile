@@ -16,7 +16,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 FROM cgr.dev/chainguard/wolfi-base:latest@sha256:5d0f514b76a62a9557abc4d30e19c9eb3f2665f1b8227e96eff7a920e389e08b AS production
 
-ENV GRADIO_SERVER_NAME=0.0.0.0 \
+ENV GRADIO_SERVER_PORT=7860 \
+    GRADIO_SERVER_NAME=0.0.0.0 \
     PATH=/home/nonroot/.local/bin:$PATH
 
 # skipcq: DOK-DL3018
