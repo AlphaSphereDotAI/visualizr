@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Literal
+from typing import Literal, Self
 
 from visualizr.anitalker.choices import (
     Activation,
@@ -94,14 +94,17 @@ class TrainConfig(BaseConfig):
     T: int = 1_000
     # to be overridden
     name: str = ""
-    decoder_layers = None
-    motion_dim = None
+    decoder_layers: int = None
+    motion_dim: int = None
+    mfcc: bool = None
+    face_scale: bool = None
+    face_location: bool = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.batch_size_eval = self.batch_size_eval or self.batch_size
         self.data_val_name = self.data_val_name or self.data_name
 
-    def scale_up_gpus(self, num_gpus, num_nodes=1):
+    def scale_up_gpus(self, num_gpus: int, num_nodes: int = 1) -> Self:
         self.batch_size *= num_gpus * num_nodes
         self.batch_size_eval *= num_gpus * num_nodes
         return self

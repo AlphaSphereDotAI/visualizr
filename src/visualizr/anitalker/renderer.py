@@ -44,7 +44,7 @@ def render_condition(
         ValueError: If the model type is not autoencoder-capable.
     """
     if conf.train_mode != TrainMode.diffusion:
-        raise NotImplementedError()
+        raise NotImplementedError
     if not conf.model_type.has_autoenc():
         msg: str = (
             "TrainMode.diffusion requires an "

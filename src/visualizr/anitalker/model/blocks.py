@@ -256,10 +256,10 @@ def apply_conditions(
     h,
     emb=None,
     cond=None,
-    layers: nn.Sequential = None,
+    layers: nn.Sequential | None = None,
     scale_bias: float = 1,
     in_channels: int = 512,
-    up_down_layer: nn.Module = None,
+    up_down_layer: nn.Module | None = None,
 ):
     """
     Apply conditions on the feature maps.

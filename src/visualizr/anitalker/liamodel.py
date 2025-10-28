@@ -12,9 +12,9 @@ class LiaModel(nn.Module):
         style_dim=512,
         motion_dim=20,
         channel_multiplier=1,
-        blur_kernel: list = None,
+        blur_kernel: list | None = None,
         fusion_type="",
-    ):
+    ) -> None:
         if blur_kernel is None:
             blur_kernel = [1, 3, 3, 1]
         super().__init__()

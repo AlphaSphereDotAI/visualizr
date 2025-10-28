@@ -27,8 +27,8 @@ def autoenc_base():
     return conf
 
 
-def ffhq128_autoenc_base():
-    conf = autoenc_base()
+def ffhq128_autoenc_base() -> TrainConfig:
+    conf: TrainConfig = autoenc_base()
     conf.data_name = "ffhqlmdb256"
     conf.scale_up_gpus(4)
     conf.img_size = 128
@@ -41,8 +41,8 @@ def ffhq128_autoenc_base():
     return conf
 
 
-def ffhq256_autoenc():
-    conf = ffhq128_autoenc_base()
+def ffhq256_autoenc() -> TrainConfig:
+    conf: TrainConfig = ffhq128_autoenc_base()
     conf.img_size = 256
     conf.net_ch = 128
     conf.net_ch_mult = (1, 1, 2, 2, 4, 4)

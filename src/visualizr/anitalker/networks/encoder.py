@@ -196,10 +196,10 @@ class ConvLayer(nn.Sequential):
         out_channel,
         kernel_size,
         downsample=False,
-        blur_kernel: list = None,
+        blur_kernel: list | None = None,
         bias=True,
         activate=True,
-    ):
+    ) -> None:
         if blur_kernel is None:
             blur_kernel = [1, 3, 3, 1]
         layers = []

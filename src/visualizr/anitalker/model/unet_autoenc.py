@@ -179,16 +179,16 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
 
 class AutoencReturn(NamedTuple):
     pred: Tensor
-    cond: Tensor = None
+    cond: Tensor | None = None
 
 
 class EmbedReturn(NamedTuple):
     # style and time
-    emb: Tensor = None
+    emb: Tensor | None = None
     # time only
-    time_emb: Tensor = None
+    time_emb: Tensor | None = None
     # style only (but could depend on time)
-    style: Tensor = None
+    style: Tensor | None = None
 
 
 class TimeStyleSeperateEmbed(nn.Module):

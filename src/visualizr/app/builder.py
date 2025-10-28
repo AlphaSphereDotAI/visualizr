@@ -108,6 +108,9 @@ class App:
             self.settings.model.motion_dim,
         )
 
+        if not isinstance(image_path, Path):
+            image_path = Path(image_path)
+
         img_source: Tensor = img_preprocessing(image_path, 256).to("cuda")
         one_shot_lia_start, one_shot_lia_direction, feats = (
             lia.get_start_direction_code(
@@ -274,6 +277,9 @@ class App:
         _msg = f"Saving video at {predicted_video_256_path}"
         logger.info(_msg)
         Info(_msg)
+
+        if not isinstance(audio_path, Path):
+            audio_path = Path(audio_path)
 
         frames_to_video(
             self.settings.directory.frames,

@@ -7,33 +7,33 @@ class TrainMode(Enum):
     # manipulate mode = training the classifier
     manipulate = "manipulate"
     # default training mode!
-    diffusion = "diffusion"
+    diffusion: str = "diffusion"
 
 
 class ModelType(Enum):
     """Kinds of the backbone models."""
 
     # unconditional ddpm
-    ddpm = "ddpm"
+    ddpm: str = "ddpm"
     # autoencoding ddpm cannot do unconditional generation
-    autoencoder = "autoencoder"
+    autoencoder: str = "autoencoder"
 
-    def has_autoenc(self):
+    def has_autoenc(self) -> bool:
         return self in [ModelType.autoencoder]
 
 
 class ModelName(Enum):
     """List of all supported model classes."""
 
-    beatgans_ddpm = "beatgans_ddpm"
-    beatgans_autoenc = "beatgans_autoenc"
+    beatgans_ddpm: str = "beatgans_ddpm"
+    beatgans_autoenc: str = "beatgans_autoenc"
 
 
 class ModelMeanType(Enum):
     """Which type of output the model predicts."""
 
     # the model predicts epsilon
-    eps = "eps"
+    eps: str = "eps"
 
 
 class ModelVarType(Enum):
@@ -45,9 +45,9 @@ class ModelVarType(Enum):
     """
 
     # posterior beta_t
-    fixed_small = "fixed_small"
+    fixed_small: str = "fixed_small"
     # beta_t
-    fixed_large = "fixed_large"
+    fixed_large: str = "fixed_large"
 
 
 class LossType(Enum):

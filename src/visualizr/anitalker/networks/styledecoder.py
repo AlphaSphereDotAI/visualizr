@@ -253,7 +253,7 @@ class EqualLinear(nn.Module):
         bias_init=0,
         lr_mul=1,
         activation=None,
-    ):
+    ) -> None:
         """
         Initialize the EqualLinear layer.
 
@@ -344,7 +344,7 @@ class ModulatedConv2d(nn.Module):
         demodulate=True,
         upsample=False,
         downsample=False,
-        blur_kernel: list = None,
+        blur_kernel: list | None = None,
     ):
         if blur_kernel is None:
             blur_kernel = [1, 3, 3, 1]
@@ -465,9 +465,9 @@ class StyledConv(nn.Module):
         kernel_size,
         style_dim,
         upsample=False,
-        blur_kernel: list = None,
+        blur_kernel: list | None = None,
         demodulate=True,
-    ):
+    ) -> None:
         if blur_kernel is None:
             blur_kernel = [1, 3, 3, 1]
         super().__init__()
@@ -499,10 +499,10 @@ class ConvLayer(nn.Sequential):
         out_channel,
         kernel_size,
         downsample=False,
-        blur_kernel: list = None,
+        blur_kernel: list | None = None,
         bias=True,
         activate=True,
-    ):
+    ) -> None:
         if blur_kernel is None:
             blur_kernel = [1, 3, 3, 1]
         layers = []
@@ -543,7 +543,7 @@ class ConvLayer(nn.Sequential):
 
 
 class ToRGB(nn.Module):
-    def __init__(self, in_channel, upsample=True, blur_kernel: list = None):
+    def __init__(self, in_channel, upsample=True, blur_kernel: list | None = None) -> None:
         if blur_kernel is None:
             blur_kernel = [1, 3, 3, 1]
         super().__init__()
@@ -564,7 +564,7 @@ class ToRGB(nn.Module):
 
 
 class ToFlow(nn.Module):
-    def __init__(self, in_channel, style_dim, upsample=True, blur_kernel: list = None):
+    def __init__(self, in_channel, style_dim, upsample=True, blur_kernel: list | None = None) -> None:
         if blur_kernel is None:
             blur_kernel = [1, 3, 3, 1]
         super().__init__()
@@ -630,9 +630,9 @@ class Synthesis(nn.Module):
         size,
         style_dim,
         motion_dim,
-        blur_kernel: list = None,
-        channel_multiplier=1,
-    ):
+        blur_kernel: list | None = None,
+        channel_multiplier: int = 1,
+    ) -> None:
         if blur_kernel is None:
             blur_kernel = [1, 3, 3, 1]
         super().__init__()
