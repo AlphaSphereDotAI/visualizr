@@ -21,7 +21,7 @@ from gradio import (
     Tab,
     Textbox,
 )
-from httpx import Client, HTTPStatusError, RequestError
+from httpx import URL, Client, HTTPStatusError, RequestError
 from huggingface_hub import snapshot_download
 from librosa import load as librosa_load
 from numpy import (
@@ -391,16 +391,18 @@ class App:
         Returns:
             Path: A path to the generated video file.
         """
+        if audio_file is None or not Path(audio_file).exists():
+            _msg = f"Audio path '{audio_file}' does not exist or is invalid."
+            logger.error(_msg)
+            raise Error(_msg)
         if name not in self._get_character_names():
             _msg = f"Character '{name}' not found."
             logger.error(_msg)
             raise Error(_msg)
         if str(audio_file).startswith(("http://", "https://")):
             audio_file = self._download_audio(audio_file)
-        if audio_file is None or not Path(audio_file).exists():
-            _msg = f"Audio path '{audio_file}' does not exist or is invalid."
-            logger.error(_msg)
-            raise Error(_msg)
+        if not isinstance(audio_file, Path):
+            audio_file = Path(audio_file)
         return self.generate_video(
             infer_type,
             self._get_image_path(name),
@@ -415,7 +417,7 @@ class App:
             face_sr=face_sr,
         ).as_posix()
 
-    def _download_audio(self, url: HttpUrl) -> Path | None:
+    def _download_audio(self, url: URL) -> Path:
         try:
             with Client() as client:
                 response = client.get(url)
@@ -425,8 +427,9 @@ class App:
                     audio_path = Path(f.name)
                 logger.info(f"Downloaded audio to {audio_path}")
         except (RequestError, HTTPStatusError, OSError) as e:
-            logger.error(f"Failed to download audio from {url}: {e}")
-            return None
+            msg = f"Failed to download audio from {url}: {e}"
+            logger.error(msg)
+            raise Error(msg) from e
         else:
             return audio_path
 
@@ -488,6 +491,9 @@ class App:
                 return self.settings.model.checkpoint.hubert_audio_only
             case "hubert_full_control":
                 return self.settings.model.checkpoint.hubert_full_control
+            case _:
+                msg = f"Unknown infer_type: {infer_type}"
+                raise Error(msg)
 
     def gui(self) -> Blocks:
         """Create the Gradio interface for the voice generation web app."""
