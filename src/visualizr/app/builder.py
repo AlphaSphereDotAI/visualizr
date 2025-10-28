@@ -552,7 +552,9 @@ class App:
                         name = Dropdown(
                             self._get_character_names(),
                             label="Character",
-                            info="Choose character, More characters will be added later.",
+                            info=(
+                                "Choose character, More characters will be added later."
+                            ),
                         )
                         audio_path_from_name = Textbox()
                     with Column():
