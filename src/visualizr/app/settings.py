@@ -93,8 +93,8 @@ class ModelSettings(BaseModel):
     step_t: int = 50
     seed: int = 0
     motion_dim: int = 20
-    image_path: FilePath = Field(default=None)
-    audio_path: FilePath = Field(default=None)
+    image_path: FilePath | None = Field(default=None)
+    audio_path: FilePath | None = Field(default=None)
     control_flag: bool = True
     pose_driven_path: str = "not_supported_in_this_mode"
     image_size: int = 256
@@ -107,7 +107,18 @@ class ModelSettings(BaseModel):
     checkpoint: Checkpoint = Checkpoint()
 
     @model_validator(mode="after")
-    def check_image_path(self) -> "ModelSettings":
+    def check_missing_paths(self) -> "ModelSettings":
+        """
+        Validate that the image and audio paths exist if provided.
+
+        Checks the existence of the image_path and audio_path attributes.
+
+        Returns:
+            ModelSettings: The validated ModelSettings instance.
+
+        Raises:
+            FileNotFoundError: If the image_path or audio_path does not exist.
+        """
         if self.image_path and not self.image_path.exists():
             _msg = f"Image path does not exist: {self.image_path}"
             logger.error(_msg)
