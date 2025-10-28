@@ -421,7 +421,8 @@ class App:
             face_sr=face_sr,
         ).as_posix()
 
-    def _download_audio(self, url: URL) -> Path:
+    @staticmethod
+    def _download_audio(url: URL) -> Path:
         try:
             with Client() as client:
                 response = client.get(url)
