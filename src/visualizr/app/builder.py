@@ -421,7 +421,8 @@ class App:
             face_sr=face_sr,
         ).as_posix()
 
-    def _download_audio(self, url: URL) -> Path:
+    @staticmethod
+    def _download_audio(url: URL) -> Path:
         """
         Download an audio file from a given URL and save it as a temporary WAV file.
 
@@ -446,8 +447,7 @@ class App:
             msg = f"Failed to download audio from {url}: {e}"
             logger.error(msg)
             raise Error(msg) from e
-        else:
-            return audio_path
+        return audio_path
 
     def _get_image_path(self, name: str) -> Path:
         """
