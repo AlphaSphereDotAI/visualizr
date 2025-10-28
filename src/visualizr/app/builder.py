@@ -31,7 +31,6 @@ from numpy import (
     pad as np_pad,
     squeeze as np_squeeze,
 )
-from pydantic import HttpUrl
 from python_speech_features import delta, mfcc
 from torch import (
     Tensor,
