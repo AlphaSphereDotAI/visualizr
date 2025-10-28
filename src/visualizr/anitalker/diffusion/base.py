@@ -113,9 +113,9 @@ class GaussianDiffusionBeatGans:
         noise=None,
         cond=None,
         x_start=None,
-        clip_denoised: bool=True,
+        clip_denoised: bool = True,
         model_kwargs=None,
-        progress: bool=False,
+        progress: bool = False,
     ):
         """
         Generate samples from the diffusion model using either DDPM or DDIM sampling.
@@ -137,7 +137,7 @@ class GaussianDiffusionBeatGans:
             torch.Tensor: The generated samples from the model.
         """
         if model_kwargs is None:
-            model_kwargs:dict = {}
+            model_kwargs: dict = {}
             if self.conf.model_type.has_autoenc():
                 model_kwargs["x_start"] = x_start
                 model_kwargs["cond"] = cond
@@ -341,7 +341,9 @@ class GaussianDiffusionBeatGans:
             return t.float() * (1000.0 / self.num_timesteps)
         return t
 
-    def condition_mean(self, cond_fn, p_mean_var, x, t: th.Tensor, model_kwargs: dict | None = None):
+    def condition_mean(
+        self, cond_fn, p_mean_var, x, t: th.Tensor, model_kwargs: dict | None = None
+    ):
         """
         Compute the mean for the previous step, given a function `cond_fn` that
         computes the gradient of a conditional log probability about
@@ -353,7 +355,9 @@ class GaussianDiffusionBeatGans:
         gradient = cond_fn(x, self._scale_timesteps(t), **model_kwargs)
         return p_mean_var["mean"].float() + p_mean_var["variance"] * gradient.float()
 
-    def condition_score(self, cond_fn, p_mean_var, x, t: th.Tensor, model_kwargs: dict | None = None):
+    def condition_score(
+        self, cond_fn, p_mean_var, x, t: th.Tensor, model_kwargs: dict | None = None
+    ):
         """
         Compute what the p_mean_variance output would have been, should the
         model's score function be conditioned by `cond_fn`.
@@ -440,8 +444,8 @@ class GaussianDiffusionBeatGans:
         denoised_fn=None,
         cond_fn=None,
         model_kwargs=None,
-        device: th.device | None=None,
-        progress : bool=False,
+        device: th.device | None = None,
+        progress: bool = False,
     ):
         """
         Generate samples from the model.
@@ -619,7 +623,7 @@ class GaussianDiffusionBeatGans:
         denoised_fn=None,
         cond_fn=None,
         model_kwargs: dict | None = None,
-        device: th.device | None=None,
+        device: th.device | None = None,
         progress: bool = False,
         eta: float = 0.0,
     ):
@@ -664,7 +668,9 @@ class GaussianDiffusionBeatGans:
                 img = out["sample"]
 
 
-def _extract_into_tensor(arr: np.ndarray, timesteps: th.Tensor, broadcast_shape) -> th.Tensor: #TODO: np
+def _extract_into_tensor(
+    arr: np.ndarray, timesteps: th.Tensor, broadcast_shape
+) -> th.Tensor:  # TODO: np
     """
     Extract values from a 1D numpy array for a batch of indexes.
 

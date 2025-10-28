@@ -137,7 +137,9 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
         mid_cond_emb: Tensor | None = cond_emb
         dec_cond_emb: Tensor | None = cond_emb
 
-        hs: list[list[Tensor]] = [[] for _ in range(len(self.conf.channel_mult))] #TODO: type
+        hs: list[list[Tensor]] = [
+            [] for _ in range(len(self.conf.channel_mult))
+        ]  # TODO: type
 
         if x is not None:
             h = x.type(self.dtype)

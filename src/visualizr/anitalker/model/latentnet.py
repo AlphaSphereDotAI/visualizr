@@ -145,8 +145,12 @@ class MLPLNAct(nn.Module):
         if self.use_cond:
             self.linear_emb = nn.Linear(cond_channels, out_channels)
             self.cond_layers = nn.Sequential(self.act, self.linear_emb)
-        self.norm: nn.LayerNorm | nn.Identity = nn.LayerNorm(out_channels) if norm else nn.Identity()
-        self.dropout: nn.Dropout | nn.Identity = nn.Dropout(p=dropout) if dropout > 0 else nn.Identity()
+        self.norm: nn.LayerNorm | nn.Identity = (
+            nn.LayerNorm(out_channels) if norm else nn.Identity()
+        )
+        self.dropout: nn.Dropout | nn.Identity = (
+            nn.Dropout(p=dropout) if dropout > 0 else nn.Identity()
+        )
         self.init_weights()
 
     def init_weights(self) -> None:

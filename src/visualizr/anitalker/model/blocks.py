@@ -347,7 +347,9 @@ class Upsample(nn.Module):
         self.use_conv = use_conv
         self.dims: int = dims
         if use_conv:
-            self.conv: nn.Conv1d | Conv2d | Conv3d = conv_nd(dims, self.channels, self.out_channels, 3, padding=1)
+            self.conv: nn.Conv1d | Conv2d | Conv3d = conv_nd(
+                dims, self.channels, self.out_channels, 3, padding=1
+            )
 
     def forward(self, x):
         if x.shape[1] != self.channels:
@@ -437,7 +439,9 @@ class AttentionBlock(nn.Module):
             # split heads before split qkv
             self.attention = QKVAttentionLegacy(self.num_heads)
 
-        self.proj_out: nn.Conv1d | Conv2d | Conv3d = zero_module(conv_nd(1, channels, channels, 1))
+        self.proj_out: nn.Conv1d | Conv2d | Conv3d = zero_module(
+            conv_nd(1, channels, channels, 1)
+        )
 
     def forward(self, x):
         return torch_checkpoint(self._forward, (x,), self.use_checkpoint)
@@ -510,5 +514,7 @@ class QKVAttention(nn.Module):
             (k * scale).view(bs * self.n_heads, ch, length),
         )  # More stable with f16 than dividing afterward
         weight = th.softmax(weight.float(), dim=-1).type(weight.dtype)
-        a: Tensor = th.einsum("bts,bcs->bct", weight, v.reshape(bs * self.n_heads, ch, length))
+        a: Tensor = th.einsum(
+            "bts,bcs->bct", weight, v.reshape(bs * self.n_heads, ch, length)
+        )
         return a.reshape(bs, -1, length)

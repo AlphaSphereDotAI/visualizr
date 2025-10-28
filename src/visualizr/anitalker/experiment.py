@@ -29,8 +29,12 @@ class LitModel(LightningModule):
         self.ema_model: DiffusionPredictor = deepcopy(self.model)
         self.ema_model.requires_grad_(requires_grad=False)
         self.ema_model.eval()
-        self.sampler: SpacedDiffusionBeatGans = conf.make_diffusion_conf().make_sampler()
-        self.eval_sampler: SpacedDiffusionBeatGans = conf.make_eval_diffusion_conf().make_sampler()
+        self.sampler: SpacedDiffusionBeatGans = (
+            conf.make_diffusion_conf().make_sampler()
+        )
+        self.eval_sampler: SpacedDiffusionBeatGans = (
+            conf.make_eval_diffusion_conf().make_sampler()
+        )
         # this is shared for both model and latent
         self.T_sampler: UniformSampler = conf.make_t_sampler()
         # initial variables for consistent sampling

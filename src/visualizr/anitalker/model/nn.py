@@ -75,7 +75,9 @@ def timestep_embedding(timesteps, dim, max_period: int = 10000) -> Tensor:
     :return: An [N x dim] Tensor of positional embeddings.
     """
     half = dim // 2
-    freqs: Tensor = exp(-log(max_period) * arange(start=0, end=half, dtype=float32) / half).to(
+    freqs: Tensor = exp(
+        -log(max_period) * arange(start=0, end=half, dtype=float32) / half
+    ).to(
         device=timesteps.device,
     )
     args = timesteps[:, None].float() * freqs[None]
