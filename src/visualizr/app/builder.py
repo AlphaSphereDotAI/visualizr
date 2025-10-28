@@ -400,7 +400,7 @@ class App:
             seed (int): Random seed for reproducibility.
 
         Returns:
-            Path: A path to the generated video file.
+            str: A path to the generated video file.
         """
         return self.generate_video_from_name(
             name,
