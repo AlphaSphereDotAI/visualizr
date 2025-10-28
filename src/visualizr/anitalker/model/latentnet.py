@@ -12,13 +12,13 @@ from visualizr.anitalker.model.nn import timestep_embedding
 
 
 class LatentNetType(Enum):
-    none = "none"
+    none: str = "none"
     # injecting inputs into the hidden layers
-    skip = "skip"
+    skip: str = "skip"
 
 
 class LatentNetReturn(NamedTuple):
-    pred: torch.Tensor = None
+    pred: torch.Tensor | None = None
 
 
 @dataclass
@@ -38,7 +38,7 @@ class MLPSkipNetConfig(BaseConfig):
     num_time_layers: int = 2
     time_last_act: bool = False
 
-    def make_model(self):
+    def make_model(self) -> "MLPSkipNet":
         return MLPSkipNet(self)
 
 
@@ -49,20 +49,26 @@ class MLPSkipNet(nn.Module):
     Default MLP for the latent DPM in the paper.
     """
 
-    def __init__(self, conf: MLPSkipNetConfig):
+    def __init__(self, conf: MLPSkipNetConfig) -> None:
         super().__init__()
-        self.conf = conf
+        self.conf: MLPSkipNetConfig = conf
 
-        layers = []
+        layers: list[nn.Module] = []
         for i in range(conf.num_time_layers):
-            a = conf.num_time_emb_channels if i == 0 else conf.num_channels
-            b = conf.num_channels
+            a: int = conf.num_time_emb_channels if i == 0 else conf.num_channels
+            b: int = conf.num_channels
             layers.append(nn.Linear(a, b))
             if i < conf.num_time_layers - 1 or conf.time_last_act:
                 layers.append(conf.activation.get_act())
-        self.time_embed = nn.Sequential(*layers)
+        self.time_embed: nn.Sequential = nn.Sequential(*layers)
+        self.layers: nn.ModuleList = nn.ModuleList([])
 
-        self.layers = nn.ModuleList([])
+        act: Activation | None = None
+        norm: bool | None = None
+        cond: bool | None = None
+        a: int | None = None
+        b: int | None = None
+        dropout: float | None = None
         for i in range(conf.num_layers):
             if i == 0:
                 act = conf.activation
@@ -98,10 +104,12 @@ class MLPSkipNet(nn.Module):
                     dropout=dropout,
                 ),
             )
-        self.last_act = conf.last_act.get_act()
+        self.last_act: nn.Identity | nn.ReLU | nn.LeakyReLU | nn.SiLU | nn.Tanh = (
+            conf.last_act.get_act()
+        )
 
-    def forward(self, x, t):
-        t = timestep_embedding(t, self.conf.num_time_emb_channels)
+    def forward(self, x, t) -> LatentNetReturn:
+        t: torch.Tensor = timestep_embedding(t, self.conf.num_time_emb_channels)
         cond = self.time_embed(t)
         h = x
         for i in range(len(self.layers)):
@@ -124,22 +132,24 @@ class MLPLNAct(nn.Module):
         cond_channels: int,
         condition_bias: float = 0,
         dropout: float = 0,
-    ):
+    ) -> None:
         super().__init__()
-        self.activation = activation
-        self.condition_bias = condition_bias
-        self.use_cond = use_cond
+        self.activation: Activation = activation
+        self.condition_bias: float = condition_bias
+        self.use_cond: bool = use_cond
 
         self.linear = nn.Linear(in_channels, out_channels)
-        self.act = activation.get_act()
+        self.act: nn.Identity | nn.ReLU | nn.LeakyReLU | nn.SiLU | nn.Tanh = (
+            activation.get_act()
+        )
         if self.use_cond:
             self.linear_emb = nn.Linear(cond_channels, out_channels)
             self.cond_layers = nn.Sequential(self.act, self.linear_emb)
-        self.norm = nn.LayerNorm(out_channels) if norm else nn.Identity()
-        self.dropout = nn.Dropout(p=dropout) if dropout > 0 else nn.Identity()
+        self.norm: nn.LayerNorm | nn.Identity = nn.LayerNorm(out_channels) if norm else nn.Identity()
+        self.dropout: nn.Dropout | nn.Identity = nn.Dropout(p=dropout) if dropout > 0 else nn.Identity()
         self.init_weights()
 
-    def init_weights(self):
+    def init_weights(self) -> None:
         for module in self.modules():
             if isinstance(module, nn.Linear):
                 if self.activation in [Activation.relu, Activation.silu]:

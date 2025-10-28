@@ -1,6 +1,6 @@
 from espnet.nets.pytorch_backend.conformer.encoder import Encoder
 from gradio import Error, Info
-from torch import cat, nn, zeros
+from torch import Tensor, cat, nn, zeros
 from torch.nn import Module
 from torch.nn.functional import softmax
 
@@ -9,7 +9,13 @@ from visualizr.app.logger import logger
 
 
 class LSTM(Module):
-    def __init__(self, motion_dim, output_dim, num_layers=2, hidden_dim=128):
+    def __init__(
+        self,
+        motion_dim,
+        output_dim,
+        num_layers: int = 2,
+        hidden_dim: int = 128,
+    ) -> None:
         super().__init__()
         self.lstm = nn.LSTM(
             input_size=motion_dim,
@@ -35,7 +41,7 @@ class DiffusionPredictor(Module):
         decoder_dim: int = 1024,
         motion_start_dim: int = 512,
         hal_layers: int = 25,
-    ):
+    ) -> None:
         super().__init__()
         self.conf: TrainConfig = conf
         # Speech downsampling
@@ -66,7 +72,7 @@ class DiffusionPredictor(Module):
             )
 
             self.weights = nn.Parameter(zeros(hal_layers))
-            self.speech_encoder = self.create_conformer_encoder(
+            self.speech_encoder: Encoder = self.create_conformer_encoder(
                 speech_dim,
                 speech_layers,
             )
@@ -80,7 +86,7 @@ class DiffusionPredictor(Module):
             Error(_msg)
             raise ValueError(_msg)
         # Encoders & Decoders
-        self.coarse_decoder = self.create_conformer_encoder(
+        self.coarse_decoder: Encoder = self.create_conformer_encoder(
             decoder_dim,
             conf.decoder_layers,
         )
@@ -137,7 +143,7 @@ class DiffusionPredictor(Module):
         yaw_pitch_roll,
         noisy_x,
         t_emb,
-        control_flag=False,
+        control_flag: bool = False,
     ):
         x = None
         if self.conf.infer_type.startswith("mfcc"):
@@ -187,7 +193,7 @@ class DiffusionPredictor(Module):
         face_location,
         face_scale,
         yaw_pitch_roll,
-        control_flag,
+        control_flag: bool,
     ):
         predicted_location, predicted_scale = 0, 0
         if "full_control" in self.conf.infer_type:
@@ -220,7 +226,9 @@ class DiffusionPredictor(Module):
         predicted_pose = yaw_pitch_roll if control_flag else self.pose_predictor(x)
         return self.pose_encoder(predicted_pose), predicted_pose
 
-    def combine_features(self, x, initial_code, direction_code, noisy_x, t_emb):
+    def combine_features(
+        self, x, initial_code, direction_code, noisy_x, t_emb
+    ) -> Tensor:
         init_code_proj = (
             self.init_code_proj(initial_code).unsqueeze(1).repeat(1, x.size(1), 1)
         )
@@ -240,6 +248,6 @@ class DiffusionPredictor(Module):
             dim=-1,
         )
 
-    def decode_features(self, concatenated_features):
+    def decode_features(self, concatenated_features: Tensor):
         outputs, _ = self.coarse_decoder(concatenated_features, masks=None)
         return self.out_proj(outputs)

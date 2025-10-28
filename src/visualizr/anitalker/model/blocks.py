@@ -2,13 +2,16 @@ import math
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from numbers import Number
+from typing import Literal
 
 import torch as th
-from torch import nn
+from torch import Tensor, nn
+from torch.ao.nn.quantized.dynamic.modules.conv import Conv2d, Conv3d
 from torch.nn.functional import interpolate
 
 from visualizr.anitalker.config_base import BaseConfig
 from visualizr.anitalker.model.nn import (
+    GroupNorm32,
     avg_pool_nd,
     conv_nd,
     normalization,
@@ -21,7 +24,7 @@ class TimestepBlock(nn.Module, ABC):
     """Any module where forward() takes timestep embeddings as a second argument."""
 
     @abstractmethod
-    def forward(self, x, emb=None, cond=None, lateral=None):
+    def forward(self, x, emb=None, cond=None, lateral=None) -> None:
         """Apply the module to `x` given `emb` timestep embeddings."""
 
 
@@ -65,11 +68,11 @@ class ResBlockConfig(BaseConfig):
     # this is defaulted from BeatGANs and seems to help learning.
     use_zero_module: bool = True
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.out_channels = self.out_channels or self.channels
         self.cond_emb_channels = self.cond_emb_channels or self.emb_channels
 
-    def make_model(self):
+    def make_model(self) -> "ResBlock":
         return ResBlock(self)
 
 
@@ -90,21 +93,21 @@ class ResBlock(TimestepBlock):
 
     """
 
-    def __init__(self, conf: ResBlockConfig):
+    def __init__(self, conf: ResBlockConfig) -> None:
         super().__init__()
-        self.conf = conf
+        self.conf: ResBlockConfig = conf
 
         #############################
         # IN LAYERS
         #############################
-        layers = [
+        layers: list[nn.Module] = [
             normalization(conf.channels),
             nn.SiLU(),
             conv_nd(conf.dims, conf.channels, conf.out_channels, 3, padding=1),
         ]
         self.in_layers = nn.Sequential(*layers)
 
-        self.updown = conf.up or conf.down
+        self.updown: bool = conf.up or conf.down
 
         if conf.up:
             self.h_upd = Upsample(conf.channels, False, conf.dims)
@@ -134,7 +137,7 @@ class ResBlock(TimestepBlock):
             # OUT LAYERS (ignored when there is no condition)
             #############################
             # original version
-            conv = conv_nd(
+            conv: nn.Conv1d | Conv2d | Conv3d = conv_nd(
                 conf.dims,
                 conf.out_channels,
                 conf.out_channels,
@@ -175,7 +178,7 @@ class ResBlock(TimestepBlock):
                 kernel_size = 1
                 padding = 0
 
-            self.skip_connection = conv_nd(
+            self.skip_connection: nn.Conv1d | Conv2d | Conv3d = conv_nd(
                 conf.dims,
                 conf.channels,
                 conf.out_channels,
@@ -210,8 +213,9 @@ class ResBlock(TimestepBlock):
             # lateral may be supplied even if it doesn't require
             # the model will take the lateral only if `has_lateral`
             if lateral is None:
-                raise ValueError("`lateral` is required")
-            x = th.cat([x, lateral], dim=1)
+                msg = "`lateral` is required"
+                raise ValueError(msg)
+            x: th.Tensor = th.cat([x, lateral], dim=1)
 
         if self.updown:
             in_rest, in_conv = self.in_layers[:-1], self.in_layers[-1]
@@ -268,7 +272,7 @@ def apply_conditions(
         emb: time conditional (ready to scale + shift)
         cond: encoder's conditional (read to scale + shift)
     """
-    two_cond = emb is not None and cond is not None
+    two_cond: bool = emb is not None and cond is not None
 
     if emb is not None:
         # adjusting shapes
@@ -336,14 +340,14 @@ class Upsample(nn.Module):
                  upsampling occurs in the inner-two dimensions.
     """
 
-    def __init__(self, channels, use_conv, dims=2, out_channels=None):
+    def __init__(self, channels, use_conv, dims: int = 2, out_channels=None) -> None:
         super().__init__()
         self.channels = channels
         self.out_channels = out_channels or channels
         self.use_conv = use_conv
-        self.dims = dims
+        self.dims: int = dims
         if use_conv:
-            self.conv = conv_nd(dims, self.channels, self.out_channels, 3, padding=1)
+            self.conv: nn.Conv1d | Conv2d | Conv3d = conv_nd(dims, self.channels, self.out_channels, 3, padding=1)
 
     def forward(self, x):
         if x.shape[1] != self.channels:
@@ -368,15 +372,15 @@ class Downsample(nn.Module):
                  downsampling occurs in the inner-two dimensions.
     """
 
-    def __init__(self, channels, use_conv, dims=2, out_channels=None):
+    def __init__(self, channels, use_conv, dims: int = 2, out_channels=None) -> None:
         super().__init__()
         self.channels = channels
         self.out_channels = out_channels or channels
         self.use_conv = use_conv
-        self.dims = dims
-        stride = 2 if dims != 3 else (1, 2, 2)
+        self.dims: int = dims
+        stride: tuple[int] | Literal[2] = 2 if dims != 3 else (1, 2, 2)
         if use_conv:
-            self.op = conv_nd(
+            self.op: nn.Conv1d | Conv2d | Conv3d = conv_nd(
                 dims,
                 self.channels,
                 self.out_channels,
@@ -395,7 +399,7 @@ class Downsample(nn.Module):
 
     def forward(self, x):
         if x.shape[1] != self.channels:
-            msg = f"Input has {x.shape[1]} channels but layer has {self.channels}"
+            msg: str = f"Input has {x.shape[1]} channels but layer has {self.channels}"
             raise ValueError(msg)
         return self.op(x)
 
@@ -406,11 +410,11 @@ class AttentionBlock(nn.Module):
     def __init__(
         self,
         channels,
-        num_heads=1,
-        num_head_channels=-1,
-        use_checkpoint=False,
-        use_new_attention_order=False,
-    ):
+        num_heads: int = 1,
+        num_head_channels: int = -1,
+        use_checkpoint: bool = False,
+        use_new_attention_order: bool = False,
+    ) -> None:
         super().__init__()
         self.channels = channels
         if num_head_channels == -1:
@@ -423,9 +427,9 @@ class AttentionBlock(nn.Module):
                 f"divisible by `num_head_channels` {num_head_channels}"
             )
             raise ValueError(msg)
-        self.use_checkpoint = use_checkpoint
-        self.norm = normalization(channels)
-        self.qkv = conv_nd(1, channels, channels * 3, 1)
+        self.use_checkpoint: bool = use_checkpoint
+        self.norm: GroupNorm32 = normalization(channels)
+        self.qkv: nn.Conv1d | Conv2d | Conv3d = conv_nd(1, channels, channels * 3, 1)
         if use_new_attention_order:
             # split qkv before split heads
             self.attention = QKVAttention(self.num_heads)
@@ -433,7 +437,7 @@ class AttentionBlock(nn.Module):
             # split heads before split qkv
             self.attention = QKVAttentionLegacy(self.num_heads)
 
-        self.proj_out = zero_module(conv_nd(1, channels, channels, 1))
+        self.proj_out: nn.Conv1d | Conv2d | Conv3d = zero_module(conv_nd(1, channels, channels, 1))
 
     def forward(self, x):
         return torch_checkpoint(self._forward, (x,), self.use_checkpoint)
@@ -454,11 +458,11 @@ class QKVAttentionLegacy(nn.Module):
     Matches legacy QKVAttention + input/output heads shaping.
     """
 
-    def __init__(self, n_heads):
+    def __init__(self, n_heads) -> None:
         super().__init__()
         self.n_heads = n_heads
 
-    def forward(self, qkv):
+    def forward(self, qkv: Tensor) -> Tensor:
         """
         Apply QKV attention.
 
@@ -467,42 +471,44 @@ class QKVAttentionLegacy(nn.Module):
         """
         bs, width, length = qkv.shape
         if width % (3 * self.n_heads) != 0:
-            raise ValueError(f"Invalid qkv shape {qkv.shape}")
+            msg: str = f"Invalid qkv shape {qkv.shape}"
+            raise ValueError(msg)
         ch = width // (3 * self.n_heads)
         q, k, v = qkv.reshape(bs * self.n_heads, ch * 3, length).split(ch, dim=1)
-        scale = 1 / math.sqrt(math.sqrt(ch))
+        scale: float = 1 / math.sqrt(math.sqrt(ch))
         # More stable with f16 than dividing afterward
-        weight = th.einsum("bct,bcs->bts", q * scale, k * scale)
+        weight: Tensor = th.einsum("bct,bcs->bts", q * scale, k * scale)
         weight = th.softmax(weight.float(), dim=-1).type(weight.dtype)
-        a = th.einsum("bts,bcs->bct", weight, v)
+        a: Tensor = th.einsum("bts,bcs->bct", weight, v)
         return a.reshape(bs, -1, length)
 
 
 class QKVAttention(nn.Module):
     """A module, which performs QKV attention and splits in a different order."""
 
-    def __init__(self, n_heads):
+    def __init__(self, n_heads) -> None:
         super().__init__()
         self.n_heads = n_heads
 
-    def forward(self, qkv):
+    def forward(self, qkv: Tensor) -> Tensor:
         """
         Apply QKV attention.
 
-        :param qkv: An `[N x (3 × H × C) x T]` tensor of Qs, Ks, and Vs.
-        :return: An `[N x (H × C) x T]` tensor after attention.
+        :param qkv: An `[N x (3 x H x C) x T]` tensor of Qs, Ks, and Vs.
+        :return: An `[N x (H x C) x T]` tensor after attention.
         """
         bs, width, length = qkv.shape
         if width % (3 * self.n_heads) != 0:
-            raise ValueError(f"Invalid qkv shape {qkv.shape}")
-        ch = width // (3 * self.n_heads)
+            msg: str = f"Invalid qkv shape {qkv.shape}"
+            raise ValueError(msg)
+        ch: int = width // (3 * self.n_heads)
         q, k, v = qkv.chunk(3, dim=1)
-        scale = 1 / math.sqrt(math.sqrt(ch))
-        weight = th.einsum(
+        scale: float = 1 / math.sqrt(math.sqrt(ch))
+        weight: Tensor = th.einsum(
             "bct,bcs->bts",
             (q * scale).view(bs * self.n_heads, ch, length),
             (k * scale).view(bs * self.n_heads, ch, length),
         )  # More stable with f16 than dividing afterward
         weight = th.softmax(weight.float(), dim=-1).type(weight.dtype)
-        a = th.einsum("bts,bcs->bct", weight, v.reshape(bs * self.n_heads, ch, length))
+        a: Tensor = th.einsum("bts,bcs->bct", weight, v.reshape(bs * self.n_heads, ch, length))
         return a.reshape(bs, -1, length)

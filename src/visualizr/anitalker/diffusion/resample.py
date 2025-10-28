@@ -16,14 +16,14 @@ class ScheduleSampler(ABC):
     """
 
     @abstractmethod
-    def weights(self):
+    def weights(self) -> None:
         """
         Get a numpy array of weights, one per diffusion step.
 
         The weights needn't be normalized but must be positive.
         """
 
-    def sample(self, batch_size, device):
+    def sample(self, batch_size: int, device: th.device) -> tuple[th.Tensor, th.Tensor]:
         """
         Importance-sample timesteps for a batch.
 
@@ -36,14 +36,14 @@ class ScheduleSampler(ABC):
         w = self.weights()
         p = w / np.sum(w)
         indices_np = np.random.choice(len(p), size=(batch_size,), p=p)
-        indices = th.from_numpy(indices_np).long().to(device)
+        indices: th.Tensor = th.from_numpy(indices_np).long().to(device)
         weights_np = 1 / (len(p) * p[indices_np])
-        weights = th.from_numpy(weights_np).float().to(device)
+        weights: th.Tensor = th.from_numpy(weights_np).float().to(device)
         return indices, weights
 
 
 class UniformSampler(ScheduleSampler):
-    def __init__(self, num_timesteps):
+    def __init__(self, num_timesteps) -> None:
         self._weights = np.ones([num_timesteps])
 
     def weights(self):

@@ -5,7 +5,7 @@ from torch.nn import Identity, LeakyReLU, ReLU, SiLU, Tanh
 
 class TrainMode(Enum):
     # manipulate mode = training the classifier
-    manipulate = "manipulate"
+    manipulate: str = "manipulate"
     # default training mode!
     diffusion: str = "diffusion"
 
@@ -52,22 +52,22 @@ class ModelVarType(Enum):
 
 class LossType(Enum):
     # use raw MSE loss and KL when learning variances
-    mse = "mse"
+    mse: str = "mse"
 
 
 class GenerativeType(Enum):
     """where how a sample is generated."""
 
-    ddpm = "ddpm"
-    ddim = "ddim"
+    ddpm: str = "ddpm"
+    ddim: str = "ddim"
 
 
 class Activation(Enum):
-    none = "none"
-    relu = "relu"
-    lrelu = "lrelu"
-    silu = "silu"
-    tanh = "tanh"
+    none: str = "none"
+    relu: str = "relu"
+    lrelu: str = "lrelu"
+    silu: str = "silu"
+    tanh: str = "tanh"
 
     def get_act(self) -> Identity | ReLU | LeakyReLU | SiLU | Tanh:
         match self:

@@ -45,7 +45,7 @@ class GaussianDiffusionBeatGansConfig(BaseConfig):
     rescale_timesteps: bool
     fp16: bool
 
-    def make_sampler(self):
+    def make_sampler(self) -> "GaussianDiffusionBeatGans":
         """
         Create a `GaussianDiffusionBeatGans` sampler based on this configuration.
 
@@ -59,20 +59,22 @@ class GaussianDiffusionBeatGansConfig(BaseConfig):
 class GaussianDiffusionBeatGans:
     """Utilities for training and sampling diffusion models."""
 
-    def __init__(self, conf: GaussianDiffusionBeatGansConfig):
-        self.conf = conf
-        self.model_mean_type = conf.model_mean_type
-        self.model_var_type = conf.model_var_type
-        self.loss_type = conf.loss_type
-        self.rescale_timesteps = conf.rescale_timesteps
+    def __init__(self, conf: GaussianDiffusionBeatGansConfig) -> None:
+        self.conf: GaussianDiffusionBeatGansConfig = conf
+        self.model_mean_type: ModelMeanType = conf.model_mean_type
+        self.model_var_type: ModelVarType = conf.model_var_type
+        self.loss_type: LossType = conf.loss_type
+        self.rescale_timesteps: bool = conf.rescale_timesteps
 
         # Use float64 for accuracy.
         betas = np.array(conf.betas, dtype=np.float64)
         self.betas = betas
         if len(betas.shape) != 1:
-            raise ValueError("betas must be 1D")
+            msg = "betas must be 1D"
+            raise ValueError(msg)
         if not ((betas > 0).all() and (betas <= 1).all()):
-            raise ValueError("betas must be positive and less than or equal to 1")
+            msg = "betas must be positive and less than or equal to 1"
+            raise ValueError(msg)
         self.num_timesteps = int(betas.shape[0])
 
         alphas = 1.0 - betas
@@ -111,9 +113,9 @@ class GaussianDiffusionBeatGans:
         noise=None,
         cond=None,
         x_start=None,
-        clip_denoised=True,
+        clip_denoised: bool=True,
         model_kwargs=None,
-        progress=False,
+        progress: bool=False,
     ):
         """
         Generate samples from the diffusion model using either DDPM or DDIM sampling.
@@ -135,7 +137,7 @@ class GaussianDiffusionBeatGans:
             torch.Tensor: The generated samples from the model.
         """
         if model_kwargs is None:
-            model_kwargs = {}
+            model_kwargs:dict = {}
             if self.conf.model_type.has_autoenc():
                 model_kwargs["x_start"] = x_start
                 model_kwargs["cond"] = cond
@@ -205,12 +207,12 @@ class GaussianDiffusionBeatGans:
 
     def p_mean_variance(
         self,
-        model,
+        model: Model,
         x,
         t: th.Tensor,
         clip_denoised=True,
         denoised_fn=None,
-        model_kwargs=None,
+        model_kwargs: dict | None = None,
     ):
         """
         Apply the model to get p(x_{t-1} | x_t), as well as a prediction of
@@ -319,7 +321,7 @@ class GaussianDiffusionBeatGans:
             "model_forward": model_forward,
         }
 
-    def _predict_xstart_from_eps(self, x_t, t, eps):
+    def _predict_xstart_from_eps(self, x_t, t: th.Tensor, eps):
         if x_t.shape != eps.shape:
             raise ValueError(f"Shape mismatch: {x_t.shape} vs {eps.shape}")
         return (
@@ -327,19 +329,19 @@ class GaussianDiffusionBeatGans:
             - _extract_into_tensor(self.sqrt_recipm1_alphas_cumprod, t, x_t.shape) * eps
         )
 
-    def _predict_eps_from_xstart(self, x_t, t, pred_xstart):
+    def _predict_eps_from_xstart(self, x_t, t: th.Tensor, pred_xstart):
         return (
             _extract_into_tensor(self.sqrt_recip_alphas_cumprod, t, x_t.shape) * x_t
             - pred_xstart
         ) / _extract_into_tensor(self.sqrt_recipm1_alphas_cumprod, t, x_t.shape)
 
-    def _scale_timesteps(self, t):
+    def _scale_timesteps(self, t: th.Tensor) -> th.Tensor:
         if self.rescale_timesteps:
             # scale t to be maxed out at 1000 steps
             return t.float() * (1000.0 / self.num_timesteps)
         return t
 
-    def condition_mean(self, cond_fn, p_mean_var, x, t, model_kwargs=None):
+    def condition_mean(self, cond_fn, p_mean_var, x, t: th.Tensor, model_kwargs: dict | None = None):
         """
         Compute the mean for the previous step, given a function `cond_fn` that
         computes the gradient of a conditional log probability about
@@ -351,7 +353,7 @@ class GaussianDiffusionBeatGans:
         gradient = cond_fn(x, self._scale_timesteps(t), **model_kwargs)
         return p_mean_var["mean"].float() + p_mean_var["variance"] * gradient.float()
 
-    def condition_score(self, cond_fn, p_mean_var, x, t, model_kwargs=None):
+    def condition_score(self, cond_fn, p_mean_var, x, t: th.Tensor, model_kwargs: dict | None = None):
         """
         Compute what the p_mean_variance output would have been, should the
         model's score function be conditioned by `cond_fn`.
@@ -414,8 +416,8 @@ class GaussianDiffusionBeatGans:
             denoised_fn=denoised_fn,
             model_kwargs=model_kwargs,
         )
-        noise = th.randn_like(x)
-        nonzero_mask = (
+        noise: th.Tensor = th.randn_like(x)
+        nonzero_mask: th.Tensor = (
             (t != 0).float().view(-1, *([1] * (len(x.shape) - 1)))
         )  # no noise when t == 0
         if cond_fn is not None:
@@ -434,12 +436,12 @@ class GaussianDiffusionBeatGans:
         model: Model,
         shape=None,
         noise=None,
-        clip_denoised=True,
+        clip_denoised: bool = True,
         denoised_fn=None,
         cond_fn=None,
         model_kwargs=None,
-        device=None,
-        progress=False,
+        device: th.device | None=None,
+        progress : bool=False,
     ):
         """
         Generate samples from the model.
@@ -480,12 +482,12 @@ class GaussianDiffusionBeatGans:
         model: Model,
         shape=None,
         noise=None,
-        clip_denoised=True,
+        clip_denoised: bool = True,
         denoised_fn=None,
         cond_fn=None,
-        model_kwargs=None,
-        device=None,
-        progress=False,
+        model_kwargs: dict | None = None,
+        device: th.device | None = None,
+        progress: bool = False,
     ):
         """
         Generate samples from the model and yield intermediate samples from
@@ -502,15 +504,15 @@ class GaussianDiffusionBeatGans:
         else:
             if not isinstance(shape, (tuple, list)):
                 raise TypeError(f"Shape must be a tuple or list, not a {type(shape)}")
-            img = th.randn(*shape, device=device)
-        indices = list(range(self.num_timesteps))[::-1]
+            img: th.Tensor = th.randn(*shape, device=device)
+        indices: list[int] = list(range(self.num_timesteps))[::-1]
 
         if progress:
             # Lazy import so that we don't depend on tqdm.
             indices = tqdm(indices)
 
         for i in indices:
-            t = th.tensor([i] * len(img), device=device)
+            t: th.Tensor = th.tensor([i] * len(img), device=device)
             with th.no_grad():
                 out = self.p_sample(
                     model,
@@ -529,11 +531,11 @@ class GaussianDiffusionBeatGans:
         model: Model,
         x,
         t: th.Tensor,
-        clip_denoised=True,
+        clip_denoised: bool = True,
         denoised_fn=None,
         cond_fn=None,
         model_kwargs=None,
-        eta=0.0,
+        eta: float = 0.0,
     ):
         """
         Sample `x_{t-1}` from the model using DDIM.
@@ -557,18 +559,18 @@ class GaussianDiffusionBeatGans:
 
         alpha_bar = _extract_into_tensor(self.alphas_cumprod, t, x.shape)
         alpha_bar_prev = _extract_into_tensor(self.alphas_cumprod_prev, t, x.shape)
-        sigma = (
+        sigma: th.Tensor = (
             eta
             * th.sqrt((1 - alpha_bar_prev) / (1 - alpha_bar))
             * th.sqrt(1 - alpha_bar / alpha_bar_prev)
         )
         # Equation 12.
-        noise = th.randn_like(x)
+        noise: th.Tensor = th.randn_like(x)
         mean_pred = (
             out["pred_xstart"] * th.sqrt(alpha_bar_prev)
             + th.sqrt(1 - alpha_bar_prev - sigma**2) * eps
         )
-        nonzero_mask = (
+        nonzero_mask: th.Tensor = (
             (t != 0).float().view(-1, *([1] * (len(x.shape) - 1)))
         )  # no noise when t == 0
         sample = mean_pred + nonzero_mask * sigma * noise
@@ -579,13 +581,13 @@ class GaussianDiffusionBeatGans:
         model: Model,
         shape=None,
         noise=None,
-        clip_denoised=True,
+        clip_denoised: bool = True,
         denoised_fn=None,
         cond_fn=None,
         model_kwargs=None,
         device=None,
-        progress=False,
-        eta=0.0,
+        progress: bool = False,
+        eta: float = 0.0,
     ):
         """
         Generate samples from the model using DDIM.
@@ -613,13 +615,13 @@ class GaussianDiffusionBeatGans:
         model: Model,
         shape=None,
         noise=None,
-        clip_denoised=True,
+        clip_denoised: bool = True,
         denoised_fn=None,
         cond_fn=None,
-        model_kwargs=None,
-        device=None,
-        progress=False,
-        eta=0.0,
+        model_kwargs: dict | None = None,
+        device: th.device | None=None,
+        progress: bool = False,
+        eta: float = 0.0,
     ):
         """
         Use DDIM to sample from the model and yield intermediate samples from
@@ -634,8 +636,8 @@ class GaussianDiffusionBeatGans:
         else:
             if not isinstance(shape, (tuple, list)):
                 raise TypeError(f"Shape must be a tuple or list, not a {type(shape)}")
-            img = th.randn(*shape, device=device)
-        indices = list(range(self.num_timesteps))[::-1]
+            img: th.Tensor = th.randn(*shape, device=device)
+        indices: list[int] = list(range(self.num_timesteps))[::-1]
 
         if progress:
             # Lazy import so that we don't depend on tqdm.
@@ -645,7 +647,7 @@ class GaussianDiffusionBeatGans:
             _kwargs = (
                 model_kwargs[i] if isinstance(model_kwargs, list) else model_kwargs
             )
-            t = th.tensor([i] * len(img), device=device)
+            t: th.Tensor = th.tensor([i] * len(img), device=device)
             with th.no_grad():
                 out = self.ddim_sample(
                     model,
@@ -662,7 +664,7 @@ class GaussianDiffusionBeatGans:
                 img = out["sample"]
 
 
-def _extract_into_tensor(arr, timesteps, broadcast_shape):
+def _extract_into_tensor(arr: np.ndarray, timesteps: th.Tensor, broadcast_shape) -> th.Tensor: #TODO: np
     """
     Extract values from a 1D numpy array for a batch of indexes.
 
@@ -672,7 +674,7 @@ def _extract_into_tensor(arr, timesteps, broadcast_shape):
                             dimension equal to the length of timesteps.
     :return: A tensor of shape [batch_size, 1, ...] Where the shape has K dims.
     """
-    res = th.from_numpy(arr).to(device=timesteps.device)[timesteps].float()
+    res: th.Tensor = th.from_numpy(arr).to(device=timesteps.device)[timesteps].float()
     while len(res.shape) < len(broadcast_shape):
         res = res[..., None]
     return res.expand(broadcast_shape)
@@ -751,7 +753,8 @@ def get_named_beta_schedule(schedule_name, num_diffusion_timesteps):
                 dtype=np.float64,
             )
         case _:
-            raise NotImplementedError(f"unknown beta schedule: {schedule_name}")
+            msg: str = f"unknown beta schedule: {schedule_name}"
+            raise NotImplementedError(msg)
 
 
 def betas_for_alpha_bar(num_diffusion_timesteps, alpha_bar, max_beta=0.999):

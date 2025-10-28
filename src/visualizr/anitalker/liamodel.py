@@ -8,12 +8,12 @@ from visualizr.anitalker.networks.styledecoder import Synthesis
 class LiaModel(nn.Module):
     def __init__(
         self,
-        size=256,
-        style_dim=512,
-        motion_dim=20,
-        channel_multiplier=1,
+        size: int=256,
+        style_dim: int=512,
+        motion_dim: int=20,
+        channel_multiplier: int=1,
         blur_kernel: list | None = None,
-        fusion_type="",
+        fusion_type: str="",
     ) -> None:
         if blur_kernel is None:
             blur_kernel = [1, 3, 3, 1]
@@ -46,7 +46,7 @@ class LiaModel(nn.Module):
             if self_state[name].size() != state[orig_name].size():
                 Error(
                     f"Wrong parameter length: {orig_name}, "
-                    + f"model: {self_state[name].size()}, "
+                     f"model: {self_state[name].size()}, "
                     + f"loaded: {state[orig_name].size()}"
                 )
                 continue

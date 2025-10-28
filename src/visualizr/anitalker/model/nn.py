@@ -1,6 +1,7 @@
 from math import log
 
 from torch import (
+    Tensor,
     arange,
     cat,
     cos,
@@ -14,11 +15,11 @@ from torch.utils.checkpoint import checkpoint
 
 
 class GroupNorm32(nn.GroupNorm):
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         return super().forward(x.float()).type(x.dtype)
 
 
-def conv_nd(dims, *args, **kwargs):
+def conv_nd(dims, *args, **kwargs) -> nn.Conv1d | nn.Conv2d | nn.Conv3d:
     """Create a 1D, 2D, or 3D convolution module."""
     match dims:
         case 1:
@@ -27,11 +28,13 @@ def conv_nd(dims, *args, **kwargs):
             return nn.Conv2d(*args, **kwargs)
         case 3:
             return nn.Conv3d(*args, **kwargs)
-    msg = f"unsupported dimensions: {dims}"
+    msg: str = f"unsupported dimensions: {dims}"
     raise ValueError(msg)
 
 
-def avg_pool_nd(dims, *args, **kwargs):
+def avg_pool_nd(
+    dims: int, *args, **kwargs
+) -> nn.AvgPool1d | nn.AvgPool2d | nn.AvgPool3d:
     """Create a 1D, 2D, or 3D average pooling module."""
     match dims:
         case 1:
@@ -40,7 +43,7 @@ def avg_pool_nd(dims, *args, **kwargs):
             return nn.AvgPool2d(*args, **kwargs)
         case 3:
             return nn.AvgPool3d(*args, **kwargs)
-    msg = f"unsupported dimensions: {dims}"
+    msg: str = f"unsupported dimensions: {dims}"
     raise ValueError(msg)
 
 
@@ -51,7 +54,7 @@ def zero_module(module):
     return module
 
 
-def normalization(channels):
+def normalization(channels) -> GroupNorm32:
     """
     Make a standard normalization layer.
 
@@ -61,7 +64,7 @@ def normalization(channels):
     return GroupNorm32(min(32, channels), channels)
 
 
-def timestep_embedding(timesteps, dim, max_period=10000):
+def timestep_embedding(timesteps, dim, max_period: int = 10000) -> Tensor:
     """
     Create sinusoidal timestep embeddings.
 
@@ -72,17 +75,17 @@ def timestep_embedding(timesteps, dim, max_period=10000):
     :return: An [N x dim] Tensor of positional embeddings.
     """
     half = dim // 2
-    freqs = exp(-log(max_period) * arange(start=0, end=half, dtype=float32) / half).to(
+    freqs: Tensor = exp(-log(max_period) * arange(start=0, end=half, dtype=float32) / half).to(
         device=timesteps.device,
     )
     args = timesteps[:, None].float() * freqs[None]
-    embedding = cat([cos(args), sin(args)], dim=-1)
+    embedding: Tensor = cat([cos(args), sin(args)], dim=-1)
     if dim % 2:
         embedding = cat([embedding, zeros_like(embedding[:, :1])], dim=-1)
     return embedding
 
 
-def torch_checkpoint(func, args, flag, preserve_rng_state=False):
+def torch_checkpoint(func, args, flag, preserve_rng_state: bool = False):
     # torch's gradient checkpoint works with automatic mixed precision, given `torch>=1.8`
     if flag:
         return checkpoint(func, *args, preserve_rng_state=preserve_rng_state)

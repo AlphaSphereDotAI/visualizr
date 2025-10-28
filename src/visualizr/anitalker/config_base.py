@@ -17,20 +17,20 @@ class BaseConfig:
     and serialize/deserialize configurations to/from JSON.
     """
 
-    def inherit(self, another):
+    def inherit(self, another) -> None:
         """Inherit common keys from a given config."""
-        common_keys = set(self.__dict__.keys()) & set(another.__dict__.keys())
+        common_keys: set[str] = set(self.__dict__.keys()) & set(another.__dict__.keys())
         for k in common_keys:
             setattr(self, k, getattr(another, k))
 
-    def propagate(self):
+    def propagate(self) -> None:
         """Push down the configuration to all members."""
         for _, v in self.__dict__.items():
             if isinstance(v, BaseConfig):
                 v.inherit(self)
                 v.propagate()
 
-    def from_dict(self, config_dict, strict=False):
+    def from_dict(self, config_dict: dict, strict: bool = False) -> None:
         """
         Populate configuration attributes from a dictionary.
 
@@ -38,20 +38,19 @@ class BaseConfig:
         """
         for k, v in config_dict.items():
             if not hasattr(self, k):
+                _msg: str = f"loading extra '{k}'"
                 if strict:
-                    raise ValueError(f"loading extra '{k}'")
-                _msg = f"loading extra '{k}'"
-                logger.info(_msg)
-                Info(_msg)
+                    raise ValueError(_msg)
+                logger.warning(_msg)
                 continue
             if isinstance(self.__dict__[k], BaseConfig):
                 self.__dict__[k].from_dict(v)
             else:
                 self.__dict__[k] = v
 
-    def as_dict_jsonable(self):
+    def as_dict_jsonable(self) -> dict:
         """Convert the configuration to a JSON-serializable dictionary."""
-        conf = {}
+        conf: dict = {}
         for k, v in self.__dict__.items():
             if isinstance(v, BaseConfig):
                 conf[k] = v.as_dict_jsonable()
@@ -61,10 +60,10 @@ class BaseConfig:
 
 
 @lru_cache
-def jsonable(x: Any) -> bool:
+def jsonable(x) -> bool:
     """Check if the object x is JSON serializable."""
     try:
         dumps(x)
-        return True
     except TypeError:
         return False
+    return True

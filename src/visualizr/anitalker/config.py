@@ -24,17 +24,12 @@ from visualizr.anitalker.model import (
     ModelConfig,
 )
 from visualizr.anitalker.model.latentnet import LatentNetType, MLPSkipNetConfig
+from visualizr.app.types import InferenceType
 
 
 @dataclass
 class TrainConfig(BaseConfig):
-    infer_type: Literal[
-        "mfcc_full_control",
-        "mfcc_pose_only",
-        "hubert_pose_only",
-        "hubert_audio_only",
-        "hubert_full_control",
-    ] = None
+    infer_type: InferenceType = None
     # random seed
     seed: int = 0
     train_mode: TrainMode = TrainMode.diffusion
@@ -109,7 +104,7 @@ class TrainConfig(BaseConfig):
         self.batch_size_eval *= num_gpus * num_nodes
         return self
 
-    def _make_diffusion_conf(self, t: int):
+    def _make_diffusion_conf(self, t: int) -> SpacedDiffusionBeatGansConfig:
         if self.diffusion_type != "beatgans":
             raise NotImplementedError
         # can use t < `self.t` for evaluation
@@ -135,7 +130,7 @@ class TrainConfig(BaseConfig):
         )
 
     @property
-    def model_out_channels(self):
+    def model_out_channels(self) -> int:
         return 3
 
     def make_t_sampler(self) -> UniformSampler:
@@ -143,13 +138,13 @@ class TrainConfig(BaseConfig):
             raise NotImplementedError
         return UniformSampler(self.T)
 
-    def make_diffusion_conf(self):
+    def make_diffusion_conf(self) -> SpacedDiffusionBeatGansConfig:
         return self._make_diffusion_conf(self.T)
 
-    def make_eval_diffusion_conf(self):
+    def make_eval_diffusion_conf(self) -> SpacedDiffusionBeatGansConfig:
         return self._make_diffusion_conf(self.T_eval)
 
-    def make_model_conf(self):
+    def make_model_conf(self) -> BeatGANsAutoencConfig | BeatGANsUNetConfig:
         if self.model_name == ModelName.beatgans_ddpm:
             self.model_type = ModelType.ddpm
             self.model_conf = BeatGANsUNetConfig(
@@ -175,16 +170,9 @@ class TrainConfig(BaseConfig):
                 resnet_two_cond=self.net_beatgans_resnet_two_cond,
                 resnet_use_zero_module=self.net_beatgans_resnet_use_zero_module,
             )
-        elif self.model_name in [
-            ModelName.beatgans_autoenc,
-        ]:
+        elif self.model_name == ModelName.beatgans_autoenc:
             cls = BeatGANsAutoencConfig
-            # supports both autoenc and vaeddpm
-            if self.model_name == ModelName.beatgans_autoenc:
-                self.model_type = ModelType.autoencoder
-            else:
-                raise NotImplementedError
-
+            self.model_type = ModelType.autoencoder
             if self.net_latent_net_type == LatentNetType.none:
                 latent_net_conf = None
             elif self.net_latent_net_type == LatentNetType.skip:

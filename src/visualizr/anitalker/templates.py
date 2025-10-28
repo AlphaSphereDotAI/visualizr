@@ -2,7 +2,7 @@ from visualizr.anitalker.choices import GenerativeType, ModelName
 from visualizr.anitalker.config import TrainConfig
 
 
-def autoenc_base():
+def autoenc_base() -> TrainConfig:
     """Return base configuration for all Diff-AE models."""
     conf = TrainConfig()
     conf.batch_size = 32

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Literal
 
 import numpy as np
 
@@ -8,7 +9,10 @@ from visualizr.anitalker.diffusion.base import (
 )
 
 
-def space_timesteps(num_timesteps, section_counts):
+def space_timesteps(
+    num_timesteps: int,
+    section_counts: list[int] | str,
+) -> set[int | float]:
     """
     Create a list of timesteps to use from an original diffusion process.
 
@@ -37,21 +41,25 @@ def space_timesteps(num_timesteps, section_counts):
             for i in range(1, num_timesteps):
                 if len(range(0, num_timesteps, i)) == desired_count:
                     return set(range(0, num_timesteps, i))
-            msg = f"cannot create exactly {num_timesteps} steps with an integer stride"
+            msg: str = (
+                f"cannot create exactly {num_timesteps} steps with an integer stride"
+            )
             raise ValueError(msg)
         section_counts = [int(x) for x in section_counts.split(",")]
     size_per = num_timesteps // len(section_counts)
     extra = num_timesteps % len(section_counts)
-    start_idx = 0
-    all_steps = []
+    start_idx: int = 0
+    all_steps: list[float] = []
     for i, section_count in enumerate(section_counts):
-        size = size_per + (1 if i < extra else 0)
+        size: int = size_per + (1 if i < extra else 0)
         if size < section_count:
-            msg = f"cannot divide section of {size} steps into {section_count}"
+            msg: str = f"cannot divide section of {size} steps into {section_count}"
             raise ValueError(msg)
-        frac_stride = 1 if section_count <= 1 else (size - 1) / (section_count - 1)
-        cur_idx = 0.0
-        taken_steps = []
+        frac_stride: float | Literal[1] = (
+            1 if section_count <= 1 else (size - 1) / (section_count - 1)
+        )
+        cur_idx: float = 0.0
+        taken_steps: list[float] = []
         for _ in range(section_count):
             taken_steps.append(start_idx + round(cur_idx))
             cur_idx += frac_stride
@@ -65,7 +73,8 @@ class SpacedDiffusionBeatGansConfig(GaussianDiffusionBeatGansConfig):
     """
     Configuration for a spaced diffusion process.
 
-    This class holds the parameters for creating a spaced diffusion sampler, including the timesteps to use.
+    This class holds the parameters for creating a spaced diffusion sampler, including
+    the timesteps to use.
 
     Args:
         use_timesteps: A collection (sequence or set) of timesteps from the
@@ -74,16 +83,16 @@ class SpacedDiffusionBeatGansConfig(GaussianDiffusionBeatGansConfig):
 
     use_timesteps: tuple[int] | None = None
 
-    def make_sampler(self):
+    def make_sampler(self) -> "SpacedDiffusionBeatGans":
         return SpacedDiffusionBeatGans(self)
 
 
 class SpacedDiffusionBeatGans(GaussianDiffusionBeatGans):
     """A diffusion process, which can skip steps in a base diffusion process."""
 
-    def __init__(self, conf: SpacedDiffusionBeatGansConfig):
+    def __init__(self, conf: SpacedDiffusionBeatGansConfig) -> None:
         self.conf = conf
-        self.use_timesteps = set(conf.use_timesteps)
+        self.use_timesteps: set[int] = set(conf.use_timesteps)
         # how the new t's mapped to the old t's
         self.timestep_map = []
         base_diffusion = GaussianDiffusionBeatGans(conf)

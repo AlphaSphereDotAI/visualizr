@@ -25,12 +25,12 @@ class BeatGANsAutoencConfig(BeatGANsUNetConfig):
 
 
 class BeatGANsAutoencModel(BeatGANsUNetModel):
-    def __init__(self, conf: BeatGANsAutoencConfig):
+    def __init__(self, conf: BeatGANsAutoencConfig) -> None:
         super().__init__(conf)
-        self.conf = conf
+        self.conf: BeatGANsAutoencConfig = conf
 
         # having only time, cond
-        self.time_embed = TimeStyleSeperateEmbed(
+        self.time_embed: TimeStyleSeperateEmbed = TimeStyleSeperateEmbed(
             time_channels=conf.model_channels,
             time_out_channels=conf.embed_channels,
         )
@@ -75,7 +75,7 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
         noise=None,
         t_cond=None,
         **kwargs,
-    ):
+    ) -> "AutoencReturn":
         """
         Apply the model to an input batch.
 
@@ -91,10 +91,16 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
             cond = self.noise_to_cond(noise)
         if cond is None:
             if x is not None and len(x) != len(x_start):
-                raise ValueError(f"{len(x)} != {len(x_start)}")
+                msg: str = f"{len(x)} != {len(x_start)}"
+                raise ValueError(msg)
 
             tmp = self.encode(x_start)
             cond = tmp["cond"]
+
+        _t_emb: Tensor | None = None
+        _t_cond_emb: Tensor | None = None
+        emb: Tensor | None = None
+        cond_emb: Tensor | None = None
         if t is not None:
             _t_emb = timestep_embedding(t, self.conf.model_channels)
             _t_cond_emb = timestep_embedding(t_cond, self.conf.model_channels)
@@ -103,7 +109,7 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
             _t_emb = None
             _t_cond_emb = None
         if self.conf.resnet_two_cond:
-            res = self.time_embed.forward(time_emb=_t_emb, cond=cond)
+            res: EmbedReturn = self.time_embed.forward(time_emb=_t_emb, cond=cond)
         else:
             raise NotImplementedError
         if self.conf.resnet_two_cond:
@@ -123,15 +129,15 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
             raise NotImplementedError
 
         # where in the model to supply time conditions
-        enc_time_emb = emb
-        mid_time_emb = emb
-        dec_time_emb = emb
+        enc_time_emb: Tensor | None = emb
+        mid_time_emb: Tensor | None = emb
+        dec_time_emb: Tensor | None = emb
         # where in the model to supply style conditions
-        enc_cond_emb = cond_emb
-        mid_cond_emb = cond_emb
-        dec_cond_emb = cond_emb
+        enc_cond_emb: Tensor | None = cond_emb
+        mid_cond_emb: Tensor | None = cond_emb
+        dec_cond_emb: Tensor | None = cond_emb
 
-        hs = [[] for _ in range(len(self.conf.channel_mult))]
+        hs: list[list[Tensor]] = [[] for _ in range(len(self.conf.channel_mult))] #TODO: type
 
         if x is not None:
             h = x.type(self.dtype)
@@ -160,6 +166,7 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
             for _ in range(self.output_num_blocks[i]):
                 # take the lateral connection from the same layer (in reserve)
                 # until there is no more, use None.
+                lateral: Tensor | None = None
                 try:
                     lateral = hs[-i - 1].pop()
                 except IndexError:
@@ -193,7 +200,7 @@ class EmbedReturn(NamedTuple):
 
 class TimeStyleSeperateEmbed(nn.Module):
     # embed only style
-    def __init__(self, time_channels, time_out_channels):
+    def __init__(self, time_channels, time_out_channels) -> None:
         super().__init__()
         self.time_embed = nn.Sequential(
             nn.Linear(time_channels, time_out_channels),
@@ -202,7 +209,7 @@ class TimeStyleSeperateEmbed(nn.Module):
         )
         self.style = nn.Identity()
 
-    def forward(self, time_emb=None, cond=None):
+    def forward(self, time_emb=None, cond=None) -> EmbedReturn:
         time_emb = None if time_emb is None else self.time_embed(time_emb)
         style = self.style(cond)
         return EmbedReturn(emb=style, time_emb=time_emb, style=style)

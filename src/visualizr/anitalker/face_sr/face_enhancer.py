@@ -62,7 +62,7 @@ def enhancer_list(
     return list(gen)
 
 
-def setup_gfpgan_restorer(method: str):
+def setup_gfpgan_restorer(method: str) -> tuple[int, str, str, str]:
     channel_multiplier: int | None = None
     model_name: str | None = None
     url: str | None = None
@@ -103,7 +103,7 @@ def setup_background_upsampler(bg_upsampler: str) -> RealESRGANer | None:
             grWarning(_msg)
             _bg_upsampler = None
         else:
-            model = RRDBNet(num_in_ch=3, num_out_ch=3, scale=2)
+            model: RRDBNet[int, int] = RRDBNet(num_in_ch=3, num_out_ch=3, scale=2)
             # need to set False in CPU mode
             _bg_upsampler = RealESRGANer(
                 scale=2,
@@ -148,7 +148,7 @@ def enhancer_generator_no_len(
             "Expected one of: gfpgan, RestoreFormer, codeformer."
         )
         raise ValueError(msg)
-    _msg = f"face enhancer: {method}"
+    _msg: str = f"face enhancer: {method}"
     logger.info(_msg)
     Info(_msg)
     if not isinstance(images, list) and images.is_file():
@@ -159,7 +159,7 @@ def enhancer_generator_no_len(
     channel_multiplier, model_name, url, arch = setup_gfpgan_restorer(method)
 
     # Setup background upsampler
-    _bg_upsampler = setup_background_upsampler(bg_upsampler)
+    _bg_upsampler: RealESRGANer | None = setup_background_upsampler(bg_upsampler)
 
     # determine model paths
     model_path: Path = GFPGAN_WEIGHTS / f"{model_name}.pth"
@@ -168,7 +168,7 @@ def enhancer_generator_no_len(
         # download pre-trained models from URL
         model_path: str = url
 
-    restorer = GFPGANer(
+    restorer: GFPGANer[str] = GFPGANer(
         model_path=model_path if isinstance(model_path, str) else model_path.as_posix(),
         arch=arch,
         channel_multiplier=channel_multiplier,
