@@ -10,6 +10,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from torch.cuda import is_available
 
 from visualizr.app.logger import logger
+from visualizr.app.types import InferenceType
 
 load_dotenv()
 
@@ -100,13 +101,8 @@ class ModelSettings(BaseModel):
     device: Literal["cuda", "cpu"] = "cuda" if is_available() else "cpu"
     decoder_layers: int = 2
     repo_id: str = "taocode/anitalker_ckpts"
-    infer_type: Literal[
-        "mfcc_full_control",
-        "mfcc_pose_only",
-        "hubert_pose_only",
-        "hubert_audio_only",
-        "hubert_full_control",
-    ] = Field(default="mfcc_full_control")
+    revision: str = "main"
+    infer_type: InferenceType = Field(default="mfcc_full_control")
     face_sr: bool = False
     checkpoint: Checkpoint = Checkpoint()
 

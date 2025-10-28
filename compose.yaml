@@ -3,7 +3,9 @@ services:
   visualizr:
     image: ghcr.io/alphaspheredotai/visualizr:latest@sha256:175490f99e805be119e83d91ed85aba6c40f573551ba125ee90c8f6ed37bf40d
     ports:
-      - "7860:7860"
+      - "7862:7860"
+    environment:
+      GRADIO_DEBUG: 1
     volumes:
       - assets:/home/nonroot/assets
       - checkpoint:/home/nonroot/ckpts

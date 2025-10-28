@@ -1,6 +1,6 @@
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 from time import time
-from typing import Literal
 
 from gradio import (
     Audio,
@@ -10,16 +10,18 @@ from gradio import (
     Column,
     Dropdown,
     Error,
+    File,
     Group,
     Image,
     Info,
-    Markdown,
     Number,
+    PlayableVideo,
     Row,
     Slider,
     Tab,
-    Video,
+    Textbox,
 )
+from httpx import URL, Client, HTTPStatusError, RequestError
 from huggingface_hub import snapshot_download
 from librosa import load as librosa_load
 from numpy import (
@@ -54,30 +56,25 @@ from visualizr.anitalker.utils import (
 )
 from visualizr.app.logger import logger
 from visualizr.app.settings import Settings
+from visualizr.app.types import InferenceType
 
 
 class App:
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Settings) -> None:
         self.settings: Settings = settings
         logger.info("Downloading model checkpoint")
         snapshot_download(
-            repo_id=settings.model.repo_id,
-            local_dir=settings.directory.checkpoint,
+            repo_id=self.settings.model.repo_id,
+            local_dir=self.settings.directory.checkpoint,
             repo_type="model",
+            revision=self.settings.model.revision,
         )
 
     def generate_video(
         self,
-        infer_type: Literal[
-            "mfcc_full_control",
-            "mfcc_pose_only",
-            "hubert_pose_only",
-            "hubert_audio_only",
-            "hubert_full_control",
-        ],
+        infer_type: InferenceType,
         image_path: str | Path,
         audio_path: str | Path,
-        face_sr: bool,
         pose_yaw: float,
         pose_pitch: float,
         pose_roll: float,
@@ -85,26 +82,14 @@ class App:
         face_scale: float,
         step_t: int,
         seed: int,
-    ) -> tuple[Video | None, Video | None, Markdown]:
+        face_sr: bool,
+    ) -> Path:
         if image_path is None or not Path(image_path).exists():
-            Error(f"{image_path} does not exist or is invalid!")
-            return (
-                None,
-                None,
-                Markdown(
-                    f"Error: image_path '{image_path}' does not exist or is invalid.",
-                ),
-            )
+            msg = f"Error: image_path '{image_path}' does not exist or is invalid."
+            raise Error(msg)
         if audio_path is None or not Path(audio_path).exists():
-            Error(f"{audio_path} does not exist or is invalid!")
-            return (
-                None,
-                None,
-                Markdown(
-                    f"Error: audio_path '{audio_path}' does not exist or is invalid.",
-                ),
-            )
-
+            msg = f"Error: audio_path '{audio_path}' does not exist or is invalid."
+            raise Error(msg)
         predicted_video_256_path: Path = (
             self.settings.directory.results
             / f"{Path(image_path).stem}-{Path(audio_path).stem}.mp4"
@@ -170,8 +155,7 @@ class App:
             if not hubert_model_path.exists():
                 _msg = "Please download the hubert weight into the ckpts path first."
                 logger.error(_msg)
-                Error(_msg)
-                raise FileNotFoundError(_msg)
+                raise Error(_msg)
             _msg: str = (
                 "You did not extract the audio features in advance, "
                 "extracting online now, which will increase processing delay"
@@ -307,41 +291,23 @@ class App:
                 predicted_video_256_path,
                 predicted_video_512_path,
             )
+            if not predicted_video_512_path.exists():
+                msg = "512x512 video generation failed. Please check your inputs."
+                raise Error(msg)
         if not predicted_video_256_path.exists():
-            return (
-                None,
-                None,
-                Markdown(
-                    (
-                        "Error: Video generation failed. "
-                        "Please check your inputs and try again."
-                    ),
-                ),
-            )
+            msg = "256x256 video generation failed. Please check your inputs."
+            raise Error(msg)
         if face_sr:
-            return (
-                Video(value=predicted_video_256_path),
-                Video(value=predicted_video_512_path),
-                Markdown("Video generated successfully!"),
-            )
-        return (
-            Video(value=predicted_video_256_path),
-            None,
-            Markdown("Video (256 ✕ 256 only) generated successfully!"),
-        )
+            Info("Video (512x512) generated successfully!")
+            return predicted_video_512_path
+        Info("Video (256x256) generated successfully!")
+        return predicted_video_256_path
 
     def generate_video_from_name(
         self,
         name: str,
-        infer_type: Literal[
-            "mfcc_full_control",
-            "mfcc_pose_only",
-            "hubert_pose_only",
-            "hubert_audio_only",
-            "hubert_full_control",
-        ],
-        audio_path: str | Path,
-        face_sr: bool,
+        infer_type: InferenceType,
+        audio_file: str | Path,
         pose_yaw: float,
         pose_pitch: float,
         pose_roll: float,
@@ -349,20 +315,15 @@ class App:
         face_scale: float,
         step_t: int,
         seed: int,
-    ) -> tuple[Video | None, Video | None, Markdown]:
+        face_sr: bool,
+    ) -> Path:
         """
         Generate a video for a character by name using the provided settings and audio.
 
         Args:
             name (str): The base name of the character image (without extension).
-            infer_type (Literal[
-                'mfcc_full_control',
-                'mfcc_pose_only',
-                'hubert_pose_only',
-                'hubert_audio_only',
-                'hubert_full_control',
-            ]): The type of inference mode.
-            audio_path (str | Path): Path to the input audio file.
+            infer_type (InferenceType): The type of inference mode.
+            audio_file (str | Path): Url or Path to the input audio file.
             face_sr (bool): Whether to apply a face super-resolution.
             pose_yaw (float): Yaw angle for the character's pose.
             pose_pitch (float): Pitch angle for the character's pose.
@@ -373,16 +334,33 @@ class App:
             seed (int): Random seed for reproducibility.
 
         Returns:
-            tuple[Video | None, Video | None, Markdown]: A tuple
-                        containing the generated 256x256 video,
-                        the high-resolution video (if `face_sr` is True),
-                        and a Markdown status message.
+            Path: A path to the generated video file.
         """
+        if audio_file is None:
+            _msg = "Audio path is required."
+            logger.error(_msg)
+            raise Error(_msg)
+        if name not in self._get_character_names():
+            _msg = f"Character '{name}' not found."
+            logger.error(_msg)
+            raise Error(_msg)
+        if isinstance(audio_file, str) and audio_file.startswith(
+            (
+                "http://",
+                "https://",
+            )
+        ):
+            audio_file = self._download_audio(URL(audio_file))
+        if not isinstance(audio_file, Path):
+            audio_file = Path(audio_file)
+        if not audio_file.exists():
+            _msg = f"Audio path '{audio_file}' does not exist or is invalid."
+            logger.error(_msg)
+            raise Error(_msg)
         return self.generate_video(
             infer_type,
             self._get_image_path(name),
-            audio_path,
-            face_sr,
+            audio_file.as_posix(),
             pose_yaw,
             pose_pitch,
             pose_roll,
@@ -390,12 +368,87 @@ class App:
             face_scale,
             step_t,
             seed,
+            face_sr,
         )
+
+    def generate_video_mcp(
+        self,
+        name: str,
+        infer_type: InferenceType,
+        audio_file: str | Path,
+        pose_yaw: float,
+        pose_pitch: float,
+        pose_roll: float,
+        face_location: float,
+        face_scale: float,
+        step_t: int,
+        seed: int,
+        face_sr: bool,
+    ) -> str:
+        """
+        Generate a video for a character by name using the provided settings and audio.
+
+        Args:
+            name (str): The base name of the character image (without extension).
+            infer_type (InferenceType): The type of inference mode.
+            audio_file (str | Path): Url or Path to the input audio file.
+            face_sr (bool): Whether to apply a face super-resolution.
+            pose_yaw (float): Yaw angle for the character's pose.
+            pose_pitch (float): Pitch angle for the character's pose.
+            pose_roll (float): Roll angle for the character's pose.
+            face_location (float): Relative location parameter for a face positioning.
+            face_scale (float): Scaling factor for the face.
+            step_t (int): Number of diffusion steps.
+            seed (int): Random seed for reproducibility.
+
+        Returns:
+            Path: A path to the generated video file.
+        """
+        return self.generate_video_from_name(
+            name,
+            infer_type,
+            audio_file.as_posix(),
+            pose_yaw,
+            pose_pitch,
+            pose_roll,
+            face_location,
+            face_scale,
+            step_t,
+            seed,
+            face_sr,
+        ).as_posix()
+
+    @staticmethod
+    def _download_audio(url: URL) -> Path:
+        """
+        Download an audio file from a given URL and save it as a temporary WAV file.
+
+        Args:
+            url (URL): The URL to download the audio from.
+
+        Returns:
+            Path: The path to the downloaded temporary audio file.
+
+        Raises:
+            Error: If the download fails due to network or file errors.
+        """
+        try:
+            with Client() as client:
+                response = client.get(url)
+                response.raise_for_status()
+                with NamedTemporaryFile(delete=False, suffix=".wav") as f:
+                    f.write(response.content)
+                    audio_path = Path(f.name)
+                logger.info(f"Downloaded audio to {audio_path}")
+        except (RequestError, HTTPStatusError, OSError) as e:
+            msg = f"Failed to download audio from {url}: {e}"
+            logger.error(msg)
+            raise Error(msg) from e
+        return audio_path
 
     def _get_image_path(self, name: str) -> Path:
         """
-        Retrieve the image path for a given character name by checking
-        supported extensions.
+        Retrieve the image path for a given character name.
 
         Args:
             name (str): The base name of the image file (without extension).
@@ -418,9 +471,10 @@ class App:
             list[str]: Sorted list of unique character names (file stems)
                        from supported image files.
         """
-        extensions = ("*.jpg", "*.jpeg", "*.png")
         paths = (
-            p for ext in extensions for p in self.settings.directory.image.glob(ext)
+            p
+            for ext in ("*.jpg", "*.jpeg", "*.png")
+            for p in self.settings.directory.image.glob(ext)
         )
         # Use a set to handle cases where an image exists with multiple supported
         # extensions (for example, napoleon.jpg, napoleon.png)
@@ -438,16 +492,7 @@ class App:
         lia.to("cuda")
         return lia
 
-    def _get_checkpoint_stage_2_path(
-        self,
-        infer_type: Literal[
-            "mfcc_full_control",
-            "mfcc_pose_only",
-            "hubert_pose_only",
-            "hubert_audio_only",
-            "hubert_full_control",
-        ],
-    ) -> Path:
+    def _get_checkpoint_stage_2_path(self, infer_type: InferenceType) -> Path:
         match infer_type:
             case "mfcc_full_control":
                 return self.settings.model.checkpoint.mfcc_full_control
@@ -459,6 +504,9 @@ class App:
                 return self.settings.model.checkpoint.hubert_audio_only
             case "hubert_full_control":
                 return self.settings.model.checkpoint.hubert_full_control
+            case _:
+                msg = f"Unknown infer_type: {infer_type}"
+                raise Error(msg)
 
     def gui(self) -> Blocks:
         """Create the Gradio interface for the voice generation web app."""
@@ -466,7 +514,7 @@ class App:
             with Tab("AniTalker (Generate Video from Paths)"):
                 with Row():
                     with Column():
-                        image_path: Image = Image(
+                        image_path = Image(
                             value=(
                                 self.settings.model.image_path.as_posix()
                                 if self.settings.model.image_path
@@ -486,9 +534,12 @@ class App:
                             show_download_button=True,
                         )
                     with Column():
-                        output_video_256 = Video(label="Generated Video (256)")
-                        output_video_512 = Video(label="Generated Video (512)")
-                        output_message = Markdown()
+                        output_video = PlayableVideo(
+                            label="Generated Video",
+                            interactive=False,
+                            autoplay=True,
+                            sources="upload",
+                        )
                 with Row():
                     generate_button = Button("Generate", variant="primary")
                     stop_button: Button = Button("Stop", variant="stop")
@@ -502,17 +553,35 @@ class App:
                                 "Choose character, More characters will be added later."
                             ),
                         )
+                        audio_path_from_name = Textbox()
                     with Column():
-                        output_video_256_from_name = Video(
-                            label="Generated Video (256)",
+                        output_video_from_name = PlayableVideo(
+                            label="Generated Video",
+                            interactive=False,
+                            autoplay=True,
+                            sources="upload",
                         )
-                        output_video_512_from_name = Video(
-                            label="Generated Video (512)",
-                        )
-                        output_message_from_name = Markdown()
                 with Row():
                     generate_from_name_button = Button("Generate", variant="primary")
                     stop_from_name_button: Button = Button("Stop", variant="stop")
+            with Tab("MCP"):
+                with Row():
+                    with Column():
+                        name_mcp = Dropdown(
+                            self._get_character_names(),
+                            label="Character",
+                            info="Choose character.",
+                        )
+                        audio_path_mcp = Textbox()
+                    with Column():
+                        output_video_mcp = File(
+                            label="Generated Video",
+                            interactive=False,
+                            file_types=["video"],
+                        )
+                with Row():
+                    generate_button_mcp = Button("Generate", variant="primary")
+                    stop_button_mcp: Button = Button("Stop", variant="stop")
             with Tab("Configuration"):
                 with Row():
                     infer_type = Dropdown(
@@ -571,7 +640,6 @@ class App:
                     infer_type,
                     image_path,
                     audio_path,
-                    face_sr,
                     pose_yaw,
                     pose_pitch,
                     pose_roll,
@@ -579,12 +647,9 @@ class App:
                     face_scale,
                     step_t,
                     seed,
+                    face_sr,
                 ],
-                [
-                    output_video_256,
-                    output_video_512,
-                    output_message,
-                ],
+                [output_video],
             )
             stop_button.click(cancels=generate_button_event)
             generate_from_name_button_event = generate_from_name_button.click(
@@ -592,8 +657,7 @@ class App:
                 [
                     name,
                     infer_type,
-                    audio_path,
-                    face_sr,
+                    audio_path_from_name,
                     pose_yaw,
                     pose_pitch,
                     pose_roll,
@@ -601,12 +665,27 @@ class App:
                     face_scale,
                     step_t,
                     seed,
+                    face_sr,
                 ],
-                [
-                    output_video_256_from_name,
-                    output_video_512_from_name,
-                    output_message_from_name,
-                ],
+                [output_video_from_name],
             )
             stop_from_name_button.click(cancels=generate_from_name_button_event)
+            generate_button_mcp_event = generate_button_mcp.click(
+                self.generate_video_mcp,
+                [
+                    name_mcp,
+                    infer_type,
+                    audio_path_mcp,
+                    pose_yaw,
+                    pose_pitch,
+                    pose_roll,
+                    face_location,
+                    face_scale,
+                    step_t,
+                    seed,
+                    face_sr,
+                ],
+                [output_video_mcp],
+            )
+            stop_button_mcp.click(cancels=generate_button_mcp_event)
             return app
