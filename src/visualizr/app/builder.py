@@ -366,7 +366,7 @@ class App:
             face_scale,
             step_t,
             seed,
-            face_sr=face_sr,
+            face_sr,
         )
 
     def generate_video_mcp(
@@ -402,21 +402,9 @@ class App:
         Returns:
             Path: A path to the generated video file.
         """
-        if audio_file is None or not Path(audio_file).exists():
-            _msg = f"Audio path '{audio_file}' does not exist or is invalid."
-            logger.error(_msg)
-            raise Error(_msg)
-        if name not in self._get_character_names():
-            _msg = f"Character '{name}' not found."
-            logger.error(_msg)
-            raise Error(_msg)
-        if str(audio_file).startswith(("http://", "https://")):
-            audio_file = self._download_audio(audio_file)
-        if not isinstance(audio_file, Path):
-            audio_file = Path(audio_file)
-        return self.generate_video(
+        return self.generate_video_from_name(
+            name,
             infer_type,
-            self._get_image_path(name),
             audio_file.as_posix(),
             pose_yaw,
             pose_pitch,
@@ -425,7 +413,7 @@ class App:
             face_scale,
             step_t,
             seed,
-            face_sr=face_sr,
+            face_sr,
         ).as_posix()
 
     @staticmethod
