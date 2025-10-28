@@ -1,6 +1,8 @@
 version: 0.1
 cli:
   version: 1.25.0
+  shell_hooks:
+    enforce: true
 plugins:
   sources:
     - id: trunk
@@ -15,7 +17,6 @@ runtimes:
     - python@3.10.8
 lint:
   enabled:
-    #    - ty@0.0.1-alpha.19
     - trufflehog-git@3.90.11
     - pre-commit-hooks@5.0.0
     - trivy@0.67.2
@@ -54,3 +55,39 @@ actions:
     - trunk-fmt-pre-commit
     - trunk-upgrade-available
     - trunk-check-pre-commit
+    - ensure-tag-matches-version
+  definitions:
+    - id: ensure-tag-matches-version
+      description: Hooks to ensure git tag matches version in pyproject.toml
+      triggers:
+        - git_hooks:
+            - pre-push
+      run: |-
+        #!/usr/bin/env bash
+        set -e
+
+        # Check if we're on main or master branch
+        if git rev-parse --abbrev-ref HEAD | grep -q 'main\|master'; then
+          # Try to get the tag for the current commit, ignore errors
+          TAG=$(git describe --tags --exact-match "$(git log -n1 --pretty='%h')" 2>/dev/null || true)
+
+          # If no tag found, skip validation entirely
+          if [ -z "$TAG" ]; then
+            echo "No tag found for the current commit - skipping version validation."
+            exit 0
+          fi
+
+          # Validate it matches pyproject.toml version
+          VERSION=$(grep '^version =' pyproject.toml | sed -E 's/version = "(.*)"/\1/' 2>/dev/null || echo "")
+
+          if [ "$TAG" != "$VERSION" ]; then
+            echo "Tag '$TAG' does not match version '$VERSION' in pyproject.toml."
+            echo "You can update the version using 'uv version $TAG'"
+            exit 1
+          fi
+
+          echo "Tag '$TAG' matches version '$VERSION'."
+        else
+          echo "Not on main/master branch - skipping tag validation."
+        fi
+        exit 0
