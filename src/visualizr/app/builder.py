@@ -292,8 +292,11 @@ class App:
                 predicted_video_256_path,
                 predicted_video_512_path,
             )
+            if not predicted_video_512_path.exists():
+                msg = "512x512 video generation failed. Please check your inputs."
+                raise Error(msg)
         if not predicted_video_256_path.exists():
-            msg = "Error: Video generation failed. Please check your inputs."
+            msg = "256x256 video generation failed. Please check your inputs."
             raise Error(msg)
         if face_sr:
             Info("Video (512x512) generated successfully!")
