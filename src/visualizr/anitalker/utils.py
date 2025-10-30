@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Literal
 
-from gradio import Error, Info
+from gradio import Info
 from imageio import mimsave
 from moviepy.editor import (
     AudioFileClip,
@@ -88,8 +88,8 @@ def remove_frames(frames_path: Path) -> None:
         Info(_msg)
     except OSError as e:
         _msg = f"Failed to delete frames: {e}"
-        logger.exception(_msg)
-        Error(_msg)
+        logger.error(_msg)
+        raise OSError(_msg) from e
 
 
 def load_stage_2_model(conf: TrainConfig, stage_2_checkpoint_path: Path) -> LitModel:

@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Literal
 
 from dotenv import load_dotenv
-from gradio import Error
 from pydantic import BaseModel, DirectoryPath, Field, FilePath, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from torch.cuda import is_available
@@ -132,12 +131,10 @@ class ModelSettings(BaseModel):
         if self.image_path and not self.image_path.exists():
             msg_image_err: str = f"Image path does not exist: {self.image_path}"
             logger.error(msg_image_err)
-            Error(msg_image_err)
             raise FileNotFoundError(msg_image_err)
         if self.audio_path and not self.audio_path.exists():
             msg_audio_err: str = f"Audio path does not exist: {self.audio_path}"
             logger.error(msg_audio_err)
-            Error(msg_audio_err)
             raise FileNotFoundError(msg_audio_err)
         return self
 

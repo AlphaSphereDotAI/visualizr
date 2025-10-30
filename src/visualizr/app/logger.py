@@ -1,4 +1,4 @@
-from logging import INFO, WARNING, basicConfig, getLogger
+from logging import INFO, WARNING, Logger, basicConfig, getLogger
 
 from rich.logging import RichHandler
 
@@ -16,4 +16,4 @@ basicConfig(
     format="%(name)s | %(process)d | %(message)s",
 )
 getLogger("httpx").setLevel(WARNING)
-logger = getLogger(__package__)
+logger: Logger = getLogger(__package__)
