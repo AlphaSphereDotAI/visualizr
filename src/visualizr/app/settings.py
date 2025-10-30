@@ -99,8 +99,14 @@ class ModelSettings(BaseModel):
     step_t: int = 50
     seed: int = 0
     motion_dim: int = 20
-    image_path: FilePath = Field(default=None)
-    audio_path: FilePath = Field(default=None)
+    image_path: FilePath | None = Field(
+        default=None,
+        description="The path to the image to generate a video from.",
+    )
+    audio_path: FilePath | None = Field(
+        default=None,
+        description="The path to the audio to generate a video from.",
+    )
     control_flag: bool = True
     pose_driven_path: str = "not_supported_in_this_mode"
     image_size: int = 256
@@ -124,22 +130,22 @@ class ModelSettings(BaseModel):
             Self: The validated ModelSettings instance.
         """
         if self.image_path and not self.image_path.exists():
-            _msg = f"Image path does not exist: {self.image_path}"
-            logger.error(_msg)
-            Error(_msg)
-            raise FileNotFoundError(_msg)
+            msg_image_err: str = f"Image path does not exist: {self.image_path}"
+            logger.error(msg_image_err)
+            Error(msg_image_err)
+            raise FileNotFoundError(msg_image_err)
         if self.audio_path and not self.audio_path.exists():
-            _msg = f"Audio path does not exist: {self.audio_path}"
-            logger.error(_msg)
-            Error(_msg)
-            raise FileNotFoundError(_msg)
+            msg_audio_err: str = f"Audio path does not exist: {self.audio_path}"
+            logger.error(msg_audio_err)
+            Error(msg_audio_err)
+            raise FileNotFoundError(msg_audio_err)
         return self
 
 
 class Settings(BaseSettings):
     """Configuration for the Visualizr app."""
 
-    model_config = SettingsConfigDict(
+    model_config: SettingsConfigDict = SettingsConfigDict(
         env_nested_delimiter="__",
         env_parse_none_str="None",
         env_file=".env",
