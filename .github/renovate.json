@@ -8,8 +8,10 @@
     "labels": [
       "Lockfile",
       "dependencies"
-    ]
+      ]
   },
+  "osvVulnerabilityAlerts": true,
+  "dependencyDashboardOSVVulnerabilitySummary": "all",
   "ignorePaths": [
     "pyproject.toml"
   ]

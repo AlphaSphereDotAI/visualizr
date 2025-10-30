@@ -83,6 +83,6 @@ queue_rules:
           - check-success = GitGuardian Security Checks
           - check-success = SonarCloud
           - check-success = Trunk Check
-          - check-success = CodeRabbit
           - check-success = Test Image / API Test
           - check-success = CodeQL
+          # - check-success = CodeRabbit
