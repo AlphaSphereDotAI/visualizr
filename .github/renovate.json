@@ -8,7 +8,7 @@
     "labels": [
       "Lockfile",
       "dependencies"
-      ]
+    ]
   },
   "osvVulnerabilityAlerts": true,
   "dependencyDashboardOSVVulnerabilitySummary": "all",

@@ -14,11 +14,6 @@ pull_request_rules:
       - files = .trunk/trunk.yaml
     actions:
       merge:
-  - name: Delete branch after close
-    conditions:
-      - closed
-    actions:
-      delete_head_branch:
   - name: Comment when a pull request is merged
     conditions:
       - merged
