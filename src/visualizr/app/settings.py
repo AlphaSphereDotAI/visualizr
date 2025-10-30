@@ -16,6 +16,8 @@ load_dotenv()
 
 
 class DirectorySettings(BaseModel):
+    """Directory settings for the Visualizr app."""
+
     base: DirectoryPath = Field(default_factory=lambda: Path.cwd())
     results: DirectoryPath = Field(default_factory=lambda: Path.cwd() / "results")
     frames: DirectoryPath = Field(
@@ -62,6 +64,8 @@ class DirectorySettings(BaseModel):
 
 
 class Checkpoint(BaseModel):
+    """Checkpoint settings for the Visualizr app."""
+
     stage_1: FilePath = Field(
         default_factory=lambda: Path.cwd() / "ckpts" / "stage1.ckpt",
     )
@@ -85,6 +89,8 @@ class Checkpoint(BaseModel):
 
 
 class ModelSettings(BaseModel):
+    """Model settings for the Visualizr app."""
+
     pose_yaw: float = 0.0
     pose_pitch: float = 0.0
     pose_roll: float = 0.0
@@ -108,6 +114,15 @@ class ModelSettings(BaseModel):
 
     @model_validator(mode="after")
     def check_image_path(self) -> "ModelSettings":
+        """
+        Check if the image and audio paths exist.
+
+        Args:
+            self (ModelSettings): The ModelSettings instance to check.
+
+        Returns:
+            Self: The validated ModelSettings instance.
+        """
         if self.image_path and not self.image_path.exists():
             _msg = f"Image path does not exist: {self.image_path}"
             logger.error(_msg)
