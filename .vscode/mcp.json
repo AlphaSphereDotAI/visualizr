@@ -1,0 +1,12 @@
+{
+    "servers": {
+        "docfork/docfork-mcp": {
+            "type": "http",
+            "url": "https://mcp.docfork.com/mcp"
+        },
+        "byterover-mcp": {
+            "type": "http",
+            "url": "https://mcp.byterover.dev/mcp"
+        }
+    }
+}
