@@ -1,0 +1,23 @@
+{
+    "servers": {
+        "Snyk": {
+            "args": [
+                "-y",
+                "snyk@latest",
+                "mcp",
+                "-t",
+                "stdio"
+            ],
+            "command": "npx",
+            "type": "stdio"
+        },
+        "byterover-mcp": {
+            "type": "http",
+            "url": "https://mcp.byterover.dev/mcp",
+        },
+        "docfork/docfork-mcp": {
+            "type": "http",
+            "url": "https://mcp.docfork.com/mcp"
+        }
+    }
+}
