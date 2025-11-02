@@ -29,41 +29,49 @@ class DirectorySettings(BaseModel):
     @computed_field
     @property
     def results(self) -> DirectoryPath:
+        """Path to the results directory."""
         return self.base / "results" / APP_NAME
 
     @computed_field
     @property
     def frames(self) -> DirectoryPath:
+        """Path to the frames directory."""
         return self.results / "frames"
 
     @computed_field
     @property
     def checkpoint(self) -> DirectoryPath:
+        """Path to the checkpoint directory."""
         return self.base / "ckpts"
 
     @computed_field
     @property
     def log(self) -> DirectoryPath:
+        """Path to the log directory."""
         return self.base / "logs" / APP_NAME
 
     @computed_field
     @property
     def assets(self) -> DirectoryPath:
+        """Path to the assets directory."""
         return self.base / "assets"
 
     @computed_field
     @property
     def image(self) -> DirectoryPath:
+        """Path to the image directory."""
         return self.assets / "image"
 
     @computed_field
     @property
     def audio(self) -> DirectoryPath:
+        """Path to the audio directory."""
         return self.assets / "audio"
 
     @computed_field
     @property
     def video(self) -> DirectoryPath:
+        """Path to the video directory."""
         return self.assets / "video"
 
     @model_validator(mode="after")
