@@ -199,4 +199,4 @@ class Settings(BaseSettings):
 if __name__ == "__main__":
     from rich import print as rprint
 
-    rprint(Settings())
+    rprint(Settings().model_dump_json(indent=4))
