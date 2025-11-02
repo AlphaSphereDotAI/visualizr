@@ -102,22 +102,47 @@ class DirectorySettings(BaseModel):
 
 
 class Checkpoint(BaseModel):
-    stage_1: FilePath = DirectorySettings().checkpoint / "stage1.ckpt"
-    mfcc_pose_only: FilePath = (
-        DirectorySettings().checkpoint / "stage2_pose_only_mfcc.ckpt"
+    directory: DirectorySettings = Field(
+        default_factory=DirectorySettings,
+        frozen=True,
+        exclude=True,
     )
-    mfcc_full_control: FilePath = (
-        DirectorySettings().checkpoint / "stage2_full_control_mfcc.ckpt"
-    )
-    hubert_audio_only: FilePath = (
-        DirectorySettings().checkpoint / "stage2_audio_only_hubert.ckpt"
-    )
-    hubert_pose_only: FilePath = (
-        DirectorySettings().checkpoint / "stage2_pose_only_hubert.ckpt"
-    )
-    hubert_full_control: FilePath = (
-        DirectorySettings().checkpoint / "stage2_full_control_hubert.ckpt"
-    )
+
+    @computed_field
+    @property
+    def stage_1(self) -> FilePath:
+        """Path to the stage 1 checkpoint file."""
+        return self.directory.checkpoint / "stage1.ckpt"
+
+    @computed_field
+    @property
+    def mfcc_pose_only(self) -> FilePath:
+        """Path to the MFCC pose-only checkpoint file."""
+        return self.directory.checkpoint / "stage2_pose_only_mfcc.ckpt"
+
+    @computed_field
+    @property
+    def mfcc_full_control(self) -> FilePath:
+        """Path to the MFCC full-control checkpoint file."""
+        return self.directory.checkpoint / "stage2_full_control_mfcc.ckpt"
+
+    @computed_field
+    @property
+    def hubert_audio_only(self) -> FilePath:
+        """Path to the Hubert audio-only checkpoint file."""
+        return self.directory.checkpoint / "stage2_audio_only_hubert.ckpt"
+
+    @computed_field
+    @property
+    def hubert_pose_only(self) -> FilePath:
+        """Path to the Hubert pose-only checkpoint file."""
+        return self.directory.checkpoint / "stage2_pose_only_hubert.ckpt"
+
+    @computed_field
+    @property
+    def hubert_full_control(self) -> FilePath:
+        """Path to the Hubert full-control checkpoint file."""
+        return self.directory.checkpoint / "stage2_full_control_hubert.ckpt"
 
 
 class ModelSettings(BaseModel):
@@ -140,7 +165,8 @@ class ModelSettings(BaseModel):
     revision: str = "main"
     infer_type: InferenceType = Field(default="mfcc_full_control")
     face_sr: bool = False
-    checkpoint: Checkpoint = Checkpoint()
+    # Defer Checkpoint creation until a ModelSettings instance is created
+    checkpoint: Checkpoint = Field(default_factory=Checkpoint)
 
     @model_validator(mode="after")
     def check_image_path(self) -> "ModelSettings":
@@ -166,5 +192,5 @@ class Settings(BaseSettings):
         env_file=".env",
         extra="ignore",
     )
-    directory: DirectorySettings = DirectorySettings()
-    model: ModelSettings = ModelSettings()
+    directory: DirectorySettings = Field(default_factory=DirectorySettings, frozen=True)
+    model: ModelSettings = Field(default_factory=ModelSettings, frozen=True)
