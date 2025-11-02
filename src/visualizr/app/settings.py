@@ -10,6 +10,9 @@ from pydantic import (
     DirectoryPath,
     Field,
     FilePath,
+    NonNegativeInt,
+    PositiveInt,
+    StrictStr,
     computed_field,
     model_validator,
 )
@@ -146,26 +149,28 @@ class Checkpoint(BaseModel):
 
 
 class ModelSettings(BaseModel):
-    pose_yaw: float = 0.0
-    pose_pitch: float = 0.0
-    pose_roll: float = 0.0
-    face_location: float = 0.5
-    face_scale: float = 0.5
-    step_t: int = 50
-    seed: int = 0
-    motion_dim: int = 20
+    pose_yaw: float = Field(default=0.0, ge=-1, le=1)
+    pose_pitch: float = Field(default=0.0, ge=-1, le=1)
+    pose_roll: float = Field(default=0.0, ge=-1, le=1)
+    face_location: float = Field(default=0.5, ge=0, le=1)
+    face_scale: float = Field(default=0.5, ge=0, le=1)
+    step_t: PositiveInt = Field(default=50, ge=1, le=100)
+    seed: int = Field(default=0)
+    motion_dim: PositiveInt = Field(default=20)
     image_path: FilePath = Field(default=None)
     audio_path: FilePath = Field(default=None)
-    control_flag: bool = True
-    pose_driven_path: str = "not_supported_in_this_mode"
-    image_size: int = 256
-    device: Literal["cuda", "cpu"] = "cuda" if is_available() else "cpu"
-    decoder_layers: int = 2
-    repo_id: str = "taocode/anitalker_ckpts"
-    revision: str = "main"
+    control_flag: bool = Field(default=True)
+    pose_driven_path: StrictStr = Field(
+        default="not_supported_in_this_mode",
+        frozen=True,
+    )
+    image_size: PositiveInt = Field(default=256)
+    device: Literal["cuda", "cpu"] = Field(default="cuda" if is_available() else "cpu")
+    decoder_layers: NonNegativeInt = Field(default=2)
+    repo_id: str = Field(default="taocode/anitalker_ckpts")
+    revision: str = Field(default="main")
     infer_type: InferenceType = Field(default="mfcc_full_control")
-    face_sr: bool = False
-    # Defer Checkpoint creation until a ModelSettings instance is created
+    face_sr: bool = Field(default=False)
     checkpoint: Checkpoint = Field(default_factory=Checkpoint)
 
     @model_validator(mode="after")
