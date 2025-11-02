@@ -9,6 +9,7 @@ from pydantic import BaseModel, DirectoryPath, Field, FilePath, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from torch.cuda import is_available
 
+from visualizr import APP_NAME
 from visualizr.app.logger import logger
 from visualizr.app.types import InferenceType
 
@@ -17,10 +18,10 @@ load_dotenv()
 
 class DirectorySettings(BaseModel):
     base: DirectoryPath = Path.cwd()
-    results: DirectoryPath = base / "results" / __package__
+    results: DirectoryPath = base / "results" / APP_NAME
     frames: DirectoryPath = results / "frames"
     checkpoint: DirectoryPath = base / "ckpts"
-    log: DirectoryPath = base / "logs" / __package__
+    log: DirectoryPath = base / "logs" / APP_NAME
     assets: DirectoryPath = base / "assets"
     image: DirectoryPath = assets / "image"
     audio: DirectoryPath = assets / "audio"
