@@ -5,7 +5,14 @@ from typing import Literal
 
 from dotenv import load_dotenv
 from gradio import Error
-from pydantic import BaseModel, DirectoryPath, Field, FilePath, model_validator
+from pydantic import (
+    BaseModel,
+    DirectoryPath,
+    Field,
+    FilePath,
+    computed_field,
+    model_validator,
+)
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from torch.cuda import is_available
 
@@ -17,15 +24,47 @@ load_dotenv()
 
 
 class DirectorySettings(BaseModel):
-    base: DirectoryPath = Path.cwd()
-    results: DirectoryPath = base / "results" / APP_NAME
-    frames: DirectoryPath = results / "frames"
-    checkpoint: DirectoryPath = base / "ckpts"
-    log: DirectoryPath = base / "logs" / APP_NAME
-    assets: DirectoryPath = base / "assets"
-    image: DirectoryPath = assets / "image"
-    audio: DirectoryPath = assets / "audio"
-    video: DirectoryPath = assets / "video"
+    base: DirectoryPath = Field(default_factory=Path.cwd)
+
+    @computed_field
+    @property
+    def results(self) -> DirectoryPath:
+        return self.base / "results" / APP_NAME
+
+    @computed_field
+    @property
+    def frames(self) -> DirectoryPath:
+        return self.results / "frames"
+
+    @computed_field
+    @property
+    def checkpoint(self) -> DirectoryPath:
+        return self.base / "ckpts"
+
+    @computed_field
+    @property
+    def log(self) -> DirectoryPath:
+        return self.base / "logs" / APP_NAME
+
+    @computed_field
+    @property
+    def assets(self) -> DirectoryPath:
+        return self.base / "assets"
+
+    @computed_field
+    @property
+    def image(self) -> DirectoryPath:
+        return self.assets / "image"
+
+    @computed_field
+    @property
+    def audio(self) -> DirectoryPath:
+        return self.assets / "audio"
+
+    @computed_field
+    @property
+    def video(self) -> DirectoryPath:
+        return self.assets / "video"
 
     @model_validator(mode="after")
     def create_missing_dirs(self) -> "DirectorySettings":
