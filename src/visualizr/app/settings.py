@@ -16,23 +16,15 @@ load_dotenv()
 
 
 class DirectorySettings(BaseModel):
-    base: DirectoryPath = Field(default_factory=lambda: Path.cwd())
-    results: DirectoryPath = Field(default_factory=lambda: Path.cwd() / "results")
-    frames: DirectoryPath = Field(
-        default_factory=lambda: Path.cwd() / "results" / "frames",
-    )
-    checkpoint: DirectoryPath = Field(default_factory=lambda: Path.cwd() / "ckpts")
-    log: DirectoryPath = Field(default_factory=lambda: Path.cwd() / "logs")
-    assets: DirectoryPath = Field(default_factory=lambda: Path.cwd() / "assets")
-    image: DirectoryPath = Field(
-        default_factory=lambda: Path.cwd() / "assets" / "image",
-    )
-    audio: DirectoryPath = Field(
-        default_factory=lambda: Path.cwd() / "assets" / "audio",
-    )
-    video: DirectoryPath = Field(
-        default_factory=lambda: Path.cwd() / "assets" / "video",
-    )
+    base: DirectoryPath = Path.cwd()
+    results: DirectoryPath = base / "results" / __package__
+    frames: DirectoryPath = results / "frames"
+    checkpoint: DirectoryPath = base / "ckpts"
+    log: DirectoryPath = base / "logs" / __package__
+    assets: DirectoryPath = base / "assets"
+    image: DirectoryPath = assets / "image"
+    audio: DirectoryPath = assets / "audio"
+    video: DirectoryPath = assets / "video"
 
     @model_validator(mode="after")
     def create_missing_dirs(self) -> "DirectorySettings":
@@ -56,31 +48,27 @@ class DirectorySettings(BaseModel):
             self.video,
         ]:
             if not directory.exists():
-                directory.mkdir(exist_ok=True)
+                directory.mkdir(exist_ok=True, parents=True)
                 logger.info("Created directory %s.", directory)
         return self
 
 
 class Checkpoint(BaseModel):
-    stage_1: FilePath = Field(
-        default_factory=lambda: Path.cwd() / "ckpts" / "stage1.ckpt",
+    stage_1: FilePath = DirectorySettings().checkpoint / "stage1.ckpt"
+    mfcc_pose_only: FilePath = (
+        DirectorySettings().checkpoint / "stage2_pose_only_mfcc.ckpt"
     )
-    mfcc_pose_only: FilePath = Field(
-        default_factory=lambda: Path.cwd() / "ckpts" / "stage2_pose_only_mfcc.ckpt",
+    mfcc_full_control: FilePath = (
+        DirectorySettings().checkpoint / "stage2_full_control_mfcc.ckpt"
     )
-    mfcc_full_control: FilePath = Field(
-        default_factory=lambda: Path.cwd() / "ckpts" / "stage2_full_control_mfcc.ckpt",
+    hubert_audio_only: FilePath = (
+        DirectorySettings().checkpoint / "stage2_audio_only_hubert.ckpt"
     )
-    hubert_audio_only: FilePath = Field(
-        default_factory=lambda: Path.cwd() / "ckpts" / "stage2_audio_only_hubert.ckpt",
+    hubert_pose_only: FilePath = (
+        DirectorySettings().checkpoint / "stage2_pose_only_hubert.ckpt"
     )
-    hubert_pose_only: FilePath = Field(
-        default_factory=lambda: Path.cwd() / "ckpts" / "stage2_pose_only_hubert.ckpt",
-    )
-    hubert_full_control: FilePath = Field(
-        default_factory=lambda: Path.cwd()
-        / "ckpts"
-        / "stage2_full_control_hubert.ckpt",
+    hubert_full_control: FilePath = (
+        DirectorySettings().checkpoint / "stage2_full_control_hubert.ckpt"
     )
 
 
