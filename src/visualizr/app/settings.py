@@ -10,7 +10,6 @@ from pydantic import (
     DirectoryPath,
     Field,
     FilePath,
-    NonNegativeInt,
     PositiveInt,
     StrictStr,
     computed_field,
@@ -173,13 +172,15 @@ class ModelSettings(BaseModel):
         exclude=True,
     )
     image_size: PositiveInt = Field(default=256)
-    device: Literal["cuda", "cpu"] = Field(        default_factory=lambda: "cuda" if is_available() else "cpu"    )
-    decoder_layers: NonNegativeInt = Field(default=2)
+    device: Literal["cuda", "cpu"] = Field(
+        default_factory=lambda: "cuda" if is_available() else "cpu",
+    )
+    decoder_layers: PositiveInt = Field(default=2)
     repo_id: str = Field(default="taocode/anitalker_ckpts", frozen=True)
     revision: str = Field(default="main", frozen=True)
     infer_type: InferenceType = Field(default="mfcc_full_control")
     face_sr: bool = Field(default=False)
-    checkpoint: Checkpoint = Field(default_factory=Checkpoint)
+    checkpoint: Checkpoint = Field(default_factory=Checkpoint, frozen=True)
 
     @model_validator(mode="after")
     def check_missing_paths(self) -> "ModelSettings":
