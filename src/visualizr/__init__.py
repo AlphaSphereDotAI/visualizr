@@ -6,6 +6,8 @@ from rich.style import Style
 
 filterwarnings("ignore", category=UserWarning)
 
+APP_NAME: str = __package__
+
 art = Figlet(font="dos_rebel", justify="center", width=110).renderText("VISUALIZR")
 
 console = Console()
