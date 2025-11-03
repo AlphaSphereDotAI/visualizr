@@ -20,6 +20,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from torch.cuda import is_available
 
 from visualizr import APP_NAME
+from visualizr.anitalker.checkpoint import ModelName
 from visualizr.app.logger import logger
 from visualizr.app.types import InferenceType
 
@@ -119,37 +120,37 @@ class Checkpoint(BaseModel):
     @property
     def stage_1(self) -> FilePath:
         """Path to the stage 1 checkpoint file."""
-        return self.base / "stage1.ckpt"
+        return self.base / ModelName.stage_1
 
     @computed_field
     @property
     def mfcc_pose_only(self) -> FilePath:
         """Path to the MFCC pose-only checkpoint file."""
-        return self.base / "stage2_pose_only_mfcc.ckpt"
+        return self.base / ModelName.mfcc_pose_only
 
     @computed_field
     @property
     def mfcc_full_control(self) -> FilePath:
         """Path to the MFCC full-control checkpoint file."""
-        return self.base / "stage2_full_control_mfcc.ckpt"
+        return self.base / ModelName.mfcc_full_control
 
     @computed_field
     @property
     def hubert_audio_only(self) -> FilePath:
         """Path to the Hubert audio-only checkpoint file."""
-        return self.base / "stage2_audio_only_hubert.ckpt"
+        return self.base / ModelName.hubert_audio_only
 
     @computed_field
     @property
     def hubert_pose_only(self) -> FilePath:
         """Path to the Hubert pose-only checkpoint file."""
-        return self.base / "stage2_pose_only_hubert.ckpt"
+        return self.base / ModelName.hubert_pose_only
 
     @computed_field
     @property
     def hubert_full_control(self) -> FilePath:
         """Path to the Hubert full-control checkpoint file."""
-        return self.base / "stage2_full_control_hubert.ckpt"
+        return self.base / ModelName.hubert_full_control
 
 
 class ModelSettings(BaseModel):
