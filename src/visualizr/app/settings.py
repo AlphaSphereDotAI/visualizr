@@ -27,7 +27,7 @@ load_dotenv()
 
 
 class DirectorySettings(BaseModel):
-    base: DirectoryPath = Field(default_factory=Path.cwd)
+    base: DirectoryPath = Field(default_factory=Path.cwd, frozen=True)
 
     @computed_field
     @property
