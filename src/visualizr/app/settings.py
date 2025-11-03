@@ -173,7 +173,7 @@ class ModelSettings(BaseModel):
         exclude=True,
     )
     image_size: PositiveInt = Field(default=256)
-    device: Literal["cuda", "cpu"] = Field(default="cuda" if is_available() else "cpu")
+    device: Literal["cuda", "cpu"] = Field(        default_factory=lambda: "cuda" if is_available() else "cpu"    )
     decoder_layers: NonNegativeInt = Field(default=2)
     repo_id: str = Field(default="taocode/anitalker_ckpts", frozen=True)
     revision: str = Field(default="main", frozen=True)
