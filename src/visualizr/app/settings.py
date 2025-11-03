@@ -27,6 +27,8 @@ load_dotenv()
 
 
 class DirectorySettings(BaseModel):
+    """Settings for application directories."""
+
     base: DirectoryPath = Field(default_factory=Path.cwd, frozen=True)
 
     @computed_field
@@ -105,6 +107,8 @@ class DirectorySettings(BaseModel):
 
 
 class Checkpoint(BaseModel):
+    """Settings for model checkpoints."""
+
     base: DirectoryPath = Field(
         default_factory=lambda: Path.cwd() / "ckpts",
         frozen=True,
@@ -149,6 +153,8 @@ class Checkpoint(BaseModel):
 
 
 class ModelSettings(BaseModel):
+    """Settings for the model configuration."""
+
     pose_yaw: float = Field(default=0.0, ge=-1, le=1)
     pose_pitch: float = Field(default=0.0, ge=-1, le=1)
     pose_roll: float = Field(default=0.0, ge=-1, le=1)
@@ -188,12 +194,12 @@ class ModelSettings(BaseModel):
             FileNotFoundError: If the image_path or audio_path does not exist.
         """
         if self.image_path and not self.image_path.exists():
-            _msg = f"Image path does not exist: {self.image_path}"
+            _msg: StrictStr = f"Image path does not exist: {self.image_path}"
             logger.error(_msg)
             Error(_msg)
             raise FileNotFoundError(_msg)
         if self.audio_path and not self.audio_path.exists():
-            _msg = f"Audio path does not exist: {self.audio_path}"
+            _msg: StrictStr = f"Audio path does not exist: {self.audio_path}"
             logger.error(_msg)
             Error(_msg)
             raise FileNotFoundError(_msg)
@@ -203,7 +209,7 @@ class ModelSettings(BaseModel):
 class Settings(BaseSettings):
     """Configuration for the Visualizr app."""
 
-    model_config = SettingsConfigDict(
+    model_config: SettingsConfigDict = SettingsConfigDict(
         env_nested_delimiter="__",
         env_parse_none_str="None",
         env_file=".env",
