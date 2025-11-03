@@ -176,8 +176,8 @@ class ModelSettings(BaseModel):
         default_factory=lambda: "cuda" if is_available() else "cpu",
     )
     decoder_layers: PositiveInt = Field(default=2)
-    repo_id: str = Field(default="taocode/anitalker_ckpts", frozen=True)
-    revision: str = Field(default="main", frozen=True)
+    repo_id: str = Field(default="taocode/anitalker_ckpts")
+    revision: str = Field(default="main")
     infer_type: InferenceType = Field(default="mfcc_full_control")
     face_sr: bool = Field(default=False)
     checkpoint: Checkpoint = Field(default_factory=Checkpoint, frozen=True)
@@ -218,7 +218,7 @@ class Settings(BaseSettings):
         extra="ignore",
     )
     directory: DirectorySettings = Field(default_factory=DirectorySettings, frozen=True)
-    model: ModelSettings = Field(default_factory=ModelSettings, frozen=True)
+    model: ModelSettings = Field(default_factory=ModelSettings)
 
 
 if __name__ == "__main__":
