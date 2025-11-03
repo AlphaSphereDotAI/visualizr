@@ -105,8 +105,8 @@ class DirectorySettings(BaseModel):
 
 
 class Checkpoint(BaseModel):
-    directory: DirectorySettings = Field(
-        default_factory=DirectorySettings,
+    base: DirectoryPath = Field(
+        default_factory=lambda: Path.cwd() / "ckpts",
         frozen=True,
         exclude=True,
     )
@@ -115,37 +115,37 @@ class Checkpoint(BaseModel):
     @property
     def stage_1(self) -> FilePath:
         """Path to the stage 1 checkpoint file."""
-        return self.directory.checkpoint / "stage1.ckpt"
+        return self.base / "stage1.ckpt"
 
     @computed_field
     @property
     def mfcc_pose_only(self) -> FilePath:
         """Path to the MFCC pose-only checkpoint file."""
-        return self.directory.checkpoint / "stage2_pose_only_mfcc.ckpt"
+        return self.base / "stage2_pose_only_mfcc.ckpt"
 
     @computed_field
     @property
     def mfcc_full_control(self) -> FilePath:
         """Path to the MFCC full-control checkpoint file."""
-        return self.directory.checkpoint / "stage2_full_control_mfcc.ckpt"
+        return self.base / "stage2_full_control_mfcc.ckpt"
 
     @computed_field
     @property
     def hubert_audio_only(self) -> FilePath:
         """Path to the Hubert audio-only checkpoint file."""
-        return self.directory.checkpoint / "stage2_audio_only_hubert.ckpt"
+        return self.base / "stage2_audio_only_hubert.ckpt"
 
     @computed_field
     @property
     def hubert_pose_only(self) -> FilePath:
         """Path to the Hubert pose-only checkpoint file."""
-        return self.directory.checkpoint / "stage2_pose_only_hubert.ckpt"
+        return self.base / "stage2_pose_only_hubert.ckpt"
 
     @computed_field
     @property
     def hubert_full_control(self) -> FilePath:
         """Path to the Hubert full-control checkpoint file."""
-        return self.directory.checkpoint / "stage2_full_control_hubert.ckpt"
+        return self.base / "stage2_full_control_hubert.ckpt"
 
 
 class ModelSettings(BaseModel):
@@ -163,6 +163,7 @@ class ModelSettings(BaseModel):
     pose_driven_path: StrictStr = Field(
         default="not_supported_in_this_mode",
         frozen=True,
+        exclude=True,
     )
     image_size: PositiveInt = Field(default=256)
     device: Literal["cuda", "cpu"] = Field(default="cuda" if is_available() else "cpu")
