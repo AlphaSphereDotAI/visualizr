@@ -3,7 +3,7 @@
 from enum import Enum
 
 
-class ModelName(Enum):
+class ModelName(str, Enum):
     """Enumeration of available model checkpoints."""
 
     stage_1: str = "stage1.ckpt"
