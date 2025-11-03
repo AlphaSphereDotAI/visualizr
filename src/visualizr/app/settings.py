@@ -157,8 +157,8 @@ class ModelSettings(BaseModel):
     step_t: PositiveInt = Field(default=50, ge=1, le=100)
     seed: int = Field(default=0)
     motion_dim: PositiveInt = Field(default=20)
-    image_path: FilePath = Field(default=None)
-    audio_path: FilePath = Field(default=None)
+    image_path: FilePath | None = Field(default=None)
+    audio_path: FilePath | None = Field(default=None)
     control_flag: bool = Field(default=True)
     pose_driven_path: StrictStr = Field(
         default="not_supported_in_this_mode",
