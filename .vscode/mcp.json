@@ -13,7 +13,7 @@
         },
         "byterover-mcp": {
             "type": "http",
-            "url": "https://mcp.byterover.dev/mcp",
+            "url": "https://mcp.byterover.dev/v2/mcp",
         },
         "docfork/docfork-mcp": {
             "type": "http",
