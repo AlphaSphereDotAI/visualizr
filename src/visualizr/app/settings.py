@@ -175,7 +175,18 @@ class ModelSettings(BaseModel):
     checkpoint: Checkpoint = Field(default_factory=Checkpoint)
 
     @model_validator(mode="after")
-    def check_image_path(self) -> "ModelSettings":
+    def check_missing_paths(self) -> "ModelSettings":
+        """
+        Validate that the image and audio paths exist if provided.
+
+        Checks the existence of the image_path and audio_path attributes.
+
+        Returns:
+            ModelSettings: The validated ModelSettings instance.
+
+        Raises:
+            FileNotFoundError: If the image_path or audio_path does not exist.
+        """
         if self.image_path and not self.image_path.exists():
             _msg = f"Image path does not exist: {self.image_path}"
             logger.error(_msg)
