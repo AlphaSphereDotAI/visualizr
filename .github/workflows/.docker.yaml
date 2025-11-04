@@ -63,6 +63,7 @@ jobs:
       url: ${{inputs.registry}}/${{github.repository}}
     steps:
       - name: Free Disk Space
+        if: github.event_name != 'pull_request'
         uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
       - name: Checkout repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
