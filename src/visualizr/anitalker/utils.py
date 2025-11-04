@@ -87,9 +87,8 @@ def remove_frames(frames_path: Path) -> None:
         logger.info(_msg)
         Info(_msg)
     except OSError as e:
-        _msg = f"Failed to delete frames: {e}"
-        logger.error(_msg)
-        raise OSError(_msg) from e
+        logger.error("Failed to delete frames: %s", e)
+        raise
 
 
 def load_stage_2_model(conf: TrainConfig, stage_2_checkpoint_path: Path) -> LitModel:
@@ -103,8 +102,8 @@ def load_stage_2_model(conf: TrainConfig, stage_2_checkpoint_path: Path) -> LitM
     try:
         state = torch_load(stage_2_checkpoint_path, map_location="cpu")
     except Exception as e:
-        msg = f"Failed to load checkpoint: {e}"
-        raise RuntimeError(msg) from e
+        logger.error("Failed to load checkpoint: %s", e)
+        raise
     model.load_state_dict(state)
     model.ema_model.eval()
     model.ema_model.to("cuda")
