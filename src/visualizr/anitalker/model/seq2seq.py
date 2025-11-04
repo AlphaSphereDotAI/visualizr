@@ -1,5 +1,5 @@
 from espnet.nets.pytorch_backend.conformer.encoder import Encoder
-from gradio import Error, Info
+from gradio import Info
 from torch import cat, nn, zeros
 from torch.nn import Module
 from torch.nn.functional import softmax
@@ -77,7 +77,6 @@ class DiffusionPredictor(Module):
                 f"`hubert_pose_only`, `hubert_audio_only`, `hubert_full_control`."
             )
             logger.error(_msg)
-            Error(_msg)
             raise ValueError(_msg)
         # Encoders & Decoders
         self.coarse_decoder = self.create_conformer_encoder(
