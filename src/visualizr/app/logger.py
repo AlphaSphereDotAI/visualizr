@@ -2,7 +2,7 @@ from logging import INFO, WARNING, Logger, basicConfig, getLogger
 
 from rich.logging import RichHandler
 
-from visualizr import console
+from visualizr import APP_NAME, console
 
 basicConfig(
     level=INFO,
@@ -16,4 +16,4 @@ basicConfig(
     format="%(name)s | %(process)d | %(message)s",
 )
 getLogger("httpx").setLevel(WARNING)
-logger: Logger = getLogger(__package__)
+logger: Logger = getLogger(APP_NAME)

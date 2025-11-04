@@ -9,7 +9,7 @@ plugins:
       ref: v1.7.3
       uri: https://github.com/trunk-io/plugins
     - id: configs
-      ref: v1.1.1
+      ref: v1.1.2
       uri: https://github.com/trunk-io/configs
 runtimes:
   enabled:
@@ -24,12 +24,12 @@ lint:
     - gitleaks@8.28.0
     - actionlint@1.7.8
     - bandit@1.8.6
-    - checkov@3.2.488
+    - checkov@3.2.489
     - git-diff-check
     - hadolint@2.14.0
     - markdownlint@0.45.0
-    - renovate@41.165.2
-    - ruff@0.14.2:
+    - renovate@41.169.1
+    - ruff@0.14.3:
         commands:
           - lint
           - format
