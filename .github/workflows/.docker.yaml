@@ -26,6 +26,12 @@ jobs:
     if: ${{ inputs.is_test }}
     environment:
       name: code_quality
+    services:
+      docker:
+        image: docker:dind
+        options: --privileged #--shm-size=2g
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock:ro
     steps:
       - name: Checkout repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
@@ -63,6 +69,12 @@ jobs:
     environment:
       name: docker_image
       url: ${{inputs.registry}}/${{github.repository}}
+    services:
+      docker:
+        image: docker:dind
+        options: --privileged #--shm-size=2g
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock:ro
     steps:
       - name: Checkout repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
@@ -137,6 +149,12 @@ jobs:
           - quickview
           - cves
           - recommendations
+    services:
+      docker:
+        image: docker:dind
+        options: --privileged #--shm-size=2g
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock:ro
     steps:
       - name: Set up Docker
         uses: docker/setup-docker-action@v4.5.0
