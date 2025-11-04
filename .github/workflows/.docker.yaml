@@ -37,6 +37,14 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
       - name: Set up Docker
         uses: docker/setup-docker-action@v4.5.0
+        with:
+          daemon-config: |
+            {
+              "debug": true,
+              "features": {
+                "containerd-snapshotter": true
+              }
+            }
       - name: Log in to ${{ inputs.registry }} Registry
         uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3
         with:
@@ -85,6 +93,14 @@ jobs:
           cmd: yq -roy '.project.requires-python' pyproject.toml
       - name: Set up Docker
         uses: docker/setup-docker-action@v4.5.0
+        with:
+          daemon-config: |
+            {
+              "debug": true,
+              "features": {
+                "containerd-snapshotter": true
+              }
+            }
       - name: Log in to ${{ inputs.registry }} Registry
         uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3
         with:
@@ -158,6 +174,14 @@ jobs:
     steps:
       - name: Set up Docker
         uses: docker/setup-docker-action@v4.5.0
+        with:
+          daemon-config: |
+            {
+              "debug": true,
+              "features": {
+                "containerd-snapshotter": true
+              }
+            }
       - name: Log in to ${{ inputs.registry }} Registry
         uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3
         with:
