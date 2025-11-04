@@ -22,7 +22,7 @@ permissions:
 jobs:
   check_dockerfile:
     name: Validate Dockerfile
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     if: ${{ inputs.is_test }}
     environment:
       name: code_quality
@@ -55,7 +55,7 @@ jobs:
     name: Build and push Docker image to ${{ inputs.registry }}
     needs: check_dockerfile
     if: ${{ always() && !cancelled() }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     outputs:
       image_tag: ${{ steps.tag.outputs.TAG }}
     environment:
@@ -126,7 +126,7 @@ jobs:
     name: Docker Scout (${{ matrix.commands }})
     needs: build_image
     if: ${{ always() && !cancelled() }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     environment:
       name: docker_image
     strategy:
@@ -155,7 +155,7 @@ jobs:
   api_test:
     name: API Test
     needs: build_image
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     if: ${{ always() && !cancelled() && inputs.is_test }}
     environment:
       name: api_test
@@ -194,7 +194,7 @@ jobs:
       - api_test
       - docker_scout
     if: ${{ always() && !cancelled() && inputs.registry == 'ghcr.io' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     environment:
       name: docker_image
     steps:

@@ -20,7 +20,7 @@ jobs:
       UV_LINK_MODE: "copy"
     permissions:
       contents: write
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
       - name: Checkout Code
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
@@ -64,7 +64,7 @@ jobs:
   github_release:
     name: Create GitHub Release
     needs: setup_and_build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     environment:
       name: github
       url: ${{github.event.repository.html_url}}/releases/tag/${{github.ref_name}}
