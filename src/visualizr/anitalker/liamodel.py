@@ -1,8 +1,8 @@
-from gradio import Error
 from torch import load, nn
 
 from visualizr.anitalker.networks.encoder import Encoder
 from visualizr.anitalker.networks.styledecoder import Synthesis
+from visualizr.app.logger import logger
 
 
 class LiaModel(nn.Module):
@@ -40,14 +40,18 @@ class LiaModel(nn.Module):
             if name not in self_state:
                 name = name.replace("lia.", "")
             if name not in self_state:
-                Error(f"{orig_name} is not in the model.")
+                logger.warning(
+                    "%s is not in the model.",
+                    orig_name,
+                )  # TODO: Need more details.
                 # You can ignore those errors as some parameters are only used for training.
                 continue
             if self_state[name].size() != state[orig_name].size():
-                Error(
-                    f"Wrong parameter length: {orig_name}, "
-                    + f"model: {self_state[name].size()}, "
-                    + f"loaded: {state[orig_name].size()}"
-                )
+                logger.warning(
+                    "Wrong parameter length: %s, model: %s, loaded: %s",
+                    orig_name,
+                    self_state[name].size(),
+                    state[orig_name].size(),
+                )  # TODO: Need more details
                 continue
             self_state[name].copy_(param)
