@@ -61,4 +61,5 @@ jobs:
     with:
       is_test: true
       registry: ghcr.io
+      install_source: git+${{ github.event.repository.html_url }}@${{ github.sha }}
     secrets: inherit
