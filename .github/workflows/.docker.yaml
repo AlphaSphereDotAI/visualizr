@@ -29,6 +29,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: iptables
       - name: Set up Docker
         uses: docker/setup-docker-action@v4.5.0
         with:
@@ -79,6 +82,9 @@ jobs:
         uses: mikefarah/yq@0ecdce24e83f0fa127940334be98c86b07b0c488 # v4.48.1
         with:
           cmd: yq -roy '.project.requires-python' pyproject.toml
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: iptables
       - name: Set up Docker
         uses: docker/setup-docker-action@v4.5.0
         with:
@@ -154,6 +160,9 @@ jobs:
           - cves
           - recommendations
     steps:
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: iptables
       - name: Set up Docker
         uses: docker/setup-docker-action@v4.5.0
         with:
