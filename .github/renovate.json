@@ -1,1 +1,18 @@
-Renovate
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:best-practices"
+  ],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "labels": [
+      "Lockfile",
+      "dependencies"
+    ]
+  },
+  "osvVulnerabilityAlerts": true,
+  "dependencyDashboardOSVVulnerabilitySummary": "all",
+  "ignorePaths": [
+    "pyproject.toml"
+  ]
+}
