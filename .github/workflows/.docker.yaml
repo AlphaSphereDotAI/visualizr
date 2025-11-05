@@ -10,6 +10,10 @@ on:
         type: string
         required: true
         description: Registry
+      install_source:
+        type: string
+        required: true
+        description: Source to install from (e.g., PyPI Package or Git source)
 permissions:
   contents: read
   packages: write
@@ -50,7 +54,7 @@ jobs:
   build_image:
     name: Build and push Docker image to ${{ inputs.registry }}
     needs: check_dockerfile
-    if: ${{ always() && !cancelled() && ( inputs.is_test == true || inputs.is_test == false ) }}
+    if: ${{ always() && !cancelled() }}
     runs-on: ubuntu-latest
     outputs:
       image_tag: ${{ steps.tag.outputs.TAG }}
@@ -63,6 +67,11 @@ jobs:
         uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
       - name: Checkout repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      - name: Get Python version from pyproject.toml
+        id: get_python_version
+        uses: mikefarah/yq@0ecdce24e83f0fa127940334be98c86b07b0c488 # v4.48.1
+        with:
+          cmd: yq -roy '.project.requires-python' pyproject.toml
       - name: Log in to ${{ inputs.registry }} Registry
         uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3
         with:
@@ -75,7 +84,7 @@ jobs:
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@c1e51972afc2121e065aed6d45c65596fe445f3f # v5
+        uses: docker/metadata-action@318604b99e75e41977312d83839a89be02ca4893 # v5
         with:
           images: ${{ inputs.registry }}/${{ github.repository }}
           tags: |
@@ -87,12 +96,13 @@ jobs:
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6
         id: push
         with:
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
+          build-args: |
+            INSTALL_SOURCE=${{ inputs.install_source }}
+            PYTHON_VERSION=${{ steps.get_python_version.outputs.result }}
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
         if: ${{ inputs.is_test == false }}
@@ -115,7 +125,7 @@ jobs:
   docker_scout:
     name: Docker Scout (${{ matrix.commands }})
     needs: build_image
-    if: ${{ always() && !cancelled() && ( inputs.is_test == true || inputs.is_test == false ) }}
+    if: ${{ always() && !cancelled() }}
     runs-on: ubuntu-latest
     environment:
       name: docker_image
@@ -177,13 +187,13 @@ jobs:
         uses: pavelzw/pytest-action@510c5e90c360a185039bea56ce8b3e7e51a16507 # v2
         with:
           click-to-expand: false
-          custom-arguments: 'tests/test_app.py::test_app -p no:warnings'
+          custom-arguments: "tests/test_app.py::test_app -p no:warnings"
   clean:
     name: Cleaning GHCR
     needs:
       - api_test
       - docker_scout
-    if: ${{ always() && !cancelled() && ( inputs.is_test == true || inputs.is_test == false ) && inputs.registry == 'ghcr.io' }}
+    if: ${{ always() && !cancelled() && inputs.registry == 'ghcr.io' }}
     runs-on: ubuntu-latest
     environment:
       name: docker_image

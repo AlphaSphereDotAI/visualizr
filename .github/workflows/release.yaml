@@ -45,4 +45,5 @@ jobs:
     with:
       is_test: false
       registry: ${{ matrix.registry }}
+      install_source: ${{ github.event.repository.name }}==${{ github.event.release.tag_name }}
     secrets: inherit
