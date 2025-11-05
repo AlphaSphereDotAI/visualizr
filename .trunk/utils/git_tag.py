@@ -46,8 +46,16 @@ def get_exact_tag_for_head(repo: Repo) -> str | None:
 
 
 def main() -> int:
-    """Validate git tag against pyproject.toml version."""
-    repo: Repo = Repo(Path.cwd(), search_parent_directories=True)
+    """
+    Validate git tag against pyproject.toml version.
+
+    Returns:
+        int: 0 if validation is successful or not applicable
+             (e.g., not on main branch, detached HEAD, no tag found),
+             1 if validation fails
+             (e.g., tag does not match version or version not set).
+    """
+    repo: Repo = Repo(search_parent_directories=True)
     logger.info("Repository at %s", repo.working_tree_dir)
     try:
         branch: str = repo.active_branch.name
