@@ -70,9 +70,12 @@ def main() -> int:
     if not tag:
         logger.info("No tag found for the current commit.")
         return 0
-    version: str = read_version_from_pyproject(repo.working_tree_dir / "pyproject.toml")
-    if not version:
-        logger.error("pyproject.toml not found or version not set.")
+    try:
+        version: str = read_version_from_pyproject(
+            repo.working_tree_dir / "pyproject.toml",
+        )
+    except (FileNotFoundError, KeyError) as e:
+        logger.error("pyproject.toml not found or version not set: %s", e)
         return 1
     if tag != version:
         logger.error(
