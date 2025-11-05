@@ -47,7 +47,8 @@ def get_exact_tag_for_head(repo: Repo) -> str | None:
 
 def main() -> int:
     """Validate git tag against pyproject.toml version."""
-    repo: Repo = Repo(Path.cwd().parent.parent)
+    repo_path: Path = Path.cwd().parent.parent
+    repo: Repo = Repo(repo_path)
     logger.info("Repository at %s", repo.working_tree_dir)
     try:
         branch: str = repo.active_branch.name
@@ -62,7 +63,7 @@ def main() -> int:
     if not tag:
         logger.info("No tag found for the current commit.")
         return 0
-    version: str = read_version_from_pyproject(Path.cwd() / "pyproject.toml")
+    version: str = read_version_from_pyproject(repo_path / "pyproject.toml")
     if not version:
         logger.error("pyproject.toml not found or version not set.")
         return 1
