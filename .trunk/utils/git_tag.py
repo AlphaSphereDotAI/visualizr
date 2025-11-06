@@ -72,7 +72,7 @@ def main() -> int:
         return 0
     try:
         version: str = read_version_from_pyproject(
-            repo.working_tree_dir / "pyproject.toml",
+            Path(repo.working_tree_dir) / "pyproject.toml",
         )
     except (FileNotFoundError, KeyError) as e:
         logger.error("pyproject.toml not found or version not set: %s", e)
