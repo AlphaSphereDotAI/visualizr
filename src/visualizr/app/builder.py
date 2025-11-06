@@ -1,5 +1,4 @@
 from pathlib import Path
-from tempfile import NamedTemporaryFile
 from time import time
 
 from gradio import (
@@ -21,7 +20,7 @@ from gradio import (
     Tab,
     Textbox,
 )
-from httpx import URL, Client, HTTPStatusError, RequestError
+from httpx import URL
 from huggingface_hub import snapshot_download
 from librosa import load as librosa_load
 from numpy import (
@@ -56,6 +55,7 @@ from visualizr.anitalker.utils import (
 )
 from visualizr.app.logger import logger
 from visualizr.app.settings import Settings
+from visualizr.app.tools import download_file
 from visualizr.app.types import InferenceType
 
 
@@ -350,7 +350,7 @@ class App:
                 "https://",
             )
         ):
-            audio_file = self._download_audio(URL(audio_file))
+            audio_file = download_file(URL(audio_file))
         if not isinstance(audio_file, Path):
             audio_file = Path(audio_file)
         if not audio_file.exists():
@@ -417,34 +417,6 @@ class App:
             seed,
             face_sr,
         ).as_posix()
-
-    @staticmethod
-    def _download_audio(url: URL) -> Path:
-        """
-        Download an audio file from a given URL and save it as a temporary WAV file.
-
-        Args:
-            url (URL): The URL to download the audio from.
-
-        Returns:
-            Path: The path to the downloaded temporary audio file.
-
-        Raises:
-            Error: If the download fails due to network or file errors.
-        """
-        try:
-            with Client() as client:
-                response = client.get(url)
-                response.raise_for_status()
-                with NamedTemporaryFile(delete=False, suffix=".wav") as f:
-                    f.write(response.content)
-                    audio_path = Path(f.name)
-                logger.info(f"Downloaded audio to {audio_path}")
-        except (RequestError, HTTPStatusError, OSError) as e:
-            msg = f"Failed to download audio from {url}: {e}"
-            logger.error(msg)
-            raise Error(msg) from e
-        return audio_path
 
     def _get_image_path(self, name: str) -> Path:
         """
