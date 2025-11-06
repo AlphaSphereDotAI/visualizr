@@ -1,5 +1,6 @@
 from pathlib import Path
 from time import time
+from typing import TYPE_CHECKING
 
 from gradio import (
     Audio,
@@ -42,7 +43,6 @@ from torch import (
 from tqdm import tqdm
 from transformers import HubertModel, Wav2Vec2FeatureExtractor
 
-from visualizr.anitalker.config import TrainConfig
 from visualizr.anitalker.liamodel import LiaModel
 from visualizr.anitalker.utils import (
     frames_to_video,
@@ -57,6 +57,9 @@ from visualizr.app.logger import logger
 from visualizr.app.settings import Settings
 from visualizr.app.tools import download_file
 from visualizr.app.types import InferenceType
+
+if TYPE_CHECKING:
+    from visualizr.anitalker.config import TrainConfig
 
 
 class App:
@@ -348,7 +351,7 @@ class App:
             (
                 "http://",
                 "https://",
-            )
+            ),
         ):
             audio_file = download_file(URL(audio_file))
         if not isinstance(audio_file, Path):
