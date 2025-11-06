@@ -106,7 +106,7 @@ class DirectorySettings(BaseModel):
         return self
 
 
-class Checkpoint(BaseModel):
+class CheckpointSettings(BaseModel):
     """Settings for model checkpoints."""
 
     base: DirectoryPath = Field(
@@ -180,7 +180,10 @@ class ModelSettings(BaseModel):
     revision: str = Field(default="main")
     infer_type: InferenceType = Field(default="mfcc_full_control")
     face_sr: bool = Field(default=False)
-    checkpoint: Checkpoint = Field(default_factory=Checkpoint, frozen=True)
+    checkpoint: CheckpointSettings = Field(
+        default_factory=CheckpointSettings,
+        frozen=True,
+    )
 
     @model_validator(mode="after")
     def check_missing_paths(self) -> "ModelSettings":
