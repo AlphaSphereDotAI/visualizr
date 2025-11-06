@@ -14,16 +14,23 @@ jobs:
     name: Setup and Build
     environment:
       name: uv
-      url: https://github.com/${{github.repository}}/commits/${{github.ref_name}}
+      url: ${{github.event.repository.html_url}}/commits/${{github.ref_name}}
     env:
       UV_COMPILE_BYTECODE: "1"
       UV_LINK_MODE: "copy"
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         with:
           token: ${{ secrets.GH_TOKEN }}
+      - name: Get Package version from pyproject.toml
+        id: get_package_version
+        uses: mikefarah/yq@0ecdce24e83f0fa127940334be98c86b07b0c488 # v4.48.1
+        with:
+          cmd: yq -roy '.project.version' pyproject.toml
       - name: Install uv
         uses: astral-sh/setup-uv@85856786d1ce8acfbcc2f13a5f3fbd6b938f9f41 # v7
         with:
@@ -33,6 +40,7 @@ jobs:
       - name: Install the project
         run: uv sync --no-dev --frozen --no-editable
       - name: Update Project Version
+        if: ${{ github.ref_name != steps.get_package_version.outputs.result }}
         run: uv version ${{ github.ref_name }}
       - name: Build source and wheel distribution
         run: uv build
@@ -41,18 +49,25 @@ jobs:
         with:
           name: dist
           path: dist/
-      - name: Commit updated count
+      - name: Update the main branch to the updated version
+        if: ${{ github.ref_name != steps.get_package_version.outputs.result }}
         uses: stefanzweifel/git-auto-commit-action@28e16e81777b558cc906c8750092100bbb34c5e3 # v7
         with:
           commit_message: "Version: ${{ github.ref_name }}"
           branch: main
+          commit_options: --no-verify
+      - name: Update the tag to the updated version
+        if: ${{ github.ref_name != steps.get_package_version.outputs.result }}
+        run: |
+          git tag --force ${{ github.ref_name }}
+          git push origin --force HEAD:refs/tags/${{ github.ref_name }}
   github_release:
     name: Create GitHub Release
     needs: setup_and_build
     runs-on: ubuntu-latest
     environment:
       name: github
-      url: https://github.com/${{github.repository}}/releases/tag/${{github.ref_name}}
+      url: ${{github.event.repository.html_url}}/releases/tag/${{github.ref_name}}
     steps:
       - name: Checkout Code
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5

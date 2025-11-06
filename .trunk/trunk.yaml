@@ -9,7 +9,7 @@ plugins:
       ref: v1.7.3
       uri: https://github.com/trunk-io/plugins
     - id: configs
-      ref: v1.1.1
+      ref: v1.1.2
       uri: https://github.com/trunk-io/configs
 runtimes:
   enabled:
@@ -21,14 +21,14 @@ lint:
     - pre-commit-hooks@5.0.0
     - trivy@0.67.2
     - yamlfmt@0.20.0
-    - gitleaks@8.28.0
+    - gitleaks@8.29.0
     - actionlint@1.7.8
     - bandit@1.8.6
-    - checkov@3.2.489
+    - checkov@3.2.490
     - git-diff-check
     - hadolint@2.14.0
     - markdownlint@0.45.0
-    - renovate@41.167.2
+    - renovate@41.171.4
     - ruff@0.14.3:
         commands:
           - lint
@@ -58,36 +58,10 @@ actions:
     - ensure-tag-matches-version
   definitions:
     - id: ensure-tag-matches-version
-      description: Hooks to ensure git tag matches version in pyproject.toml
       triggers:
         - git_hooks:
             - pre-push
-      run: |-
-        #!/usr/bin/env bash
-        set -e
-
-        # Check if we're on main or master branch
-        if git rev-parse --abbrev-ref HEAD | grep -q 'main\|master'; then
-          # Try to get the tag for the current commit, ignore errors
-          TAG=$(git describe --tags --exact-match "$(git log -n1 --pretty='%h')" 2>/dev/null || true)
-
-          # If no tag found, skip validation entirely
-          if [ -z "$TAG" ]; then
-            echo "No tag found for the current commit - skipping version validation."
-            exit 0
-          fi
-
-          # Validate it matches pyproject.toml version
-          VERSION=$(grep '^version =' pyproject.toml | sed -E 's/version = "(.*)"/\1/' 2>/dev/null || echo "")
-
-          if [ "$TAG" != "$VERSION" ]; then
-            echo "Tag '$TAG' does not match version '$VERSION' in pyproject.toml."
-            echo "You can update the version using 'uv version $TAG'"
-            exit 1
-          fi
-
-          echo "Tag '$TAG' matches version '$VERSION'."
-        else
-          echo "Not on main/master branch - skipping tag validation."
-        fi
-        exit 0
+      run: python git_tag.py
+      runtime: python
+      run_from: .trunk/utils
+      packages_file: .trunk/utils/requirements.txt
