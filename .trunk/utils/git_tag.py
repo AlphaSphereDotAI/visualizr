@@ -40,7 +40,11 @@ def get_exact_tag_for_head(repo: Repo) -> str | None:
     except Exception:
         return None
     try:
-        return repo.git.describe("--tags", "--exact-match", commit_hex)
+        return (
+            repo.tags[-1].name
+            if repo.tags and repo.tags[-1].commit.hexsha == commit_hex
+            else None
+        )
     except GitCommandError:
         return None
 
