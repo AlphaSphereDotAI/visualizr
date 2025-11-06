@@ -6,6 +6,7 @@ on:
     paths:
       - pyproject.toml
       - uv.lock
+      - Dockerfile
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}
   cancel-in-progress: true
@@ -13,7 +14,7 @@ permissions: read-all
 jobs:
   version:
     name: Versioning
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     if: github.actor == 'renovate[bot]'
     permissions:
       contents: write
