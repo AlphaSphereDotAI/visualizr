@@ -421,7 +421,7 @@ class App:
             face_sr,
         ).as_posix()
 
-    def _get_image_path(self, name: str) -> Path:
+    def _get_image_path(self, name: str) -> Path | None:
         """
         Retrieve the image path for a given character name.
 
@@ -430,13 +430,16 @@ class App:
 
         Returns:
             Path: The path to the existing image file.
-                  Defaults to .jpg if none is found.
+                  None if no matching file is found.
         """
-        for ext in (".jpg", ".jpeg", ".png"):
-            path = self.settings.directory.image / f"{name}{ext}"
-            if path.is_file():
-                return path
-        return self.settings.directory.image / f"{name}.jpg"
+        return next(
+            (
+                img
+                for img in self.settings.assets.sample_image
+                if img.is_file() and img.stem.lower() == name.lower()
+            ),
+            None,
+        )
 
     def _get_character_names(self) -> list[str]:
         """
