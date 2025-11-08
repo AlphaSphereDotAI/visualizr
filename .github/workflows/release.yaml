@@ -18,6 +18,11 @@ jobs:
       name: pypi
       url: https://pypi.org/project/${{github.event.repository.name}}/${{github.event.release.tag_name}}
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        with:
+          egress-policy: audit
+
       - name: Retrieve release distributions
         uses: robinraju/release-downloader@daf26c55d821e836577a15f77d86ddc078948b05 # v1
         with:
@@ -25,7 +30,7 @@ jobs:
           out-file-path: dist/
           fileName: "*"
       - name: Publish release distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # release/v1
         with:
           packages-dir: dist/
   image:

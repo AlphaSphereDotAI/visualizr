@@ -14,6 +14,11 @@ jobs:
     environment:
       name: code_quality
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        with:
+          egress-policy: audit
+
       - name: Checkout repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         with:
@@ -30,7 +35,7 @@ jobs:
       - name: Apply linters fixes if exist
         run: $TRUNK_PATH fmt --all --no-progress
       - name: Commit and push applied linter fixes
-        uses: stefanzweifel/git-auto-commit-action@28e16e81777b558cc906c8750092100bbb34c5e3 # v7
+        uses: step-security/git-auto-commit-action@e2d505468267a3cb406af729d48d664de1f16393 # v6.0.2
         if: success() || failure()
         with:
           commit_message: "[Trunk] Apply linters fixes"
@@ -46,6 +51,11 @@ jobs:
       pull-requests: write
       checks: write
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        with:
+          egress-policy: audit
+
       - name: Checkout repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
       - name: Install uv
