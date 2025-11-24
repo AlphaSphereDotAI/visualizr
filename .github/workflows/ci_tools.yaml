@@ -15,7 +15,7 @@ concurrency:
 jobs:
   trunk_upgrade:
     name: Upgrade Trunk
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     if: github.event_name == 'schedule'
     permissions:
       contents: write
@@ -28,7 +28,7 @@ jobs:
         uses: trunk-io/trunk-action/upgrade@75699af9e26881e564e9d832ef7dc3af25ec031b # v1
   cache_trunk:
     name: Cache Trunk
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     if: github.event_name == 'push'
     permissions:
       actions: write

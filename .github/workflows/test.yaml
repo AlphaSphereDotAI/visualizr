@@ -12,7 +12,7 @@ permissions: read-all
 jobs:
   compatibility:
     name: Check Dependency Compatibility
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     environment:
       name: code_quality
     permissions:

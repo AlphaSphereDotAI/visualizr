@@ -22,19 +22,28 @@ permissions:
 jobs:
   check_dockerfile:
     name: Validate Dockerfile
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     if: ${{ inputs.is_test }}
     environment:
       name: code_quality
     steps:
       - name: Checkout repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      - name: Install APT packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker.io
+          sudo systemctl start docker
       - name: Log in to ${{ inputs.registry }} Registry
         uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3
         with:
           registry: ${{ inputs.registry }}
           username: mh0386
           password: ${{ inputs.registry == 'ghcr.io' && secrets.GH_TOKEN || inputs.registry == 'docker.io' && secrets.TOKEN_KEY_DOCKER }}
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3
       - name: Validate build configuration
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6
         with:
@@ -55,16 +64,13 @@ jobs:
     name: Build and push Docker image to ${{ inputs.registry }}
     needs: check_dockerfile
     if: ${{ always() && !cancelled() }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     outputs:
       image_tag: ${{ steps.tag.outputs.TAG }}
     environment:
       name: docker_image
       url: ${{inputs.registry}}/${{github.repository}}
     steps:
-      - name: Free Disk Space
-        if: github.event_name != 'pull_request'
-        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
       - name: Checkout repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
       - name: Get Python version from pyproject.toml
@@ -72,6 +78,18 @@ jobs:
         uses: mikefarah/yq@0ecdce24e83f0fa127940334be98c86b07b0c488 # v4.48.1
         with:
           cmd: yq -roy '.project.requires-python' pyproject.toml
+      - name: Install APT packages
+        run: sudo apt-get update && sudo apt-get install -y docker.io
+      - name: Set up Docker
+        uses: docker/setup-docker-action@v4.5.0
+        with:
+          daemon-config: |
+            {
+              "debug": true,
+              "features": {
+                "containerd-snapshotter": true
+              }
+            }
       - name: Log in to ${{ inputs.registry }} Registry
         uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3
         with:
@@ -126,7 +144,7 @@ jobs:
     name: Docker Scout (${{ matrix.commands }})
     needs: build_image
     if: ${{ always() && !cancelled() }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     environment:
       name: docker_image
     strategy:
@@ -137,6 +155,18 @@ jobs:
           - cves
           - recommendations
     steps:
+      - name: Install APT packages
+        run: sudo apt-get update && sudo apt-get install -y docker.io
+      - name: Set up Docker
+        uses: docker/setup-docker-action@v4.5.0
+        with:
+          daemon-config: |
+            {
+              "debug": true,
+              "features": {
+                "containerd-snapshotter": true
+              }
+            }
       - name: Log in to ${{ inputs.registry }} Registry
         uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3
         with:
@@ -155,7 +185,7 @@ jobs:
   api_test:
     name: API Test
     needs: build_image
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     if: ${{ always() && !cancelled() && inputs.is_test }}
     environment:
       name: api_test
@@ -194,7 +224,7 @@ jobs:
       - api_test
       - docker_scout
     if: ${{ always() && !cancelled() && inputs.registry == 'ghcr.io' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     environment:
       name: docker_image
     steps:
