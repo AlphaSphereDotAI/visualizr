@@ -14,32 +14,36 @@ permissions: read-all
 jobs:
   version:
     name: Versioning
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     if: github.actor == 'renovate[bot]'
     permissions:
       contents: write
     environment:
       name: versioning
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
         with:
           token: ${{ secrets.GH_TOKEN }}
           fetch-depth: 0
       - name: Install uv
-        uses: astral-sh/setup-uv@85856786d1ce8acfbcc2f13a5f3fbd6b938f9f41 # v7
+        uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244 # v7
         with:
           enable-cache: true
           cache-dependency-glob: "uv.lock"
           activate-environment: true
       - name: Increase the patch version
         run: uv version --bump patch
-      - name: Read version from pyproject.toml
-        id: read_version
-        run: |
-          VERSION=$(grep -E '^version\s*=' pyproject.toml | head -n 1 | cut -d '=' -f 2 | tr -d ' "')
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+      - name: Get Package version from pyproject.toml
+        id: get_package_version
+        uses: mikefarah/yq@45be35c06387d692bb6bf689919919e0e32e796f # v4.49.1
+        with:
+          cmd: yq -roy '.project.version' pyproject.toml
       - name: Commit updated count
         uses: stefanzweifel/git-auto-commit-action@28e16e81777b558cc906c8750092100bbb34c5e3 # v7
         with:
-          commit_message: "Tag: ${{ steps.read_version.outputs.version }}"
-          tagging_message: ${{ steps.read_version.outputs.version }}
+          commit_message: "Tag: ${{ steps.get_package_version.outputs.result }}"
+          tagging_message: ${{ steps.get_package_version.outputs.result }}
