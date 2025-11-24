@@ -62,9 +62,20 @@ jobs:
       name: docker_image
       url: ${{inputs.registry}}/${{github.repository}}
     steps:
-      - name: Free Disk Space
-        if: github.event_name != 'pull_request'
-        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
+      - name: Free Disk Space - Ubuntu Runners
+        uses: endersonmenezes/free-disk-space@6c4664f43348c8c7011b53488d5ca65e9fc5cd1a # v3
+        with:
+          remove_android: true
+          remove_dotnet: true
+          remove_haskell: true
+          remove_tool_cache: true
+          remove_swap: true
+          remove_packages_one_command: true
+          rm_cmd: "rmz"
+          remove_folders: >
+            /usr/share/swift /usr/share/miniconda /usr/share/az* /usr/local/lib/node_modules /usr/local/share/chromium /usr/local/share/powershell
+            /usr/local/julia /usr/local/aws-cli /usr/local/aws-sam-cli /usr/share/gradle
+
       - name: Checkout repository
         uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
       - name: Get Python version from pyproject.toml
