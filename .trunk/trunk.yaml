@@ -28,7 +28,7 @@ lint:
     - git-diff-check
     - hadolint@2.14.0
     - markdownlint@0.47.0
-    - renovate@42.68.4
+    - renovate@42.69.2
     - ruff@0.14.10:
         commands:
           - lint
