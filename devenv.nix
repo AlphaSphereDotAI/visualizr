@@ -158,6 +158,14 @@
     # uv-export.enable = true;
     uv-lock.enable = true;
     yamllint.enable = true;
+    # ensure-tag-matches-version = {
+    #   enable = true;
+    #   file = "pyproject.toml";
+    #   entry = ''
+    #     UV_VERSION=$(uv version --short 2>/dev/null)
+
+    #   '';
+    # };
   };
 
   # treefmt = {
