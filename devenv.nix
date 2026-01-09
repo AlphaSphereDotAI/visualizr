@@ -158,14 +158,19 @@
     # uv-export.enable = true;
     uv-lock.enable = true;
     yamllint.enable = true;
-    # ensure-tag-matches-version = {
-    #   enable = true;
-    #   file = "pyproject.toml";
-    #   entry = ''
-    #     UV_VERSION=$(uv version --short 2>/dev/null)
-
-    #   '';
-    # };
+    ensure-tag-matches-version = {
+      enable = true;
+      file = "pyproject.toml";
+      entry = ''
+        UV_VERSION=$(uv version --short 2>/dev/null)
+        NEAREST_TAG=$(git describe --tags --match "*.*.*" --abbrev=0 2>/dev/null)
+        if [ "$UV_VERSION" != "$NEAREST_TAG" ]; then
+          echo "Error: UV version ($UV_VERSION) does not match nearest tag ($NEAREST_TAG)"
+          exit 1
+        fi
+        exit 0
+      '';
+    };
   };
 
   # treefmt = {
