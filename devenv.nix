@@ -2,7 +2,8 @@
   pkgs,
   lib,
   ...
-}: {
+}:
+{
   files = {
     ".yamllint.yaml".yaml = {
       extends = "default";
@@ -17,7 +18,7 @@
       target-version = "py313";
       line-length = 120;
       lint = {
-        fixable = ["ALL"];
+        fixable = [ "ALL" ];
         ignore = [
           "D100"
           "D105"
@@ -26,7 +27,7 @@
           "D413"
           "SIM117"
         ];
-        select = ["ALL"];
+        select = [ "ALL" ];
         isort = {
           combine-as-imports = true;
         };
@@ -155,12 +156,16 @@
     trim-trailing-whitespace.enable = true;
     trufflehog.enable = true;
     uv-check.enable = true;
-    # uv-export.enable = true;
     uv-lock.enable = true;
     yamllint.enable = true;
     ensure-tag-matches-version = {
+      name = "Ensure Tag Matches Version";
       enable = true;
       file = "pyproject.toml";
+      stages = [
+        "pre-push"
+        "pre-commit"
+      ];
       entry = ''
         UV_VERSION=$(uv version --short 2>/dev/null)
         NEAREST_TAG=$(git describe --tags --match "*.*.*" --abbrev=0 2>/dev/null)
