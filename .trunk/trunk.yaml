@@ -28,7 +28,7 @@ lint:
     - git-diff-check
     - hadolint@2.14.0
     - markdownlint@0.47.0
-    - renovate@42.80.1
+    - renovate@42.81.2
     - ruff@0.14.11:
         commands:
           - lint
@@ -38,7 +38,7 @@ lint:
           - lint
           - format
     - trufflehog@3.92.4
-    - yamllint@1.37.1
+    - yamllint@1.38.0
   disabled:
     - prettier
     - black
