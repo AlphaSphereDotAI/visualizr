@@ -12,3 +12,4 @@ jobs:
           is_test: true
           lint: true
           linter: pre-commit
+          token: ${{ secrets.GH_TOKEN }}
