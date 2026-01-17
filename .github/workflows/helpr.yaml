@@ -1,0 +1,14 @@
+name: helpr
+on:
+  push:
+  pull_request:
+jobs:
+  helpr:
+    name: helpr
+    runs-on: ubuntu-latest
+    steps:
+      - uses: AlphaSphereDotAI/helpr_action@main
+        with:
+          is_test: true
+          lint: true
+          linter: pre-commit
