@@ -8,6 +8,10 @@ jobs:
     name: helpr
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          token: ${{ secrets.GH_TOKEN }}
       - uses: AlphaSphereDotAI/helpr_action@main
         with:
           is_test: true
