@@ -1,7 +1,7 @@
 name: Visualizr
 services:
   visualizr:
-    image: ghcr.io/alphaspheredotai/visualizr:latest@sha256:fb64d1ec688582e2b5119d2e9f2bad271db7dff827b02525a485fa27c5881f86
+    image: ghcr.io/alphaspheredotai/visualizr:latest@sha256:2c5b096a66c6ebee1a5c0242a8b42c393e0cfdcda086ae6ceba11f92618ec7aa
     ports:
       - "7862:7860"
     environment:
