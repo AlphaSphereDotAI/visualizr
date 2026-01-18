@@ -21,7 +21,7 @@ jobs:
           - pre-commit
           - lint
     steps:
-      - uses: AlphaSphereDotAI/helpr_action@main
+      - uses: AlphaSphereDotAI/helpr_action@13dbd4a5c40e8757f6c6f4c97e2f4df7c6d57cec
         with:
           is_test: true
           lint: true
