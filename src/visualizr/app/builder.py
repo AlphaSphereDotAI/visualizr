@@ -1,6 +1,6 @@
 from pathlib import Path
-from tempfile import NamedTemporaryFile
 from time import time
+from typing import TYPE_CHECKING
 
 from gradio import (
     Audio,
@@ -21,7 +21,7 @@ from gradio import (
     Tab,
     Textbox,
 )
-from httpx import URL, Client, HTTPStatusError, RequestError
+from httpx import URL
 from huggingface_hub import snapshot_download
 from librosa import load as librosa_load
 from numpy import (
@@ -43,7 +43,6 @@ from torch import (
 from tqdm import tqdm
 from transformers import HubertModel, Wav2Vec2FeatureExtractor
 
-from visualizr.anitalker.config import TrainConfig
 from visualizr.anitalker.liamodel import LiaModel
 from visualizr.anitalker.utils import (
     frames_to_video,
@@ -56,7 +55,11 @@ from visualizr.anitalker.utils import (
 )
 from visualizr.app.logger import logger
 from visualizr.app.settings import Settings
+from visualizr.app.tools import download_file
 from visualizr.app.types import InferenceType
+
+if TYPE_CHECKING:
+    from visualizr.anitalker.config import TrainConfig
 
 
 class App:
@@ -348,9 +351,9 @@ class App:
             (
                 "http://",
                 "https://",
-            )
+            ),
         ):
-            audio_file = self._download_audio(URL(audio_file))
+            audio_file = download_file(URL(audio_file))
         if not isinstance(audio_file, Path):
             audio_file = Path(audio_file)
         if not audio_file.exists():
@@ -418,35 +421,7 @@ class App:
             face_sr,
         ).as_posix()
 
-    @staticmethod
-    def _download_audio(url: URL) -> Path:
-        """
-        Download an audio file from a given URL and save it as a temporary WAV file.
-
-        Args:
-            url (URL): The URL to download the audio from.
-
-        Returns:
-            Path: The path to the downloaded temporary audio file.
-
-        Raises:
-            Error: If the download fails due to network or file errors.
-        """
-        try:
-            with Client() as client:
-                response = client.get(url)
-                response.raise_for_status()
-                with NamedTemporaryFile(delete=False, suffix=".wav") as f:
-                    f.write(response.content)
-                    audio_path = Path(f.name)
-                logger.info(f"Downloaded audio to {audio_path}")
-        except (RequestError, HTTPStatusError, OSError) as e:
-            msg = f"Failed to download audio from {url}: {e}"
-            logger.error(msg)
-            raise Error(msg) from e
-        return audio_path
-
-    def _get_image_path(self, name: str) -> Path:
+    def _get_image_path(self, name: str) -> Path | None:
         """
         Retrieve the image path for a given character name.
 
@@ -455,13 +430,16 @@ class App:
 
         Returns:
             Path: The path to the existing image file.
-                  Defaults to .jpg if none is found.
+                  None if no matching file is found.
         """
-        for ext in (".jpg", ".jpeg", ".png"):
-            path = self.settings.directory.image / f"{name}{ext}"
-            if path.is_file():
-                return path
-        return self.settings.directory.image / f"{name}.jpg"
+        return next(
+            (
+                img
+                for img in self.settings.assets.sample_image
+                if img.is_file() and img.stem.lower() == name.lower()
+            ),
+            None,
+        )
 
     def _get_character_names(self) -> list[str]:
         """

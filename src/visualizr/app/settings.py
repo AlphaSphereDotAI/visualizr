@@ -1,10 +1,12 @@
 """Settings for the Visualizr app."""
 
 from pathlib import Path
+from shutil import move
 from typing import Literal
 
 from dotenv import load_dotenv
 from gradio import Error
+from httpx import URL
 from pydantic import (
     BaseModel,
     DirectoryPath,
@@ -21,6 +23,7 @@ from torch.cuda import is_available
 from visualizr import APP_NAME
 from visualizr.anitalker.checkpoint import ModelName
 from visualizr.app.logger import logger
+from visualizr.app.tools import download_file
 from visualizr.app.types import InferenceType
 
 load_dotenv()
@@ -110,7 +113,7 @@ class DirectorySettings(BaseModel):
         return self
 
 
-class Checkpoint(BaseModel):
+class CheckpointSettings(BaseModel):
     """Settings for model checkpoints."""
 
     base: DirectoryPath = Field(
@@ -184,7 +187,10 @@ class ModelSettings(BaseModel):
     revision: str = Field(default="main")
     infer_type: InferenceType = Field(default="mfcc_full_control")
     face_sr: bool = Field(default=False)
-    checkpoint: Checkpoint = Field(default_factory=Checkpoint, frozen=True)
+    checkpoint: CheckpointSettings = Field(
+        default_factory=CheckpointSettings,
+        frozen=True,
+    )
 
     @model_validator(mode="after")
     def check_missing_paths(self) -> "ModelSettings":
@@ -212,6 +218,55 @@ class ModelSettings(BaseModel):
         return self
 
 
+class AssetsSettings(BaseModel):
+    """Settings for application assets."""
+
+    base: DirectoryPath = Field(
+        default_factory=lambda: Path.cwd() / "assets",
+        frozen=True,
+        exclude=True,
+    )
+
+    @computed_field
+    @property
+    def sample_image(self) -> list[FilePath]:
+        """Path to the sample image asset."""
+        return [
+            self.base / "image" / "Napoleon.jpg",
+            self.base / "image" / "Einstein.jpg",
+        ]
+
+    @computed_field
+    @property
+    def sample_audio(self) -> FilePath:
+        """Path to the sample audio asset."""
+        return self.base / "audio" / "sample.wav"
+
+    @model_validator(mode="after")
+    def check_asset_paths(self) -> "AssetsSettings":
+        """Ensure that sample assets are present, downloading them if necessary."""
+        for asset in [*self.sample_image]:
+            if not asset.exists():
+                file = download_file(
+                    URL(
+                        f"https://raw.githubusercontent.com/AlphaSphereDotAI/chattr/main/assets/image/{asset.name}",
+                    ),
+                    asset.suffix,
+                )
+                move(file, asset)
+                logger.info(f"Moved downloaded asset from {file} to {asset}")
+        if not self.sample_audio.exists():
+            file = download_file(
+                URL(
+                    f"https://raw.githubusercontent.com/AlphaSphereDotAI/chattr/main/assets/audio/{self.sample_audio.name}",
+                ),
+                self.sample_audio.suffix,
+            )
+            move(file, self.sample_audio)
+            logger.info(f"Moved downloaded asset from {file} to {self.sample_audio}")
+        return self
+
+
 class Settings(BaseSettings):
     """Configuration for the Visualizr app."""
 
@@ -223,6 +278,7 @@ class Settings(BaseSettings):
     )
     directory: DirectorySettings = Field(default_factory=DirectorySettings, frozen=True)
     model: ModelSettings = Field(default_factory=ModelSettings)
+    assets: AssetsSettings = Field(default_factory=AssetsSettings)
 
 
 if __name__ == "__main__":
