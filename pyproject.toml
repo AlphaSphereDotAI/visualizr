@@ -62,6 +62,7 @@ url = "https://download.pytorch.org/whl/cu118"
 dev = [
     "gitpython>=3.1.45",
     "gradio-client>=1.12.1",
+    "pycrucible>=0.3.0",
     "pytest-emoji>=0.2.0",
     "pytest-md>=0.2.0",
     #    "pytest-mergify>=2025.8.20.1",

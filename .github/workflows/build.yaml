@@ -44,6 +44,8 @@ jobs:
         run: uv version ${{ github.ref_name }}
       - name: Build source and wheel distribution
         run: uv build
+      - name: Build Python App with PyCrucible
+        uses: razorblade23/pycrucible-action@v2
       - name: Upload artifacts
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
