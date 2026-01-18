@@ -7,6 +7,8 @@ jobs:
   helpr:
     name: helpr
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: AlphaSphereDotAI/helpr_action@main
         with:
