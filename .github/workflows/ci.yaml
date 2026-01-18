@@ -12,12 +12,18 @@ permissions:
   actions: read
 jobs:
   test:
-    name: Test
+    name: ${{ matrix.linter }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        linter:
+          - pre-commit
+          - lint
     steps:
       - uses: AlphaSphereDotAI/helpr_action@main
         with:
           is_test: true
           lint: true
-          linter: pre-commit
+          linter: ${{ matrix.linter }}
           github_token: ${{ secrets.GH_TOKEN }}
